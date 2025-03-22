@@ -1,6 +1,7 @@
 "use client"
 
-import React, { useState, useEffect } from "react"
+import type React from "react"
+import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import NavBar from "../components/NavBar"
 import Footer from "../components/Footer"
@@ -9,7 +10,7 @@ import ProductCard from "../components/ProductCard"
 import ButtonPrimary from "../components/ButtonPrimary"
 import TextFieldCustom from "../components/TextFieldCustom"
 import LoadingSpinner from "../components/LoadingSpinner"
-import { Search, X, ChevronLeft, ChevronRight } from "lucide-react"
+import { Search, X } from "lucide-react"
 import { getProducts, getCategories } from "../services/api"
 
 interface Product {
@@ -22,16 +23,18 @@ interface Product {
   categorie: Category
 }
 
+interface Category {
+  id: number
+}
+
 interface Photo {
-  image: string
+  image: string;
 }
 
 interface Category {
   id: number
   nom: string
 }
-
-const PRODUCTS_PER_PAGE = 8
 
 const ProductsPage: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([])
@@ -41,7 +44,6 @@ const ProductsPage: React.FC = () => {
   const [showPromotionsOnly, setShowPromotionsOnly] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [currentPage, setCurrentPage] = useState(1)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -56,40 +58,31 @@ const ProductsPage: React.FC = () => {
             photos: p.photos || [],
             description: p.description || "",
             categorie: p.categorie,
-          }))
+          })),
         )
-        setCategories([{ id: -1, nom: "Toutes" }, ...categoriesRes.data.results])
+        setCategories([{ id: -1, nom: "Toutes" }, ...categoriesRes.data.results]) // Ajout "Toutes" comme option
         setLoading(false)
       } catch (err) {
         setError("Erreur lors du chargement des produits")
         setLoading(false)
       }
     }
+
     fetchData()
   }, [])
+  console.log(products)
 
   const filteredProducts = products.filter((product) => {
     const matchesSearch = product.nom.toLowerCase().includes(searchQuery.toLowerCase())
     const matchesCategory =
       selectedCategory === "" || selectedCategory === -1 || product.categorie.id === selectedCategory
-    const matchesPromotion = !showPromotionsOnly || product.prix_reduit !== undefined
+    const matchesPromotion = !showPromotionsOnly || product.prix_reduit !== product.prix
     return matchesSearch && matchesCategory && matchesPromotion
   })
 
-  const totalPages = Math.ceil(filteredProducts.length / PRODUCTS_PER_PAGE)
-  const paginatedProducts = filteredProducts.slice(
-    (currentPage - 1) * PRODUCTS_PER_PAGE,
-    currentPage * PRODUCTS_PER_PAGE
-  )
-
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-  }
-
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen bg-gradient-to-b from-soft-green/10 to-white">
+      <div className="flex justify-center items-center h-screen">
         <LoadingSpinner />
       </div>
     )
@@ -97,8 +90,8 @@ const ProductsPage: React.FC = () => {
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center h-screen bg-gradient-to-b from-soft-green/10 to-white">
-        <p className="text-powder-pink text-xl mb-6 font-medium">{error}</p>
+      <div className="flex flex-col items-center justify-center h-screen">
+        <p className="text-powder-pink text-xl mb-4">{error}</p>
         <ButtonPrimary onClick={() => window.location.reload()}>Réessayer</ButtonPrimary>
       </div>
     )
@@ -108,183 +101,150 @@ const ProductsPage: React.FC = () => {
     <>
       <NavBar />
       <PageContainer>
-        {/* En-tête amélioré */}
-        <div className="relative h-72 bg-gradient-to-br from-soft-green to-powder-pink overflow-hidden rounded-b-3xl shadow-lg">
+        {/* En-tête */}
+        <div className="relative h-64 bg-soft-green overflow-hidden">
           <img
             src="/images/products-header.jpg"
             alt="Produits floraux"
-            className="w-full h-full object-cover mix-blend-overlay opacity-40"
+            className="w-full h-full object-cover opacity-50"
           />
+          <div className="absolute inset-0 bg-gradient-to-r from-soft-green/80 to-transparent" />
           <div className="absolute inset-0 flex items-center justify-center">
             <motion.h1
-              className="text-5xl md:text-6xl font-serif text-white text-center drop-shadow-lg"
-              initial={{ opacity: 0, y: 30 }}
+              className="text-5xl font-serif font-medium text-white text-center"
+              initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 1, ease: "easeOut" }}
+              transition={{ duration: 0.8 }}
             >
               Nos créations florales
             </motion.h1>
           </div>
         </div>
 
-        <div className="py-12 px-4 sm:px-6 lg:px-8 flex gap-8">
-          {/* Barre de filtres latérale */}
+        <div className=" mx-auto py-12 px-4 sm:px-6 lg:px-8">
+          {/* Barre de filtres */}
           <motion.div
-            className="w-72 flex-shrink-0 bg-white p-6 rounded-2xl shadow-md border border-soft-brown/10 sticky top-24 h-fit"
-            initial={{ opacity: 0, x: -50 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6 }}
+            className="bg-white p-4 rounded-xl shadow-lg mb-12 sticky top-4 z-10 border border-soft-brown/20"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            id="searchSection"
           >
-            <h2 className="text-xl font-serif text-soft-brown mb-6">Filtres</h2>
+            <div className="flex flex-col space-y-4">
+              {/* Première ligne: Recherche et réinitialisation */}
+              <div className="flex items-center gap-3">
+                {/* Recherche */}
+                <div className="flex-grow relative">
+                  <TextFieldCustom
+                    id="search"
+                    label="Rechercher"
+                    value={searchQuery}
+                    onChange={setSearchQuery}
+                    placeholder="Rechercher un produit..."
+                    icon={<Search className="w-5 h-5 text-soft-brown/60" />}
+                  />
 
-            {/* Recherche */}
-            <div className="relative mb-6">
-              <TextFieldCustom
-                id="search"
-                label="Rechercher"
-                value={searchQuery}
-                onChange={setSearchQuery}
-                placeholder="Rechercher..."
-                icon={<Search className="w-5 h-5 text-soft-brown/50" />}
-              />
-              {searchQuery && (
-                <motion.button
-                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-powder-pink hover:text-soft-brown transition-colors"
-                  onClick={() => setSearchQuery("")}
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                >
-                  <X className="w-4 h-4" />
-                </motion.button>
-              )}
-            </div>
-
-            {/* Catégories */}
-            <div className="mb-6">
-              <h3 className="text-sm font-medium text-soft-brown/80 mb-3">Catégories</h3>
-              <div className="space-y-2">
-                {categories.map((category) => (
-                  <motion.button
-                    key={category.id}
-                    onClick={() => setSelectedCategory(category.id === -1 ? "" : category.id)}
-                    className={`w-full text-left px-4 py-2 rounded-lg text-sm transition-all duration-200 ${
-                      selectedCategory === (category.id === -1 ? "" : category.id)
-                        ? "bg-soft-green text-white"
-                        : "text-soft-brown hover:bg-soft-green/10"
-                    }`}
-                    whileHover={{ x: 5 }}
-                  >
-                    {category.nom}
-                  </motion.button>
-                ))}
-              </div>
-            </div>
-
-            {/* Promotions */}
-            <div className="flex items-center gap-3">
-              <input
-                type="checkbox"
-                checked={showPromotionsOnly}
-                onChange={(e) => setShowPromotionsOnly(e.target.checked)}
-                className="h-5 w-5 text-soft-green border-soft-brown/20 rounded focus:ring-soft-green"
-                id="promotions-only"
-              />
-              <label htmlFor="promotions-only" className="text-soft-brown text-sm">
-                Promotions uniquement
-              </label>
-            </div>
-
-            {/* Bouton de réinitialisation */}
-            {(searchQuery || selectedCategory !== "" || showPromotionsOnly) && (
-              <motion.button
-                className="mt-6 w-full py-2 text-sm text-powder-pink hover:text-soft-brown transition-colors"
-                onClick={() => {
-                  setSearchQuery("")
-                  setSelectedCategory("")
-                  setShowPromotionsOnly(false)
-                }}
-                whileHover={{ scale: 1.02 }}
-              >
-                Réinitialiser les filtres
-              </motion.button>
-            )}
-          </motion.div>
-
-          {/* Contenu principal */}
-          <div className="flex-1">
-            {/* Grille de produits */}
-            <motion.div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" layout>
-              <AnimatePresence>
-                {paginatedProducts.length > 0 ? (
-                  paginatedProducts.map((product) => (
-                    <motion.div
-                      key={product.id}
-                      layout
-                      layoutId={product.id}
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.9 }}
-                      transition={{ duration: 0.4 }}
-                    >
-                      <ProductCard product={product} />
-                    </motion.div>
-                  ))
-                ) : (
-                  <motion.p
-                    className="text-center text-soft-brown/70 col-span-full text-lg py-12"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 0.5 }}
-                  >
-                    Aucun produit ne correspond à vos critères.
-                  </motion.p>
-                )}
-              </AnimatePresence>
-            </motion.div>
-
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="flex items-center justify-center gap-4 mt-12">
-                <motion.button
-                  onClick={() => handlePageChange(currentPage - 1)}
-                  disabled={currentPage === 1}
-                  className="p-2 rounded-full bg-soft-green/10 text-soft-brown disabled:opacity-50 disabled:cursor-not-allowed"
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                >
-                  <ChevronLeft className="w-6 h-6" />
-                </motion.button>
-
-                <div className="flex gap-2">
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                  {/* Bouton de réinitialisation intégré */}
+                  {(searchQuery || selectedCategory !== "" || showPromotionsOnly) && (
                     <motion.button
-                      key={page}
-                      onClick={() => handlePageChange(page)}
-                      className={`w-10 h-10 rounded-full text-sm font-medium ${
-                        currentPage === page
-                          ? "bg-soft-green text-white"
+                      initial={{ scale: 0.8, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      exit={{ scale: 0.8, opacity: 0 }}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-powder-pink/10 hover:bg-powder-pink/20 text-powder-pink transition-colors duration-200"
+                      onClick={() => {
+                        setSearchQuery("")
+                        setSelectedCategory("")
+                        setShowPromotionsOnly(false)
+                      }}
+                      title="Réinitialiser tous les filtres"
+                    >
+                      <X className="w-4 h-4" />
+                    </motion.button>
+                  )}
+                </div>
+              </div>
+
+              {/* Deuxième ligne: Filtres de catégories et checkbox */}
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="flex flex-wrap gap-2 flex-grow">
+                  {categories.map((category) => (
+                    <motion.button
+                      key={category.id}
+                      onClick={() => setSelectedCategory(category.id === -1 ? "" : category.id)}
+                      className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
+                        selectedCategory === (category.id === -1 ? "" : category.id)
+                          ? "bg-soft-green text-white shadow-md"
                           : "bg-light-beige text-soft-brown hover:bg-soft-green/20"
                       }`}
-                      whileHover={{ scale: 1.1 }}
+                      whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                     >
-                      {page}
+                      {category.nom}
                     </motion.button>
                   ))}
                 </div>
 
-                <motion.button
-                  onClick={() => handlePageChange(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                  className="p-2 rounded-full bg-soft-green/10 text-soft-brown disabled:opacity-50 disabled:cursor-not-allowed"
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
+                <motion.div
+                  className="flex items-center ml-auto bg-light-beige px-3 py-2 rounded-full"
+                  whileHover={{ scale: 1.05 }}
                 >
-                  <ChevronRight className="w-6 h-6" />
-                </motion.button>
+                  <input
+                    type="checkbox"
+                    checked={showPromotionsOnly}
+                    onChange={(e) => setShowPromotionsOnly(e.target.checked)}
+                    className="h-5 w-5 text-soft-green border-soft-brown/30 rounded focus:ring-soft-green mr-2"
+                    id="promotions-only"
+                  />
+                  <label htmlFor="promotions-only" className="text-soft-brown text-sm whitespace-nowrap">
+                    En promotion
+                  </label>
+                </motion.div>
               </div>
-            )}
-          </div>
+
+              {/* Indicateur de filtres actifs */}
+              {(searchQuery || selectedCategory !== "" || showPromotionsOnly) && (
+                <div className="flex items-center pt-1">
+                  <p className="text-xs text-soft-brown/60 italic">
+                    Filtres actifs:
+                    {searchQuery && <span className="ml-1">Recherche</span>}
+                    {selectedCategory !== "" && <span className="ml-1">Catégorie</span>}
+                    {showPromotionsOnly && <span className="ml-1">Promotions</span>}
+                  </p>
+                </div>
+              )}
+            </div>
+          </motion.div>
+
+          {/* Grille de produits */}
+          <motion.div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8" layout>
+            <AnimatePresence>
+              {filteredProducts.length > 0 ? (
+                filteredProducts.map((product) => (
+                  <motion.div
+                    key={product.id}
+                    layout
+                    layoutId={product.id}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.5 }}
+                  >
+                    <ProductCard product={product} />
+                  </motion.div>
+                ))
+              ) : (
+                <motion.p
+                  className="text-center text-soft-brown/70 col-span-full text-lg"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.5 }}
+                >
+                  Aucun produit ne correspond à vos critères.
+                </motion.p>
+              )}
+            </AnimatePresence>
+          </motion.div>
         </div>
       </PageContainer>
       <Footer />
@@ -292,4 +252,5 @@ const ProductsPage: React.FC = () => {
   )
 }
 
-export default ProductsPage;
+export default ProductsPage
+
