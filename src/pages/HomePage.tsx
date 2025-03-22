@@ -1012,7 +1012,7 @@ export default function HomePage() {
                   <p className="text-soft-green font-medium">
                     123 Avenue des Fleurs
                     <br />
-                    75001 Paris, France
+                    75001 Yaoundé, France
                   </p>
                 </motion.div>
               </div>

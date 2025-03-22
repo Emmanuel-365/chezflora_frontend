@@ -43,7 +43,7 @@ const AteliersPage = () => {
         // Add some mock data for demonstration
         const ateliersWithMockData = ateliersData.map((atelier: Atelier) => ({
           ...atelier,
-          lieu: ["Paris", "Lyon", "Marseille", "Bordeaux", "Lille"][Math.floor(Math.random() * 5)],
+          lieu: ["Yaoundé", "Garoua", "Douala", "Bertoua", "Ngaoundéré"][Math.floor(Math.random() * 5)],
           tags: ["débutant", "avancé", "enfants", "adultes", "saisonnier"][Math.floor(Math.random() * 5)],
           duree: ["1h", "1h30", "2h", "2h30", "3h"][Math.floor(Math.random() * 5)],
         }))

@@ -51,7 +51,7 @@ const RealisationsPage = () => {
           ...r,
           photos: typeof r.photos === 'string' ? JSON.parse(r.photos) : r.photos,
           // Add some mock data for demonstration
-          lieu: ["Paris", "Lyon", "Marseille", "Bordeaux", "Lille"][Math.floor(Math.random() * 5)],
+          lieu: ["Yaoundé", "Lyon", "Douala", "Bordeaux", "Lille"][Math.floor(Math.random() * 5)],
           client: ["Entreprise ABC", "Restaurant XYZ", "Hôtel Luxe", "Mariage Martin", "Événement Gala"][Math.floor(Math.random() * 5)]
         }))
         

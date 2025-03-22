@@ -250,7 +250,7 @@ const Footer = () => {
                     <p className="text-sm text-gray-600">
                       123 Avenue des Fleurs
                       <br />
-                      75001 Paris, France
+                      75001 Yaoundé, France
                     </p>
                   </div>
                 </div>
