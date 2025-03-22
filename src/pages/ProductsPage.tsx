@@ -56,7 +56,7 @@ const ProductsPage = () => {
       try {
         setLoading(true)
         const [productsRes, categoriesRes] = await Promise.all([
-          getProducts(controller.signal),
+          getProducts({signal: controller.signal}),
           getCategories(controller.signal),
         ])
 

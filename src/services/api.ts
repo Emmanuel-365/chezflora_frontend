@@ -107,9 +107,9 @@ export const resendOtp = (data: { user_id: string }) => api.post('/resend-otp/',
 export const resetPassword = (data: { email: string }) => api.post('/reset_password/', data);
 export const getUserProfile = () => api.get<User>('/utilisateurs/me/');
 export const getPublicParameters = () => api.get('/parametres/public/');
-export const getProducts = (params?: { categorie?: number }) => api.get('/produits/', { params });
+export const getProducts = (params?: { categorie?: number, signal?: AbortSignal }, ) => api.get('/produits/', { params });
 export const getProduct = (id: string) => api.get(`/produits/${id}/`);
-export const getCategories = () => api.get('/categories/');
+export const getCategories = (signal?: AbortSignal) => api.get('/categories/', {signal});
 export const getServices = () => api.get('/services/');
 export const getService = (id: string) => api.get(`/services/${id}/`);
 export const getWorkshops = () => api.get('/ateliers/');
