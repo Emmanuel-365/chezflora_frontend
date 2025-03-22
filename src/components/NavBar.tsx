@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react"
 import { Link, useNavigate, useLocation } from "react-router-dom"
 import { getPublicParameters, getUserProfile, getCartCount } from "../services/api"
-import { ShoppingCart, User, Menu, X, LogOut, Heart, Package, ChevronDown, Search, Settings, Bell, HelpCircle, ShieldCheck } from 'lucide-react'
+import { ShoppingCart, User, Menu, X, LogOut, Heart, Package, ChevronDown, Search, Settings, HelpCircle, ShieldCheck } from 'lucide-react'
 import { motion, AnimatePresence } from "framer-motion"
 
 import logo from "../assets/logo.png";
@@ -19,7 +19,6 @@ const NavBar = () => {
   const [cartCount, setCartCount] = useState(0)
   const [searchQuery, setSearchQuery] = useState("")
   const [isSearchFocused, setIsSearchFocused] = useState(false)
-  const [notifications, setNotifications] = useState(2) // Example notification count
   
   const navigate = useNavigate()
   const location = useLocation()
@@ -42,7 +41,6 @@ const NavBar = () => {
 
   console.log(params);
 
-  setNotifications(0)
 
   // Effect to fetch user data and parameters
   useEffect(() => {
@@ -216,17 +214,6 @@ const NavBar = () => {
               );
             })}
 
-            {/* Notifications */}
-            {isAuthenticated && (
-              <button className="p-2 rounded-full text-gray-600 hover:text-emerald-600 hover:bg-emerald-50 transition-colors duration-200 relative">
-                <Bell className="h-5 w-5" />
-                {notifications > 0 && (
-                  <span className="absolute -top-1 -right-1 flex items-center justify-center w-5 h-5 bg-emerald-500 text-white text-xs font-bold rounded-full">
-                    {notifications}
-                  </span>
-                )}
-              </button>
-            )}
 
             {/* Cart */}
             <Link
