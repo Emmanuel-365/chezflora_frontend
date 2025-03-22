@@ -49,8 +49,8 @@ const AdminAbonnementsPage: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [stats, setStats] = useState<Stats | null>(null);
-  const [loadingList, setLoadingList] = useState(true); // Chargement spécifique à la liste
-  const [loadingStats, setLoadingStats] = useState(true); // Chargement spécifique aux stats
+  const [loadingList, setLoadingList] = useState(true);
+  const [loadingStats, setLoadingStats] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterType, setFilterType] = useState<string>("all");
@@ -82,12 +82,17 @@ const AdminAbonnementsPage: React.FC = () => {
           }),
           api.get<Stats>("/abonnements/stats/"),
         ]);
-        setAbonnements(abonnementsResponse.data.results);
-        setTotalAbonnements(abonnementsResponse.data.count);
-        setTotalPages(Math.ceil(abonnementsResponse.data.count / abonnementsPerPage));
+
+        // Vérification que results est un tableau, sinon tableau vide par défaut
+        const results = Array.isArray(abonnementsResponse.data.results) ? abonnementsResponse.data.results : [];
+        setAbonnements(results);
+        setTotalAbonnements(abonnementsResponse.data.count || 0);
+        setTotalPages(Math.ceil((abonnementsResponse.data.count || 0) / abonnementsPerPage));
         setStats(statsResponse.data);
       } catch (err: any) {
+        console.error("Erreur lors du chargement des données:", err.response?.data);
         setError("Erreur lors du chargement des données.");
+        setAbonnements([]); // Réinitialiser à un tableau vide en cas d'erreur
       } finally {
         setLoadingList(false);
         setLoadingStats(false);
@@ -147,13 +152,15 @@ const AdminAbonnementsPage: React.FC = () => {
       const response = await api.get<ApiResponse>("/abonnements/", {
         params: { page: currentPage, per_page: abonnementsPerPage },
       });
-      setAbonnements(response.data.results);
+      const results = Array.isArray(response.data.results) ? response.data.results : [];
+      setAbonnements(results);
       setLoadingList(false);
       setLoadingStats(true);
       const statsResponse = await api.get<Stats>("/abonnements/stats/");
       setStats(statsResponse.data);
       setLoadingStats(false);
     } catch (err: any) {
+      console.error("Erreur lors de la mise à jour:", err.response?.data);
       setError("Erreur lors de la mise à jour de l’abonnement.");
     }
   };
@@ -273,37 +280,49 @@ const AdminAbonnementsPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {abonnements.map((abonnement) => (
-                  <tr key={abonnement.id} className="border-b border-lightBorder dark:border-darkBorder hover:bg-gray-100 dark:hover:bg-gray-700">
-                    <td className="py-3 px-4 text-gray-700 dark:text-gray-300">{abonnement.id}</td>
-                    <td className="py-3 px-4 text-gray-700 dark:text-gray-300">{abonnement.client}</td>
-                    <td className="py-3 px-4 text-gray-700 dark:text-gray-300">{abonnement.type}</td>
-                    <td className="py-3 px-4 text-gray-700 dark:text-gray-300">{abonnement.produits.length}</td>
-                    <td className="py-3 px-4 text-gray-700 dark:text-gray-300">{new Date(abonnement.date_debut).toLocaleDateString()}</td>
-                    <td className="py-3 px-4 text-gray-700 dark:text-gray-300">{abonnement.date_fin ? new Date(abonnement.date_fin).toLocaleDateString() : "N/A"}</td>
-                    <td className="py-3 px-4 text-gray-700 dark:text-gray-300">{abonnement.prix}</td>
-                    <td className="py-3 px-4 text-gray-700 dark:text-gray-300">{abonnement.prochaine_livraison ? new Date(abonnement.prochaine_livraison).toLocaleDateString() : "N/A"}</td>
-                    <td className="py-3 px-4">
-                      <span
-                        className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                          abonnement.is_active
-                            ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                            : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
-                        }`}
-                      >
-                        {abonnement.is_active ? "Oui" : "Non"}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4">
-                      <ButtonPrimary
-                        onClick={() => openEditModal(abonnement)}
-                        className="px-2 py-1 bg-blue-500 text-white hover:bg-blue-600 flex items-center text-sm"
-                      >
-                        <Edit className="h-4 w-4 mr-1" /> Modifier
-                      </ButtonPrimary>
+                {Array.isArray(abonnements) && abonnements.length > 0 ? (
+                  abonnements.map((abonnement) => (
+                    <tr key={abonnement.id} className="border-b border-lightBorder dark:border-darkBorder hover:bg-gray-100 dark:hover:bg-gray-700">
+                      <td className="py-3 px-4 text-gray-700 dark:text-gray-300">{abonnement.id}</td>
+                      <td className="py-3 px-4 text-gray-700 dark:text-gray-300">{abonnement.client}</td>
+                      <td className="py-3 px-4 text-gray-700 dark:text-gray-300">{abonnement.type}</td>
+                      <td className="py-3 px-4 text-gray-700 dark:text-gray-300">{abonnement.produits.length}</td>
+                      <td className="py-3 px-4 text-gray-700 dark:text-gray-300">{new Date(abonnement.date_debut).toLocaleDateString()}</td>
+                      <td className="py-3 px-4 text-gray-700 dark:text-gray-300">
+                        {abonnement.date_fin ? new Date(abonnement.date_fin).toLocaleDateString() : "N/A"}
+                      </td>
+                      <td className="py-3 px-4 text-gray-700 dark:text-gray-300">{abonnement.prix}</td>
+                      <td className="py-3 px-4 text-gray-700 dark:text-gray-300">
+                        {abonnement.prochaine_livraison ? new Date(abonnement.prochaine_livraison).toLocaleDateString() : "N/A"}
+                      </td>
+                      <td className="py-3 px-4">
+                        <span
+                          className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                            abonnement.is_active
+                              ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                              : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+                          }`}
+                        >
+                          {abonnement.is_active ? "Oui" : "Non"}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4">
+                        <ButtonPrimary
+                          onClick={() => openEditModal(abonnement)}
+                          className="px-2 py-1 bg-blue-500 text-white hover:bg-blue-600 flex items-center text-sm"
+                        >
+                          <Edit className="h-4 w-4 mr-1" /> Modifier
+                        </ButtonPrimary>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={10} className="py-3 px-4 text-center text-gray-700 dark:text-gray-300">
+                      Aucun abonnement trouvé.
                     </td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </div>
