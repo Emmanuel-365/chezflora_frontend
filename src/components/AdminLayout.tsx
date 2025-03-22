@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, Suspense } from "react";
+import React, { useState, useEffect, Suspense, useCallback } from "react";
 // import { useLocation } from "react-router-dom";
 import AdminSidebar from "../components/AdminSidebar";
 import { Sun, Moon } from "lucide-react";
@@ -21,15 +21,16 @@ const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isDarkMode, setIsDarkMode] = useState(applyTheme);
   // const location = useLocation();
 
-  const toggleSidebar = () => {
+  // Memoize toggleSidebar to prevent unnecessary re-renders
+  const toggleSidebar = useCallback(() => {
     setIsSidebarOpen((prev: boolean) => {
       const newState = !prev;
       localStorage.setItem("sidebarOpen", JSON.stringify(newState));
       return newState;
     });
-  };
+  }, []);
 
-  const toggleDarkMode = () => {
+  const toggleDarkMode = useCallback(() => {
     setIsDarkMode((prev: boolean) => {
       const newMode = !prev;
       localStorage.setItem("theme", newMode ? "dark" : "light");
@@ -37,20 +38,29 @@ const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       else document.documentElement.classList.remove("dark");
       return newMode;
     });
-  };
+  }, []);
 
   useEffect(() => {
     const handleResize = () => {
       const desktop = window.innerWidth >= 768;
       setIsDesktop(desktop);
-      if (!desktop && isSidebarOpen) setIsSidebarOpen(false); // Ferme la sidebar sur mobile lors du resize
+      // Ne ferme pas la sidebar automatiquement sur mobile lors du resize
+      // pour éviter la disparition lors du changement de page
     };
     window.addEventListener("resize", handleResize);
     handleResize();
     return () => window.removeEventListener("resize", handleResize);
-  }, [isSidebarOpen]);
+  }, []);
 
-  const contentMargin = isSidebarOpen ? "ml-[250px]" : isDesktop ? "ml-[80px]" : "ml-[60px]"; // Alignement avec la sidebar mobile
+  // Synchroniser l'état de la sidebar avec localStorage au montage
+  useEffect(() => {
+    const savedState = localStorage.getItem("sidebarOpen");
+    if (savedState !== null) {
+      setIsSidebarOpen(JSON.parse(savedState));
+    }
+  }, []);
+
+  const contentMargin = isSidebarOpen ? "ml-[250px]" : isDesktop ? "ml-[80px]" : "ml-[60px]";
 
   return (
     <div className="flex min-h-screen">
