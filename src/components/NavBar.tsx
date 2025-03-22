@@ -18,13 +18,11 @@ const NavBar = () => {
   const [userName, setUserName] = useState<string | null>(null)
   const [cartCount, setCartCount] = useState(0)
   const [searchQuery, setSearchQuery] = useState("")
-  const [isSearchFocused, setIsSearchFocused] = useState(false)
   
   const navigate = useNavigate()
   const location = useLocation()
   const userMenuRef = useRef<HTMLDivElement>(null)
   const mobileMenuRef = useRef<HTMLDivElement>(null)
-  const searchInputRef = useRef<HTMLInputElement>(null)
 
   // Check if user is admin
   const isAdmin = userRole === 'admin'
@@ -106,7 +104,6 @@ const NavBar = () => {
     if (searchQuery.trim()) {
       navigate(`/products?search=${encodeURIComponent(searchQuery)}`)
       setSearchQuery("")
-      setIsSearchFocused(false)
     }
   }
 
