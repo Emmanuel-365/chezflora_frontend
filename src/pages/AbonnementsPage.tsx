@@ -118,7 +118,7 @@ const AbonnementsPage: React.FC = () => {
     try {
       const token = localStorage.getItem('access_token');
       const response = await axios.post(
-        `http://localhost:8000/api/abonnements/${id}/cancel/`,
+        `http://chezflora-api.onrender.com/api/abonnements/${id}/cancel/`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );

@@ -84,7 +84,7 @@ const OrdersPage: React.FC = () => {
     try {
       const token = localStorage.getItem('access_token');
       const response = await axios.post(
-        `http://localhost:8000/api/commandes/${orderId}/cancel/`,
+        `http://chezflora-api.onrender.com/api/commandes/${orderId}/cancel/`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
