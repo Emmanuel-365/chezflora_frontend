@@ -41,7 +41,7 @@ interface ApiResponse {
 }
 
 const AdminAbonnementsPage: React.FC = () => {
-  const navigate = useNavigate();
+  
   const [abonnements, setAbonnements] = useState<Abonnement[]>([]);
   const [totalAbonnements, setTotalAbonnements] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);

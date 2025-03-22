@@ -27,7 +27,7 @@ interface ApiResponse {
 }
 
 const AdminAddressesPage: React.FC = () => {
-  const navigate = useNavigate();
+  
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [totalAddresses, setTotalAddresses] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);

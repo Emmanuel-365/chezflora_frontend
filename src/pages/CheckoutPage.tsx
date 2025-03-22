@@ -36,7 +36,7 @@ interface Adresse {
 }
 
 const CheckoutPage: React.FC = () => {
-  const navigate = useNavigate();
+  
   const [cart, setCart] = useState<Cart | null>(null);
   const [addresses, setAddresses] = useState<Adresse[]>([]);
   const [selectedAddress, setSelectedAddress] = useState<string>('');

@@ -20,7 +20,7 @@ interface ProductStats {
 }
 
 const AdminProductsStatsPage: React.FC = () => {
-  const navigate = useNavigate();
+  
   const [statsData, setStatsData] = useState<ProductStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

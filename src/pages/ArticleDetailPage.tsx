@@ -28,7 +28,7 @@ interface Article {
 
 const ArticleDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
+  
   const [article, setArticle] = useState<Article | null>(null);
   const [commentText, setCommentText] = useState('');
   const [replyText, setReplyText] = useState<{ [key: string]: string }>({});

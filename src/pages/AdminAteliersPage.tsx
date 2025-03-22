@@ -25,7 +25,7 @@ interface ApiResponse {
 }
 
 const AdminAteliersPage: React.FC = () => {
-  const navigate = useNavigate();
+  
   const [ateliers, setAteliers] = useState<Atelier[]>([]);
   const [totalAteliers, setTotalAteliers] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);

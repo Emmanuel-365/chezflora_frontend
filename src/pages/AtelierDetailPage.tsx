@@ -18,7 +18,7 @@ import { Atelier } from '../types/types';
 
 const AtelierDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
+  
   const { user, isAuthenticated, loading: authLoading } = useAuth();
   const [atelier, setAtelier] = useState<Atelier | null>(null);
   const [loading, setLoading] = useState(true);

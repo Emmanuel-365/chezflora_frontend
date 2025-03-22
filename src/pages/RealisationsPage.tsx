@@ -22,7 +22,7 @@ interface Realisation {
 }
 
 const RealisationsPage: React.FC = () => {
-  const navigate = useNavigate();
+  
   const [realisations, setRealisations] = useState<Realisation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

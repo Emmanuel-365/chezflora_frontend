@@ -30,7 +30,7 @@ interface Cart {
 }
 
 const CartPage: React.FC = () => {
-  const navigate = useNavigate();
+  
   const [cart, setCart] = useState<Cart | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

@@ -11,7 +11,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { Atelier } from '../types/types';
 
 const AteliersPage: React.FC = () => {
-  const navigate = useNavigate();
+  
   const { user, isAuthenticated, loading: authLoading } = useAuth();
   const [ateliers, setAteliers] = useState<Atelier[]>([]);
   const [loading, setLoading] = useState(true);

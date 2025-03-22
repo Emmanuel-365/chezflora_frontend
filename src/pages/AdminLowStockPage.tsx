@@ -26,7 +26,7 @@ interface ApiResponse {
 }
 
 const AdminLowStockPage: React.FC = () => {
-  const navigate = useNavigate();
+  
   const [lowStockData, setLowStockData] = useState<LowStockResponse | null>(null);
   const [products, setProducts] = useState<LowStockProduct[]>([]);
   const [totalProducts, setTotalProducts] = useState(0);

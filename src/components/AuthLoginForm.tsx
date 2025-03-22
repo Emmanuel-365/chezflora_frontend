@@ -17,6 +17,7 @@ const AuthLoginForm: React.FC<AuthLoginFormProps> = ({ className = '' }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [formError, setFormError] = useState<string>('');
+  
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {

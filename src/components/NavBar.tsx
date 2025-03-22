@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { getPublicParameters, getUserProfile, getCartCount } from "../services/api"
-import { Flower2, ShoppingCart, User, Menu, X, LogOut, Heart, Package, ChevronDown, Search } from "lucide-react"
+import {ShoppingCart, User, Menu, X, LogOut, Heart, Package, ChevronDown, Search } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 
 import logo from "../assets/logo.png";
@@ -58,7 +58,6 @@ const NavBar = () => {
 
           // recuperer le nombre de produits dans le panier d'un utilisateur 
 
-          // Simuler un nombre d'articles dans le panier
           setCartCount(await getCartCount())
         }
       } catch (error) {

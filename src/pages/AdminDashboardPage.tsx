@@ -49,7 +49,7 @@ interface DashboardData {
 }
 
 const AdminDashboardPage: React.FC = () => {
-  const navigate = useNavigate();
+  
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -65,7 +65,7 @@ const AdminDashboardPage: React.FC = () => {
       }
 
       try {
-        const response = await axios.get(`http://chezflora-api.onrender.com/api/utilisateurs/dashboard/?days=${daysFilter}`, {
+        const response = await axios.get(`http://localhost:8000/api/utilisateurs/dashboard/?days=${daysFilter}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         console.log('Dashboard data:', response.data);

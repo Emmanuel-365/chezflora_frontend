@@ -1,29 +1,11 @@
 import axios from 'axios';
 
-const API_URL = 'http://chezflora-api.onrender.com/api/';
+const API_URL = 'http://localhost:8000/api/';
 
 const api = axios.create({
   baseURL: API_URL,
   headers: { 'Content-Type': 'application/json' },
 });
-
-// Liste des endpoints publics exacts (sans sous-routes)
-const publicEndpoints = [
-  '/token/',
-  '/token/refresh/',
-  '/register/',
-  '/verify-otp/',
-  '/resend-otp/',
-  '/reset_password/',
-  '/produits/',
-  '/categories/',
-  '/services/',
-  '/ateliers/',
-  '/articles/',
-  '/realisations/',
-  '/parametres/public/',
-  '/promotions/',
-];
 
 // Gestion des requêtes avec token
 api.interceptors.request.use(
@@ -121,7 +103,7 @@ export const login = (data: { username: string; password: string }) =>
 export const register = (data: { username: string; email: string; password: string }) =>
   api.post('/register/', data);
 export const verifyOtp = (data: { user_id: string; code: string }) => api.post('/verify-otp/', data);
-export const resendOtp = (data: { email: string }) => api.post('/resend-otp/', data);
+export const resendOtp = (data: { user_id: string }) => api.post('/resend-otp/', data);
 export const resetPassword = (data: { email: string }) => api.post('/reset_password/', data);
 export const getUserProfile = () => api.get<User>('/utilisateurs/me/');
 export const getPublicParameters = () => api.get('/parametres/public/');
@@ -207,6 +189,7 @@ export const getUserStats = (params?: { days?: number }) =>
 export const deleteWishlist = (id: string) => api.delete(`/wishlist/${id}/`);
 export const getCartCount = async () => {
   const cart = await api.get('/paniers');
+
   return cart.data.results[0].items.length;
 };
 

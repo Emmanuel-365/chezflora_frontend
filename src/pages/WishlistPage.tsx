@@ -24,7 +24,7 @@ interface Wishlist {
 }
 
 const WishlistPage: React.FC = () => {
-  const navigate = useNavigate();
+  
   const [wishlist, setWishlist] = useState<Wishlist | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

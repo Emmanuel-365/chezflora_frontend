@@ -16,7 +16,7 @@ interface RevenueData {
 }
 
 const AdminCommandsRevenuePage: React.FC = () => {
-  const navigate = useNavigate();
+  
   const [revenueData, setRevenueData] = useState<RevenueData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

@@ -33,7 +33,7 @@ interface Wishlist {
 
 const ProductDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
+  
   const [product, setProduct] = useState<Product | null>(null);
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);

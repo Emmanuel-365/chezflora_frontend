@@ -42,7 +42,7 @@ interface Commande {
 }
 
 const OrdersPage: React.FC = () => {
-  const navigate = useNavigate();
+  
   const [orders, setOrders] = useState<Commande[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -83,7 +83,7 @@ const OrdersPage: React.FC = () => {
     try {
       const token = localStorage.getItem('access_token');
       const response = await axios.post(
-        `http://chezflora-api.onrender.com/api/commandes/${orderId}/cancel/`,
+        `http://localhost:8000/api/commandes/${orderId}/cancel/`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );

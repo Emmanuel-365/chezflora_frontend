@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, Suspense } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import AdminSidebar from "../components/AdminSidebar";
 import { Sun, Moon } from "lucide-react";
 
@@ -25,10 +25,9 @@ const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isDarkMode, setIsDarkMode] = useState(applyTheme);
   const [isLoading, setIsLoading] = useState(false); // État de chargement
   const location = useLocation();
-  const navigate = useNavigate();
 
   const toggleSidebar = () => {
-    setIsSidebarOpen((prev) => {
+    setIsSidebarOpen((prev: boolean) => {
       const newState = !prev;
       localStorage.setItem("sidebarOpen", JSON.stringify(newState));
       return newState;
@@ -36,7 +35,7 @@ const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   };
 
   const toggleDarkMode = () => {
-    setIsDarkMode((prev) => {
+    setIsDarkMode((prev: boolean) => {
       const newMode = !prev;
       localStorage.setItem("theme", newMode ? "dark" : "light");
       if (newMode) {

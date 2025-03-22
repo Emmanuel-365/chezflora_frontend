@@ -2,32 +2,20 @@
 
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from 'react-router-dom';
 import {
   Home,
   Users,
   ShoppingCart,
   Package,
   Calendar,
-  FileText,
   Settings,
   LogOut,
   ChevronRight,
   ChevronDown,
-  BarChart2,
-  ShoppingBag,
-  AlertTriangle,
-  Image as ImageIcon,
   BookOpen,
-  Tag,
-  Percent,
-  List,
-  MapPin,
   Briefcase,
   DollarSign,
-  Key,
-  Heart,
-  Edit,
 } from "lucide-react";
 
 interface AdminSidebarProps {
@@ -36,7 +24,7 @@ interface AdminSidebarProps {
 }
 
 const AdminSidebar: React.FC<AdminSidebarProps> = ({ isOpen, toggleSidebar }) => {
-  const navigate = useNavigate();
+  
   const [expandedSections, setExpandedSections] = useState<{ [key: string]: boolean }>({
     users: false,
     commands: false,
@@ -47,6 +35,8 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ isOpen, toggleSidebar }) =>
     payments: false,
     settings: false,
   });
+
+  const navigate = useNavigate();
 
   const toggleSection = (section: string) => {
     setExpandedSections((prev) => ({ ...prev, [section]: !prev[section] }));

@@ -25,7 +25,7 @@ interface ApiResponse {
 }
 
 const AdminAteliersParticipantsPage: React.FC = () => {
-  const navigate = useNavigate();
+  
   const { atelierId } = useParams<{ atelierId: string }>();
   const [atelier, setAtelier] = useState<Atelier | null>(null);
   const [participants, setParticipants] = useState<Participant[]>([]);

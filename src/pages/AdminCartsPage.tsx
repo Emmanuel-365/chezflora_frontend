@@ -19,7 +19,7 @@ interface ApiResponse {
 }
 
 const AdminCartsPage: React.FC = () => {
-  const navigate = useNavigate();
+  
   const [carts, setCarts] = useState<Panier[]>([]);
   const [totalCarts, setTotalCarts] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);

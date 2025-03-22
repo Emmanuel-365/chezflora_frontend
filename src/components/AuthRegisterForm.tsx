@@ -19,8 +19,8 @@ const AuthRegisterForm: React.FC<AuthRegisterFormProps> = ({ className = '' }) =
   const [isLoading, setIsLoading] = useState(false);
   const [formError, setFormError] = useState<string>('');
   const [acceptTerms, setAcceptTerms] = useState(false);
+  
   const navigate = useNavigate();
-
   const hasMinLength = password.length >= 8;
   const hasUpperCase = /[A-Z]/.test(password);
   const hasLowerCase = /[a-z]/.test(password);

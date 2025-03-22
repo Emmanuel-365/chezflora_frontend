@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState} from 'react';
 import { useNavigate } from 'react-router-dom';
-import NavBar from '../components/Navbar';
+import NavBar from '../components/NavBar';
 import Footer from '../components/Footer';
 import PageContainer from '../components/PageContainer';
 import AuthOtpForm from '../components/AuthOtpForm';
@@ -10,7 +10,7 @@ const OtpPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
-  const navigate = useNavigate();
+  const navigate = useNavigate()
   const userId = localStorage.getItem('pendingUserId') || '';
 
 //   useEffect(() => {

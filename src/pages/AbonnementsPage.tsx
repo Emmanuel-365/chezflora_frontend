@@ -28,7 +28,7 @@ interface Product {
 }
 
 const AbonnementsPage: React.FC = () => {
-  const navigate = useNavigate();
+  
   const [abonnements, setAbonnements] = useState<Abonnement[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedType, setSelectedType] = useState<'mensuel' | 'hebdomadaire' | 'annuel'>('mensuel');
@@ -117,7 +117,7 @@ const AbonnementsPage: React.FC = () => {
     try {
       const token = localStorage.getItem('access_token');
       const response = await axios.post(
-        `http://chezflora-api.onrender.com/api/abonnements/${id}/cancel/`,
+        `http://localhost:8000/api/abonnements/${id}/cancel/`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );

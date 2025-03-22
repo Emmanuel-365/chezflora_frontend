@@ -25,7 +25,7 @@ interface ApiResponse {
 }
 
 const AdminCommandLinesPage: React.FC = () => {
-  const navigate = useNavigate();
+  
   const [lines, setLines] = useState<LigneCommande[]>([]);
   const [totalLines, setTotalLines] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);

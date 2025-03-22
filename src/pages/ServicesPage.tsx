@@ -17,10 +17,12 @@ interface Service {
 }
 
 const ServicesPage: React.FC = () => {
-  const navigate = useNavigate();
+  
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+    const navigate = useNavigate();
+  
 
   useEffect(() => {
     const fetchServices = async () => {

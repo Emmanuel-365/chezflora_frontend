@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import AdminLayout from '../components/AdminLayout';
 import ButtonPrimary from '../components/ButtonPrimary';
-import { Tag, Search, Filter, Edit, Trash2, PlusCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Tag, Search, Edit, Trash2, PlusCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import debounce from 'lodash/debounce';
 
 interface Promotion {
@@ -33,7 +32,6 @@ interface ApiResponse {
 }
 
 const AdminPromotionsPage: React.FC = () => {
-  const navigate = useNavigate();
   const [promotions, setPromotions] = useState<Promotion[]>([]);
   const [totalPromotions, setTotalPromotions] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
@@ -55,7 +53,7 @@ const AdminPromotionsPage: React.FC = () => {
     date_debut: '',
     date_fin: '',
     produits: [] as string[],
-    categorie: '',
+    categorie: '' as string | Category,
   });
   const [editPromotion, setEditPromotion] = useState({
     nom: '',
@@ -63,7 +61,7 @@ const AdminPromotionsPage: React.FC = () => {
     date_debut: '',
     date_fin: '',
     produit_ids: [] as string[],
-    categorie_id: '',
+    categorie_id: '' as string | Category,
   });
   const promotionsPerPage = 10;
 
@@ -155,11 +153,10 @@ const AdminPromotionsPage: React.FC = () => {
         ...newPromotion,
         reduction: parseFloat(newPromotion.reduction),
         produit_ids: newPromotion.produits,
-        categorie_id: newPromotion.categorie.id || null,
+        categorie_id: typeof newPromotion.categorie === 'string' ? null : newPromotion.categorie.id || null,
         date_debut: new Date(newPromotion.date_debut).toISOString(),
         date_fin: new Date(newPromotion.date_fin).toISOString(),
       };
-      console.log(newPromotion.produits);
       await api.post('/promotions/', promotionData);
       setIsAddModalOpen(false);
       fetchPromotions();
@@ -174,7 +171,6 @@ const AdminPromotionsPage: React.FC = () => {
     setEditPromotion({
       nom: promotion.nom,
       reduction: promotion.reduction.toString(),
-      // Formatage ISO pour l'input date (YYYY-MM-DD)
       date_debut: new Date(promotion.date_debut).toISOString().split('T')[0],
       date_fin: new Date(promotion.date_fin).toISOString().split('T')[0],
       produit_ids: promotion.produits.map((p) => p.id),
@@ -192,13 +188,13 @@ const AdminPromotionsPage: React.FC = () => {
   const handleEditPromotion = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedPromotion) return;
-  
+
     try {
       const promotionData = {
         ...editPromotion,
         reduction: parseFloat(editPromotion.reduction),
         produit_ids: editPromotion.produit_ids,
-        categorie: editPromotion.categorie_id || null,
+        categorie_id: typeof editPromotion.categorie_id === 'string' ? editPromotion.categorie_id || null : editPromotion.categorie_id.id || null,
         date_debut: new Date(editPromotion.date_debut).toISOString(),
         date_fin: new Date(editPromotion.date_fin).toISOString(),
       };
@@ -256,9 +252,11 @@ const AdminPromotionsPage: React.FC = () => {
 
   const handleCategorySelect = (categoryId: string, type: 'new' | 'edit') => {
     if (type === 'new') {
-      setNewPromotion({ ...newPromotion, categorie: categoryId, produits: [] });
+      const selectedCategory = categories.find(cat => cat.id === categoryId) || '';
+      setNewPromotion({ ...newPromotion, categorie: selectedCategory, produits: [] });
     } else {
-      setEditPromotion({ ...editPromotion, categorie_id: categoryId, produit_ids: [] });
+      const selectedCategory = categories.find(cat => cat.id === categoryId) || '';
+      setEditPromotion({ ...editPromotion, categorie_id: selectedCategory, produit_ids: [] });
     }
   };
 
@@ -315,7 +313,7 @@ const AdminPromotionsPage: React.FC = () => {
               <tr className="border-b border-lightBorder dark:border-darkBorder">
                 <th className="py-3 px-4 text-lightText dark:text-darkText">ID</th>
                 <th className="py-3 px-4 text-lightText dark:text-darkText">Nom</th>
-                <th className="py-3 px-4 text-lightText dark:text-darkText">reduction</th>
+                <th className="py-3 px-4 text-lightText dark:text-darkText">Réduction</th>
                 <th className="py-3 px-4 text-lightText dark:text-darkText">Début</th>
                 <th className="py-3 px-4 text-lightText dark:text-darkText">Fin</th>
                 <th className="py-3 px-4 text-lightText dark:text-darkText">Nb Produits</th>
@@ -395,7 +393,7 @@ const AdminPromotionsPage: React.FC = () => {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">reduction (%)</label>
+                    <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">Réduction (%)</label>
                     <input
                       type="number"
                       step="0.1"
@@ -437,21 +435,21 @@ const AdminPromotionsPage: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => setNewPromotion({ ...newPromotion, categorie: '', produits: [] })}
-                        className={`px-3 py-1 rounded-lg text-sm ${newPromotion.categorie.id === '' ? 'bg-blue-500 text-white' : 'bg-lightCard dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'}`}
+                        className={`px-3 py-1 rounded-lg text-sm ${typeof newPromotion.categorie === 'string' ? 'bg-blue-500 text-white' : 'bg-lightCard dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'}`}
                       >
                         Produits spécifiques
                       </button>
                       <button
                         type="button"
-                        onClick={() => setNewPromotion({ ...newPromotion, produits: [], categorie: categories[0]?.id || '' })}
-                        className={`px-3 py-1 rounded-lg text-sm ${newPromotion.categorie.id !== '' ? 'bg-blue-500 text-white' : 'bg-lightCard dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'}`}
+                        onClick={() => setNewPromotion({ ...newPromotion, produits: [], categorie: categories[0] || '' })}
+                        className={`px-3 py-1 rounded-lg text-sm ${typeof newPromotion.categorie !== 'string' ? 'bg-blue-500 text-white' : 'bg-lightCard dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'}`}
                       >
                         Toute une catégorie
                       </button>
                     </div>
                   </div>
 
-                  {newPromotion.categorie.id === '' ? (
+                  {typeof newPromotion.categorie === 'string' ? (
                     <div>
                       <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">Rechercher des produits</label>
                       <div className="relative">
@@ -505,7 +503,7 @@ const AdminPromotionsPage: React.FC = () => {
                     <div>
                       <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">Sélectionner une catégorie</label>
                       <select
-                        value={newPromotion.categorie}
+                        value={typeof newPromotion.categorie === 'string' ? newPromotion.categorie : newPromotion.categorie.id}
                         onChange={(e) => handleCategorySelect(e.target.value, 'new')}
                         className="w-full px-3 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-blue-500"
                       >
@@ -554,7 +552,7 @@ const AdminPromotionsPage: React.FC = () => {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">reduction (%)</label>
+                    <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">Réduction (%)</label>
                     <input
                       type="number"
                       step="0.1"
@@ -595,21 +593,21 @@ const AdminPromotionsPage: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => setEditPromotion({ ...editPromotion, categorie_id: '', produit_ids: editPromotion.produit_ids })}
-                        className={`px-3 py-1 rounded-lg text-sm ${editPromotion.categorie_id === '' ? 'bg-blue-500 text-white' : 'bg-lightCard dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'}`}
+                        className={`px-3 py-1 rounded-lg text-sm ${typeof editPromotion.categorie_id === 'string' ? 'bg-blue-500 text-white' : 'bg-lightCard dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'}`}
                       >
                         Produits spécifiques
                       </button>
                       <button
                         type="button"
-                        onClick={() => setEditPromotion({ ...editPromotion, produit_ids: [], categorie_id: categories[0]?.id || '' })}
-                        className={`px-3 py-1 rounded-lg text-sm ${editPromotion.categorie_id !== '' ? 'bg-blue-500 text-white' : 'bg-lightCard dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'}`}
+                        onClick={() => setEditPromotion({ ...editPromotion, produit_ids: [], categorie_id: categories[0] || '' })}
+                        className={`px-3 py-1 rounded-lg text-sm ${typeof editPromotion.categorie_id !== 'string' ? 'bg-blue-500 text-white' : 'bg-lightCard dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'}`}
                       >
                         Toute une catégorie
                       </button>
                     </div>
                   </div>
 
-                  {editPromotion.categorie_id === '' ? (
+                  {typeof editPromotion.categorie_id === 'string' ? (
                     <div>
                       <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">Rechercher des produits</label>
                       <div className="relative">
@@ -663,7 +661,7 @@ const AdminPromotionsPage: React.FC = () => {
                     <div>
                       <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">Sélectionner une catégorie</label>
                       <select
-                        value={editPromotion.categorie_id}
+                        value={typeof editPromotion.categorie_id === 'string' ? editPromotion.categorie_id : editPromotion.categorie_id.id}
                         onChange={(e) => handleCategorySelect(e.target.value, 'edit')}
                         className="w-full px-3 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-blue-500"
                       >

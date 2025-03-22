@@ -27,7 +27,7 @@ interface UserStats {
 }
 
 const AdminUserStatsPage: React.FC = () => {
-  const navigate = useNavigate();
+  
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [statsData, setStatsData] = useState<UserStats | null>(null);
   const [loading, setLoading] = useState(true);

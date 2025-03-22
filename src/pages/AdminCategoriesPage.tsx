@@ -20,7 +20,7 @@ interface ApiResponse {
 }
 
 const AdminCategoriesPage: React.FC = () => {
-  const navigate = useNavigate();
+  
   const [categories, setCategories] = useState<Category[]>([]);
   const [totalCategories, setTotalCategories] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);

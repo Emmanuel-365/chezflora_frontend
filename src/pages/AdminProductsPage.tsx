@@ -41,7 +41,7 @@ interface Promotion {
 }
 
 const AdminProductsPage: React.FC = () => {
-  const navigate = useNavigate();
+  
   const [products, setProducts] = useState<Product[]>([]);
   const [totalProducts, setTotalProducts] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);

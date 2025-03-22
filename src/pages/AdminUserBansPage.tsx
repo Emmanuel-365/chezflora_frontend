@@ -24,7 +24,7 @@ interface ApiResponse {
 }
 
 const AdminUserBansPage: React.FC = () => {
-  const navigate = useNavigate();
+  
   const [bannedUsers, setBannedUsers] = useState<User[]>([]);
   const [totalUsers, setTotalUsers] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);

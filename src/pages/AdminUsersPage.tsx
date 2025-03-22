@@ -24,7 +24,7 @@ interface ApiResponse {
 }
 
 const AdminUsersPage: React.FC = () => {
-  const navigate = useNavigate();
+  
   const [users, setUsers] = useState<User[]>([]);
   const [totalUsers, setTotalUsers] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);

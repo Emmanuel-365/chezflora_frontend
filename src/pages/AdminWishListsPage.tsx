@@ -27,7 +27,7 @@ interface ApiResponse {
 }
 
 const AdminWishlistsPage: React.FC = () => {
-  const navigate = useNavigate();
+  
   const [wishlists, setWishlists] = useState<Wishlist[]>([]);
   const [totalWishlists, setTotalWishlists] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);

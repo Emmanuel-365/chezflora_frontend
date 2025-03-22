@@ -25,7 +25,7 @@ interface ApiResponse {
 }
 
 const AdminDevisPage: React.FC = () => {
-  const navigate = useNavigate();
+  
   const [devis, setDevis] = useState<Devis[]>([]);
   const [totalDevis, setTotalDevis] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);

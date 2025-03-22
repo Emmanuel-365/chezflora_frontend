@@ -17,7 +17,7 @@ interface Devis {
 }
 
 const DevisPage: React.FC = () => {
-  const navigate = useNavigate();
+  
   const [devisList, setDevisList] = useState<Devis[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

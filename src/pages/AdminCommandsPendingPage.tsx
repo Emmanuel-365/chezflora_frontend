@@ -23,7 +23,7 @@ interface ApiResponse {
 }
 
 const AdminCommandsPendingPage: React.FC = () => {
-  const navigate = useNavigate();
+  
   const [commands, setCommands] = useState<Commande[]>([]);
   const [totalCommands, setTotalCommands] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);

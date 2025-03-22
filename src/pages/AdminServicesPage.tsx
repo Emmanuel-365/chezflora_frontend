@@ -22,7 +22,7 @@ interface ApiResponse {
 }
 
 const AdminServicesPage: React.FC = () => {
-  const navigate = useNavigate();
+  
   const [services, setServices] = useState<Service[]>([]);
   const [totalServices, setTotalServices] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);

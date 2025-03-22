@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import NavBar from '../components/NavBar';
 import Footer from '../components/Footer';
 import PageContainer from '../components/PageContainer';
 import ButtonPrimary from '../components/ButtonPrimary';
 import { getUserProfile, updateUserProfile, changePassword, deleteAccount } from '../services/api';
-import { User, Shield, ChevronsUpDown, Camera, Trash2, AlertCircle } from 'lucide-react';
+import { User, Shield, ChevronsUpDown, Camera, AlertCircle } from 'lucide-react';
 
 interface UserProfile {
   id: string;
@@ -15,7 +15,7 @@ interface UserProfile {
 }
 
 const AccountPage: React.FC = () => {
-  const navigate = useNavigate();
+  
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -32,6 +32,8 @@ const AccountPage: React.FC = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [notifications, setNotifications] = useState(true); // Paramètre fictif
   const [marketing, setMarketing] = useState(false); // Paramètre fictif
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchUserProfile = async () => {
