@@ -67,7 +67,7 @@ const AdminDashboardPage: React.FC = () => {
       }
 
       try {
-        const response = await axios.get(`http://chezflora-api.onrender.com/api/utilisateurs/dashboard/?days=${daysFilter}`, {
+        const response = await axios.get(`https://chezflora-api.onrender.com/api/utilisateurs/dashboard/?days=${daysFilter}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         console.log('Dashboard data:', response.data);
