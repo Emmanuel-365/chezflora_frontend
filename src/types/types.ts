@@ -19,6 +19,8 @@ export interface User {
     places_totales: number;
     is_active: boolean;
     participants: { utilisateur: Utilisateur; date_inscription: string; statut: string }[];
+    tags: string;
+    lieu: string;
   }
 
   interface Utilisateur {
