@@ -265,7 +265,7 @@ export default function HomePage() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                 >
-                  <FeaturedPromotions promotions={promotions} title="Nos produits phares"/>
+                  <FeaturedPromotions promotions={promotions}/>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -303,7 +303,7 @@ export default function HomePage() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                 >
-                  <FeaturedProducts products={products} title="Nos produits phares"/>
+                  <FeaturedProducts products={products}/>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -341,7 +341,7 @@ export default function HomePage() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                 >
-                  <ServicesOverview services={services} title="Nos services"/>
+                  <ServicesOverview services={services}/>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -379,7 +379,7 @@ export default function HomePage() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                 >
-                  <UpcomingWorkshops workshops={workshops} title="Ateliers à venir"/>
+                  <UpcomingWorkshops workshops={workshops}/>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -417,7 +417,7 @@ export default function HomePage() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                 >
-                  <RecentArticles articles={articles} title="Nos derniers articles" />
+                  <RecentArticles articles={articles}/>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -430,7 +430,7 @@ export default function HomePage() {
             animate="visible"
           >
             <h2 className="text-3xl font-serif text-soft-brown text-center mb-8">Pourquoi choisir ChezFlora ?</h2>
-            <WhyChooseUs features={features} title="Pourquoi choisir ChezFlora ?" />
+            <WhyChooseUs features={features}/>
           </motion.section>
         </main>
       </PageContainer>

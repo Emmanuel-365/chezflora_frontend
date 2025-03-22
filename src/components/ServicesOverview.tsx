@@ -13,14 +13,12 @@ interface Service {
 
 interface ServicesOverviewProps {
   services: Service[];
-  title: string;
 }
 
-export default function ServicesOverview({ services, title }: ServicesOverviewProps) {
+export default function ServicesOverview({ services}: ServicesOverviewProps) {
   return (
     <section className="bg-light-beige py-16">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h2 className="text-3xl font-serif font-medium text-soft-brown mb-12 text-center">{title}</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {services.map((service, index) => (
             <motion.div
