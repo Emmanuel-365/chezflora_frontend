@@ -156,36 +156,6 @@ const NavBar = () => {
             </motion.div>
           </Link>
 
-          {/* Search - Desktop */}
-          <div className="hidden lg:flex items-center justify-center max-w-md w-full mx-4 relative">
-            <form onSubmit={handleSearch} className="w-full">
-              <div className="relative">
-                <input
-                  ref={searchInputRef}
-                  type="search"
-                  placeholder="Rechercher des produits..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onFocus={() => setIsSearchFocused(true)}
-                  onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
-                  className={`w-full pl-10 pr-4 py-2 text-sm text-gray-700 bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all duration-200 ${
-                    isSearchFocused ? "shadow-md" : ""
-                  }`}
-                />
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                {searchQuery && (
-                  <button
-                    type="button"
-                    onClick={() => setSearchQuery("")}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                )}
-              </div>
-            </form>
-          </div>
-
           {/* Navigation - Desktop */}
           <div className="hidden lg:flex items-center space-x-1">
             {navLinks.map((link) => {
