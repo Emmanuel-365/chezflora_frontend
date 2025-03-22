@@ -250,7 +250,7 @@ const Footer = () => {
                     <p className="text-sm text-gray-600">
                       123 Avenue des Fleurs
                       <br />
-                      75001 Yaoundé, France
+                      99322 Yaoundé, France
                     </p>
                   </div>
                 </div>
@@ -471,7 +471,7 @@ const Footer = () => {
           </p>
           <div className="flex items-center mt-4 md:mt-0">
             <span className="text-gray-500 text-sm flex items-center">
-              Fait avec <Heart className="h-4 w-4 text-red-500 mx-1" /> en France
+              Fait avec <Heart className="h-4 w-4 text-red-500 mx-1" /> au Cameroun
             </span>
           </div>
         </div>
