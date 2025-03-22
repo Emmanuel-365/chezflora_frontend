@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { useState, useEffect } from "react"
-import { useNavigate, Link } from "react-router-dom"
+import { Link } from "react-router-dom"
 import NavBar from "../components/NavBar"
 import Footer from "../components/Footer"
 import PageContainer from "../components/PageContainer"
@@ -22,7 +22,6 @@ interface Article {
 }
 
 const ArticlesPage: React.FC = () => {
-  const navigate = useNavigate()
   const [articles, setArticles] = useState<Article[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)

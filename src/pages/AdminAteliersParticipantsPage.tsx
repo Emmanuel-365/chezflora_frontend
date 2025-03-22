@@ -17,12 +17,12 @@ interface Atelier {
   nom: string;
 }
 
-interface ApiResponse {
-  results: Participant[];
-  count: number;
-  next: string | null;
-  previous: string | null;
-}
+// interface ApiResponse {
+//   results: Participant[];
+//   count: number;
+//   next: string | null;
+//   previous: string | null;
+// }
 
 const AdminAteliersParticipantsPage: React.FC = () => {
   
@@ -36,6 +36,8 @@ const AdminAteliersParticipantsPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const participantsPerPage = 10;
+  const navigate = useNavigate();
+
 
   useEffect(() => {
     fetchAtelier();

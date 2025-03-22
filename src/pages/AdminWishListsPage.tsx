@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import api, { getWishlist, supprimerProduitWishlist,  } from '../services/api'; // Importez les fonctions nécessaires
+import api, { supprimerProduitWishlist,  } from '../services/api'; // Importez les fonctions nécessaires
 import AdminLayout from '../components/AdminLayout';
 import ButtonPrimary from '../components/ButtonPrimary';
 import { Heart, Search, Trash2, ChevronLeft, ChevronRight, Eye } from 'lucide-react';

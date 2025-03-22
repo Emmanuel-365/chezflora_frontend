@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import api from '../services/api'; // Utilisation de l’instance axios existante
 import AdminLayout from '../components/AdminLayout';
 import ButtonPrimary from '../components/ButtonPrimary';

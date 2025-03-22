@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import AdminLayout from '../components/AdminLayout';
 import ButtonPrimary from '../components/ButtonPrimary';
@@ -34,8 +33,8 @@ const AdminServicesPage: React.FC = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [newService, setNewService] = useState({ nom: '', description: '', photos: [], is_active: true });
-  const [editService, setEditService] = useState({ nom: '', description: '', photos: [], is_active: true });
+  const [newService, setNewService] = useState({ nom: '', description: '', photos: [] as String[], is_active: true });
+  const [editService, setEditService] = useState({ nom: '', description: '', photos: [] as String[], is_active: true });
   const servicesPerPage = 10;
 
   useEffect(() => {

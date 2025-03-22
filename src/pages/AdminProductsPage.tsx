@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import AdminLayout from '../components/AdminLayout';
 import ButtonPrimary from '../components/ButtonPrimary';
-import { Package, Search, Filter, Edit, Trash2, PlusCircle, Eye, ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { Package, Search, Edit, Trash2, PlusCircle, Eye, ChevronLeft, ChevronRight, X } from 'lucide-react';
 
 interface Photo {
   id: string;

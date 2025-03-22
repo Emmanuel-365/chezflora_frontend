@@ -11,13 +11,18 @@ interface Service {
 
 interface Realisation {
   id: string;
-  service: string;
+  service: Service;
   titre: string;
   description: string;
   photos: string[];
   date: string;
   admin: string;
   is_active: boolean;
+}
+
+interface Service {
+  id: string;
+  nom: string;
 }
 
 interface ApiResponse {
@@ -110,7 +115,7 @@ const AdminRealisationsPage: React.FC = () => {
 
   const openEditModal = (realisation: Realisation) => {
     setSelectedRealisation(realisation);
-    setEditRealisation({ service: realisation.service, titre: realisation.titre, description: realisation.description, photos: [], date: realisation.date.split('T')[0], is_active: realisation.is_active });
+    setEditRealisation({ service: realisation.service.nom, titre: realisation.titre, description: realisation.description, photos: [], date: realisation.date.split('T')[0], is_active: realisation.is_active });
     setIsEditModalOpen(true);
   };
 

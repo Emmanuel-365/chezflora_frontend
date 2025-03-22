@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import AdminLayout from '../components/AdminLayout';
 import ButtonPrimary from '../components/ButtonPrimary';
@@ -165,7 +164,7 @@ const AdminProductsStatsPage: React.FC = () => {
           </div>
 
           {/* Liste des produits en stock faible */}
-          {statsData?.low_stock_details.length > 0 && (
+          {statsData && statsData?.low_stock_details.length > 0 && (
             <div className="bg-lightCard dark:bg-darkCard p-4 rounded-lg shadow-md">
               <h2 className="text-lg font-medium text-lightText dark:text-darkText mb-2 flex items-center">
                 <AlertTriangle className="h-5 w-5 mr-2" /> Produits en stock faible
@@ -180,7 +179,7 @@ const AdminProductsStatsPage: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {statsData.low_stock_details.map((product) => (
+                    {statsData && statsData.low_stock_details.map((product) => (
                       <tr key={product.id} className="border-b border-lightBorder dark:border-darkBorder">
                         <td className="py-3 px-4 text-gray-700 dark:text-gray-300">{product.id}</td>
                         <td className="py-3 px-4 text-gray-700 dark:text-gray-300">{product.nom}</td>

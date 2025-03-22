@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { getUsers, createUser, updateUser, deleteUser } from '../services/api'; // Importez depuis api.ts
 import AdminLayout from '../components/AdminLayout';
 import ButtonPrimary from '../components/ButtonPrimary';
-import { Users, Search, Filter, Edit, Trash2, PlusCircle, CheckCircle, XCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Users, Search, Edit, Trash2, PlusCircle, CheckCircle, XCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface User {
   id: string;
@@ -16,12 +15,12 @@ interface User {
   last_login: string | null;
 }
 
-interface ApiResponse {
-  results: User[]; // Avec pagination
-  count: number;
-  next: string | null;
-  previous: string | null;
-}
+// interface ApiResponse {
+//   results: User[]; // Avec pagination
+//   count: number;
+//   next: string | null;
+//   previous: string | null;
+// }
 
 const AdminUsersPage: React.FC = () => {
   

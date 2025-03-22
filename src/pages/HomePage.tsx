@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Truck, Flower, Heart, Star } from 'lucide-react';
 import NavBar from '../components/NavBar';
 import Footer from '../components/Footer';

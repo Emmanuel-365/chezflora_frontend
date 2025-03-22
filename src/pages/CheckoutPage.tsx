@@ -5,7 +5,7 @@ import Footer from '../components/Footer';
 import PageContainer from '../components/PageContainer';
 import ButtonPrimary from '../components/ButtonPrimary';
 import { getCart, validateCart, getAddresses, createAddress } from '../services/api';
-import { AlertCircle, ChevronLeft } from 'lucide-react';
+import { ChevronLeft } from 'lucide-react';
 
 interface CartItem {
   id: string;
@@ -44,6 +44,7 @@ const CheckoutPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchData = async () => {

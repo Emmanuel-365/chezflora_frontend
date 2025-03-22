@@ -76,8 +76,8 @@ const CrudForm: React.FC<CrudFormProps> = ({ fields, initialData, onSubmit, onCa
               value={formData[field.name] || ''}
               onChange={(value) => handleChange(field.name, value)}
               required={field.required}
-              multiline={field.type === 'textarea'}
-              rows={field.type === 'textarea' ? 4 : undefined}
+              // multiline={field.type === 'textarea'}
+              // rows={field.type === 'textarea' ? 4 : undefined}
             />
           ))}
         </div>

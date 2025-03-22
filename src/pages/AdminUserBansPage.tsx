@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { getUsers, updateUser } from '../services/api';
 import AdminLayout from '../components/AdminLayout';
 import ButtonPrimary from '../components/ButtonPrimary';
-import { Users, Search, XCircle, CheckCircle, ChevronLeft, ChevronRight, Ban } from 'lucide-react';
+import { Search, XCircle, CheckCircle, ChevronLeft, ChevronRight, Ban } from 'lucide-react';
 
 interface User {
   id: string;
@@ -16,12 +15,12 @@ interface User {
   last_login: string | null;
 }
 
-interface ApiResponse {
-  results: User[];
-  count: number;
-  next: string | null;
-  previous: string | null;
-}
+// interface ApiResponse {
+//   results: User[];
+//   count: number;
+//   next: string | null;
+//   previous: string | null;
+// }
 
 const AdminUserBansPage: React.FC = () => {
   

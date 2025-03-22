@@ -4,7 +4,7 @@ import NavBar from '../components/NavBar';
 import Footer from '../components/Footer';
 import PageContainer from '../components/PageContainer';
 import ButtonPrimary from '../components/ButtonPrimary';
-import { getCart, validateCart, updateCartQuantity, removeFromCart } from '../services/api';
+import { getCart, updateCartQuantity, removeFromCart } from '../services/api';
 import { Trash2, Plus, Minus } from 'lucide-react';
 
 interface Photo {
@@ -35,6 +35,7 @@ const CartPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchCart = async () => {
@@ -44,6 +45,7 @@ const CartPage: React.FC = () => {
         navigate('/auth');
         return;
       }
+      setCheckoutLoading(false);
 
       try {
         const response = await getCart();

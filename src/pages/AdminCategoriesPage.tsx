@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import AdminLayout from '../components/AdminLayout';
 import ButtonPrimary from '../components/ButtonPrimary';
-import { Folder, Search, Filter, Edit, Trash2, PlusCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Folder, Search, Edit, Trash2, PlusCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface Category {
   id: string;

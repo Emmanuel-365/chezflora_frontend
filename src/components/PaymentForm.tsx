@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { CreditCard, Calendar, Lock } from 'lucide-react';
 import TextFieldCustom from './TextFieldCustom';
 import ButtonPrimary from './ButtonPrimary';
 

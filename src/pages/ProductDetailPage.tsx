@@ -22,14 +22,18 @@ interface Product {
   prix_reduit?: number;
   photos: Photo[];
   description: string;
-  categorie: number;
+  categorie: Category;
   stock: number;
 }
 
-interface Wishlist {
-  id: string;
-  produits: { id: string }[];
+interface Category {
+  id: number
 }
+
+// interface Wishlist {
+//   id: string;
+//   produits: { id: string }[];
+// }
 
 const ProductDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -43,6 +47,7 @@ const ProductDetailPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [cartLoading, setCartLoading] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -221,7 +226,7 @@ const ProductDetailPage: React.FC = () => {
     );
   }
 
-  const currentPhoto = product.photos.length > 0 ? product.photos[currentPhotoIndex] : '/images/placeholder-image.jpg';
+  const currentPhoto = product.photos.length > 0 ? product.photos[currentPhotoIndex].image : '/images/placeholder-image.jpg';
 
   return (
     <>
@@ -256,8 +261,8 @@ const ProductDetailPage: React.FC = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
             <div className="relative">
               <motion.img
-                key={currentPhoto.image}
-                src={currentPhoto.image}
+                key={currentPhoto}
+                src={currentPhoto}
                 alt={`${product.nom} - Photo ${currentPhotoIndex + 1}`}
                 className="w-full h-[500px] object-cover rounded-lg shadow-lg"
                 initial={{ opacity: 0 }}

@@ -18,9 +18,17 @@ interface Product {
   nom: string
   prix: number
   prix_reduit?: number
-  photos: string[]
+  photos: Photo[]
   description: string
-  categorie: number
+  categorie: Category
+}
+
+interface Category {
+  id: number
+}
+
+interface Photo {
+  image: string;
 }
 
 interface Category {

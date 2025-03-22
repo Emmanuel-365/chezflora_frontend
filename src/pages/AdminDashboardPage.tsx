@@ -55,6 +55,8 @@ const AdminDashboardPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [daysFilter, setDaysFilter] = useState<number>(7);
   const [selectedSection, setSelectedSection] = useState<string>('overview');
+  const navigate = useNavigate();
+
 
   useEffect(() => {
     const fetchDashboard = async () => {

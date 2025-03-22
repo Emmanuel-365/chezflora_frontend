@@ -263,7 +263,7 @@ const AdminArticlesPage: React.FC = () => {
                 </div>
                 <div className="flex gap-2 justify-end">
                   <ButtonPrimary type="button" onClick={closeEditModal} className="px-4 py-2 bg-lightCard dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600">Annuler</ButtonPrimary>
-                  <ButtonPrimary type="submit" class drainage="px-4 py-2 bg-blue-500 text-white hover:bg-blue-600">Enregistrer</ButtonPrimary>
+                  <ButtonPrimary type="submit" className="px-4 py-2 bg-blue-500 text-white hover:bg-blue-600">Enregistrer</ButtonPrimary>
                 </div>
               </form>
             </div>

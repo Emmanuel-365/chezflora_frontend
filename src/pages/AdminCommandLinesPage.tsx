@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import AdminLayout from '../components/AdminLayout';
 import ButtonPrimary from '../components/ButtonPrimary';
@@ -7,15 +6,17 @@ import { ShoppingCart, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface LigneCommande {
   id: string;
-  commande: {
-    id: string;
-    client: { username: string; email: string };
-    total: string;
-  };
+  commande: string
   produit: { id: string; nom: string };
   quantite: number;
   prix_unitaire: string;
 }
+
+// interface Commande {
+//   id: string;
+//   client: { username: string; email: string };
+//   total: string;
+// };
 
 interface ApiResponse {
   results: LigneCommande[];

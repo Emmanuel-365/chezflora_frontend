@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import api from '../services/api'; // Utilisation de l’instance axios existante
 import AdminLayout from '../components/AdminLayout';
 import ButtonPrimary from '../components/ButtonPrimary';
-import { ShoppingCart, Search, Filter, Eye, XCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ShoppingCart, Search, Eye, XCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface Commande {
   id: string;

@@ -28,6 +28,8 @@ const ServiceDetailPage: React.FC = () => {
   const [devisDescription, setDevisDescription] = useState('');
   const [prixPropose, setPrixPropose] = useState('');
   const [devisLoading, setDevisLoading] = useState(false);
+  const navigate = useNavigate();
+
 
   useEffect(() => {
     const fetchService = async () => {

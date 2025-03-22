@@ -34,8 +34,8 @@ const BlogCommentForm: React.FC<BlogCommentFormProps> = ({ onSubmit }) => {
         value={comment}
         onChange={setComment}
         placeholder="Partagez vos pensées..."
-        multiline
-        rows={4}
+        // multiline
+        // rows={4}
         required
       />
       <div className="mt-4 flex justify-end">

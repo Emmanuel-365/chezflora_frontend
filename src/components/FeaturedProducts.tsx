@@ -7,7 +7,17 @@ interface Product {
   nom: string;
   prix: number;
   prix_reduit?: number;
-  photos: string[];
+  photos: Photo[];
+  description: string;
+  categorie: Category;
+}
+
+interface Photo {
+  image: string;
+}
+
+interface Category {
+  id: number
 }
 
 interface FeaturedProductsProps {

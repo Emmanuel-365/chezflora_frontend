@@ -32,6 +32,9 @@ const NavBar = () => {
       }
     }
 
+    // pour eviter les erreurs de non utilisation
+    console.log(params, userRole)
+
     window.addEventListener("scroll", handleScroll)
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])

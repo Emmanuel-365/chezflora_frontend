@@ -47,6 +47,7 @@ const OrdersPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [cancelLoading, setCancelLoading] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchOrders = async () => {

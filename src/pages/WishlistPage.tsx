@@ -29,6 +29,8 @@ const WishlistPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const navigate = useNavigate();
+
 
   useEffect(() => {
     const fetchWishlist = async () => {

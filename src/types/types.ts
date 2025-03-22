@@ -18,7 +18,11 @@ export interface User {
     places_disponibles: number;
     places_totales: number;
     is_active: boolean;
-    participants: { utilisateur: string; date_inscription: string; statut: string }[];
+    participants: { utilisateur: Utilisateur; date_inscription: string; statut: string }[];
+  }
+
+  interface Utilisateur {
+    id: string
   }
   
   // Typage pour le token JWT (retour de /token/)

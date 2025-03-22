@@ -147,7 +147,7 @@ export const createDevis = (data: { service: string; description: string; prix_p
   api.post('/devis/', data);
 export const getDevis = () => api.get('/devis');
 export const getAbonnements = () => api.get('/abonnements/');
-export const createAbonnement = (data: { type: string; produits: string[] }) =>
+export const createAbonnement = (data: { type: string; produit_ids: string[] }) =>
   api.post('/abonnements/', data);
 export const cancelAbonnement = (id: string) => api.delete(`/abonnements/${id}/`);
 export const getAteliers = () => api.get('/ateliers/');

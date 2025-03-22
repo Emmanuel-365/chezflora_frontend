@@ -7,12 +7,12 @@ import ButtonPrimary from '../components/ButtonPrimary';
 import { getAbonnements, createAbonnement, getProducts } from '../services/api';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Calendar } from 'lucide-react';
+// import { Calendar } from 'lucide-react';
 
 interface Abonnement {
   id: string;
   type: 'mensuel' | 'hebdomadaire' | 'annuel';
-  produits: { id: string; nom: string; prix: number; photos: string[] }[];
+  produit_ids: { id: string; nom: string; prix: number; photos: string[] }[];
   prix: string;
   date_debut: string;
   date_fin: string | null;
@@ -38,6 +38,7 @@ const AbonnementsPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [subscribeLoading, setSubscribeLoading] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -253,7 +254,7 @@ const AbonnementsPage: React.FC = () => {
                       </p>
                     </div>
                     <div className="flex flex-wrap gap-2 mb-2">
-                      {abonnement.produits.map((p) => (
+                      {abonnement.produit_ids.map((p) => (
                         <div key={p.id} className="flex items-center space-x-2">
                           <img src={p.photos[0] || '/images/placeholder-image.jpg'} alt={p.nom} className="w-8 h-8 object-cover rounded-md" />
                           <span className="text-soft-brown/90">{p.nom}</span>

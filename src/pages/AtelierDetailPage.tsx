@@ -24,6 +24,7 @@ const AtelierDetailPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isInscrit, setIsInscrit] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchAtelier = async () => {
@@ -32,7 +33,7 @@ const AtelierDetailPage: React.FC = () => {
         setAtelier(response.data);
         if (isAuthenticated && user) {
           const participantIds = response.data.participants.map((p) => p.utilisateur);
-          setIsInscrit(participantIds.includes(user.id));
+          setIsInscrit(participantIds.includes(user));
         }
       } catch (err: any) {
         setError(err.response?.data?.error || 'Erreur lors du chargement de l’atelier');

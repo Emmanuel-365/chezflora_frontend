@@ -4,7 +4,7 @@ import NavBar from '../components/NavBar';
 import Footer from '../components/Footer';
 import PageContainer from '../components/PageContainer';
 import ButtonPrimary from '../components/ButtonPrimary';
-import { getAteliers, inscrireAtelier, desinscrireAtelier, getUserProfile } from '../services/api';
+import { getAteliers, inscrireAtelier, desinscrireAtelier} from '../services/api';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Calendar, ChevronRight } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
@@ -17,6 +17,7 @@ const AteliersPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -26,13 +27,13 @@ const AteliersPage: React.FC = () => {
         const ateliersResponse = await getAteliers();
         setAteliers(ateliersResponse.data.results || ateliersResponse.data); // Adapte selon la structure de la réponse
         if (isAuthenticated && user) {
-          const userResponse = await getUserProfile();
-          setAteliers((prev) =>
-            prev.map((atelier) => ({
-              ...atelier,
-              participants: atelier.participants || [],
-            }))
-          );
+          // const userResponse = await getUserProfile();
+          // setAteliers((prev) =>
+          //   prev.map((atelier) => ({
+          //     ...atelier,
+          //     participants: atelier.participants || [],
+          //   }))
+          // );
         }
         setLoading(false);
       } catch (err: any) {
@@ -133,7 +134,7 @@ const AteliersPage: React.FC = () => {
                     >
                       <div>
                         <div className="flex justify-between items-start mb-4">
-                          <h2 className="text-xl font-medium text-soft-brown">{atelier.titre}</h2>
+                          <h2 className="text-xl font-medium text-soft-brown">{atelier.nom}</h2>
                           <span
                             className={`text-sm font-semibold ${
                               atelier.places_disponibles > 0 ? 'text-soft-green' : 'text-powder-pink'

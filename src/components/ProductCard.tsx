@@ -8,12 +8,17 @@ interface Photo {
 }
 
 interface Product {
-  id: string;
-  nom: string;
-  prix: number;
-  prix_reduit?: number;
-  photos?: Photo[];
-  description?: string; // Optionnel pour les vues où on ne montre pas la description
+  id: string
+  nom: string
+  prix: number
+  prix_reduit?: number
+  photos: Photo[]
+  description: string
+  categorie: Category
+}
+
+interface Category {
+  id: number
 }
 
 interface ProductCardProps {
@@ -21,6 +26,7 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({ product }: ProductCardProps) {
+
   // Vérification pour éviter les erreurs si product ou photos est undefined
   if (!product) return null;
 

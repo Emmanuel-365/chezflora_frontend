@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import AdminLayout from '../components/AdminLayout';
 import ButtonPrimary from '../components/ButtonPrimary';
@@ -18,12 +17,12 @@ interface LowStockResponse {
   products: LowStockProduct[];
 }
 
-interface ApiResponse {
-  results: LowStockProduct[];
-  count: number;
-  next: string | null;
-  previous: string | null;
-}
+// interface ApiResponse {
+//   results: LowStockProduct[];
+//   count: number;
+//   next: string | null;
+//   previous: string | null;
+// }
 
 const AdminLowStockPage: React.FC = () => {
   
