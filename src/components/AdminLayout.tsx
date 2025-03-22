@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, Suspense } from "react";
-import { useLocation } from "react-router-dom";
+// import { useLocation } from "react-router-dom";
 import AdminSidebar from "../components/AdminSidebar";
 import { Sun, Moon } from "lucide-react";
 
@@ -19,7 +19,7 @@ const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   });
   const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 768);
   const [isDarkMode, setIsDarkMode] = useState(applyTheme);
-  const location = useLocation();
+  // const location = useLocation();
 
   const toggleSidebar = () => {
     setIsSidebarOpen((prev: boolean) => {
