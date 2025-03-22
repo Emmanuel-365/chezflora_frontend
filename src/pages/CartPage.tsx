@@ -229,10 +229,10 @@ const CartPage = () => {
               transition={{ duration: 0.6 }}
             >
               <h1 className="text-4xl md:text-5xl font-serif font-medium text-gray-800 mb-4">
-                Your Shopping Cart
+                Votre Panier
               </h1>
               <p className="text-gray-600 max-w-2xl mx-auto">
-                Review your items, adjust quantities, or proceed to checkout.
+                revoyez vos produits, ajuster les quantités, ou procédez au payement
               </p>
             </motion.div>
           </div>
@@ -241,9 +241,9 @@ const CartPage = () => {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mb-16">
           {/* Breadcrumb */}
           <nav className="flex mb-8 text-sm text-gray-500">
-            <Link to="/" className="hover:text-emerald-600 transition-colors">Home</Link>
+            <Link to="/" className="hover:text-emerald-600 transition-colors">Accueil</Link>
             <span className="mx-2">/</span>
-            <span className="text-gray-700">Cart</span>
+            <span className="text-gray-700">Panier</span>
           </nav>
 
           {loading ? (
@@ -355,7 +355,7 @@ const CartPage = () => {
                   <div className="lg:col-span-4">
                     <div className="bg-white rounded-xl shadow-sm overflow-hidden sticky top-24">
                       <div className="p-6 border-b border-gray-100">
-                        <h2 className="text-xl font-medium text-gray-800">Order Summary</h2>
+                        <h2 className="text-xl font-medium text-gray-800">Résumé de commande</h2>
                       </div>
                       
                       <div className="p-6">
