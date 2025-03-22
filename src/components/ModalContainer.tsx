@@ -58,7 +58,9 @@ export const ModalContainer: React.FC<ModalContainerProps> = ({ isOpen, onClose,
             </button>
           </div>
         )}
-        <div className="p-6">{children}</div>
+        <div className="p-6 max-h-[70vh] overflow-y-auto scrollbar-thin scrollbar-thumb-[#D2B48C] scrollbar-track-[#F5E8C7]">
+          {children}
+        </div>
       </div>
     </div>
   );
