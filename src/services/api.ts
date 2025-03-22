@@ -110,12 +110,12 @@ export const getPublicParameters = () => api.get('/parametres/public/');
 export const getProducts = (params?: { categorie?: number, signal?: AbortSignal }, ) => api.get('/produits/', { params });
 export const getProduct = (id: string) => api.get(`/produits/${id}/`);
 export const getCategories = (signal?: AbortSignal) => api.get('/categories/', {signal});
-export const getServices = () => api.get('/services/');
+export const getServices = (params: {signal: AbortSignal}) => api.get('/services/', {params});
 export const getService = (id: string) => api.get(`/services/${id}/`);
-export const getWorkshops = () => api.get('/ateliers/');
-export const getArticles = () => api.get('/articles/');
+export const getWorkshops = (params?:{}) => api.get('/ateliers/', {params});
+export const getArticles = (params?:{}) => api.get('/articles/', {params});
 export const getRealisations = () => api.get('/realisations/');
-export const getPromotions = () => api.get('/promotions/');
+export const getPromotions = (params?:{}) => api.get('/promotions/', {params});
 export const getCart = () => api.get('/paniers/mon_panier/');
 export const addToCart = (panierId: string, data: { produit_id: string; quantite: number }) =>
   api.post(`/paniers/${panierId}/ajouter_produit/`, data);

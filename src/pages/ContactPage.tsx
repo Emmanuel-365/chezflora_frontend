@@ -197,7 +197,7 @@ const ContactPage = () => {
                         <p className="text-soft-brown/70">
                           123 Avenue des Fleurs
                           <br />
-                          75001 Paris, France
+                          99322 Yaoundé, France
                         </p>
                       </div>
                     </motion.div>
@@ -407,7 +407,7 @@ const ContactPage = () => {
                   <div className="absolute inset-0 flex items-center justify-center">
                     <div className="bg-white p-4 rounded-lg shadow-lg">
                       <p className="font-medium text-soft-brown">ChezFlora</p>
-                      <p className="text-soft-brown/70 text-sm">123 Avenue des Fleurs, Paris</p>
+                      <p className="text-soft-brown/70 text-sm">123 Avenue des Fleurs, Yaoundé</p>
                     </div>
                   </div>
                 </div>

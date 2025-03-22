@@ -33,7 +33,7 @@ const AboutPage = () => {
   const teamInView = useInView(teamRef, { once: true, amount: 0.3 })
 
   const timelineEvents = [
-    { year: "2015", title: "Création", description: "Ouverture de notre première boutique à Paris." },
+    { year: "2015", title: "Création", description: "Ouverture de notre première boutique à Yaoundé." },
     { year: "2017", title: "Expansion", description: "Lancement de notre service de livraison à domicile." },
     { year: "2019", title: "Innovation", description: "Début des ateliers floraux et événements créatifs." },
     {
