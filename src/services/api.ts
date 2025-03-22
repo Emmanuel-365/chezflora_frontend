@@ -110,7 +110,7 @@ export const getPublicParameters = () => api.get('/parametres/public/');
 export const getProducts = (params?: { categorie?: number, signal?: AbortSignal }, ) => api.get('/produits/', { params });
 export const getProduct = (id: string) => api.get(`/produits/${id}/`);
 export const getCategories = (signal?: AbortSignal) => api.get('/categories/', {signal});
-export const getServices = (params: {signal: AbortSignal}) => api.get('/services/', {params});
+export const getServices = (params?: {signal: AbortSignal}) => api.get('/services/', {params});
 export const getService = (id: string) => api.get(`/services/${id}/`);
 export const getWorkshops = (params?:{}) => api.get('/ateliers/', {params});
 export const getArticles = (params?:{}) => api.get('/articles/', {params});
