@@ -21,7 +21,6 @@ const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isDarkMode, setIsDarkMode] = useState(applyTheme);
   // const location = useLocation();
 
-  // Memoize toggleSidebar to prevent unnecessary re-renders
   const toggleSidebar = useCallback(() => {
     setIsSidebarOpen((prev: boolean) => {
       const newState = !prev;
@@ -44,15 +43,12 @@ const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const handleResize = () => {
       const desktop = window.innerWidth >= 768;
       setIsDesktop(desktop);
-      // Ne ferme pas la sidebar automatiquement sur mobile lors du resize
-      // pour éviter la disparition lors du changement de page
     };
     window.addEventListener("resize", handleResize);
     handleResize();
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Synchroniser l'état de la sidebar avec localStorage au montage
   useEffect(() => {
     const savedState = localStorage.getItem("sidebarOpen");
     if (savedState !== null) {
@@ -64,6 +60,7 @@ const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
   return (
     <div className="flex min-h-screen">
+      {/* Sidebar rendue indépendamment du Suspense */}
       <div
         className={`fixed top-0 left-0 h-full transition-transform duration-300 ease-in-out z-50 ${
           isSidebarOpen ? "translate-x-0" : "-translate-x-full"
@@ -73,6 +70,7 @@ const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         <AdminSidebar isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
       </div>
 
+      {/* Contenu principal avec Suspense */}
       <div className="flex-1 w-full transition-all duration-300">
         <div className={`min-h-screen ${contentMargin} transition-all duration-300 bg-lightBg dark:bg-darkBg`}>
           <header className="flex justify-end p-4">
@@ -98,6 +96,7 @@ const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         </div>
       </div>
 
+      {/* Overlay pour mobile */}
       {isSidebarOpen && !isDesktop && (
         <div
           className="fixed inset-0 bg-black bg-opacity-50 z-40"
