@@ -1,13 +1,12 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { Link, useNavigate } from "react-router-dom"
+import { Link, useNavigate, useLocation } from "react-router-dom"
 import { getPublicParameters, getUserProfile, getCartCount } from "../services/api"
-import {ShoppingCart, User, Menu, X, LogOut, Heart, Package, ChevronDown, Search } from "lucide-react"
+import { ShoppingCart, User, Menu, X, LogOut, Heart, Package, ChevronDown, Search, Settings, Bell, HelpCircle, ShieldCheck } from 'lucide-react'
 import { motion, AnimatePresence } from "framer-motion"
 
 import logo from "../assets/logo.png";
-
 
 const NavBar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -18,27 +17,34 @@ const NavBar = () => {
   const [userRole, setUserRole] = useState<string | null>(null)
   const [userName, setUserName] = useState<string | null>(null)
   const [cartCount, setCartCount] = useState(0)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [isSearchFocused, setIsSearchFocused] = useState(false)
+  const [notifications, setNotifications] = useState(2) // Example notification count
+  
   const navigate = useNavigate()
+  const location = useLocation()
   const userMenuRef = useRef<HTMLDivElement>(null)
   const mobileMenuRef = useRef<HTMLDivElement>(null)
+  const searchInputRef = useRef<HTMLInputElement>(null)
 
-  // Effet de scroll pour changer l'apparence de la navbar
+  // Check if user is admin
+  const isAdmin = userRole === 'admin'
+
+  // Effect for scroll to change navbar appearance
   useEffect(() => {
     const handleScroll = () => {
-      if (window.scrollY > 10) {
-        setIsScrolled(true)
-      } else {
-        setIsScrolled(false)
-      }
+      setIsScrolled(window.scrollY > 10)
     }
-
-    // pour eviter les erreurs de non utilisation
-    console.log(params, userRole)
 
     window.addEventListener("scroll", handleScroll)
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
+  console.log(params);
+
+  setNotifications(0)
+
+  // Effect to fetch user data and parameters
   useEffect(() => {
     const fetchParamsAndUser = async () => {
       try {
@@ -59,16 +65,18 @@ const NavBar = () => {
           setUserRole(userRes.data.role)
           setUserName(userRes.data.username)
 
-          // recuperer le nombre de produits dans le panier d'un utilisateur 
-
-          setCartCount(await getCartCount())
+          // Get cart count
+          const count = await getCartCount()
+          setCartCount(count)
         }
       } catch (error) {
         console.error("Erreur lors de la récupération des données:", error)
       }
     }
+    
     fetchParamsAndUser()
 
+    // Close menus when clicking outside
     const handleClickOutside = (event: MouseEvent) => {
       if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
         setIsUserMenuOpen(false)
@@ -89,6 +97,22 @@ const NavBar = () => {
     }
   }, [])
 
+  // Effect to close mobile menu on route change
+  useEffect(() => {
+    setIsMenuOpen(false)
+  }, [location.pathname])
+
+  // Handle search submission
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (searchQuery.trim()) {
+      navigate(`/products?search=${encodeURIComponent(searchQuery)}`)
+      setSearchQuery("")
+      setIsSearchFocused(false)
+    }
+  }
+
+  // Handle logout
   const handleLogout = () => {
     localStorage.removeItem("access_token")
     setIsAuthenticated(false)
@@ -97,6 +121,7 @@ const NavBar = () => {
     navigate("/")
   }
 
+  // Navigation links
   const navLinks = [
     { name: "Accueil", path: "/" },
     { name: "Produits", path: "/products" },
@@ -108,57 +133,119 @@ const NavBar = () => {
     { name: "Contact", path: "/contact" },
   ]
 
+  // Add admin link if user is admin
+  if (isAdmin) {
+    navLinks.push({ name: "Administration", path: "/admin" })
+  }
 
   return (
     <nav
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        isScrolled ? "bg-white/90 backdrop-blur-md shadow-lg" : "bg-white/80 backdrop-blur-sm"
+        isScrolled 
+          ? "bg-white/95 backdrop-blur-md shadow-lg py-2" 
+          : "bg-white/80 backdrop-blur-sm py-3"
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-20">
+        <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <Link to="/" className="flex items-center group">
-              <img src={logo} alt="Logo" width={200}/>
+          <Link to="/" className="flex items-center group relative z-10">
+            <motion.div
+              whileHover={{ scale: 1.02 }}
+              transition={{ type: "spring", stiffness: 400, damping: 10 }}
+            >
+              <img src={logo || "/placeholder.svg"} alt="Logo" width={180} className="h-auto" />
+            </motion.div>
           </Link>
 
+          {/* Search - Desktop */}
+          <div className="hidden lg:flex items-center justify-center max-w-md w-full mx-4 relative">
+            <form onSubmit={handleSearch} className="w-full">
+              <div className="relative">
+                <input
+                  ref={searchInputRef}
+                  type="search"
+                  placeholder="Rechercher des produits..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onFocus={() => setIsSearchFocused(true)}
+                  onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
+                  className={`w-full pl-10 pr-4 py-2 text-sm text-gray-700 bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all duration-200 ${
+                    isSearchFocused ? "shadow-md" : ""
+                  }`}
+                />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+            </form>
+          </div>
+
           {/* Navigation - Desktop */}
-          <div className="hidden lg:flex items-center justify-center flex-1 max-w-3xl mx-8">
-            <div className="flex space-x-1">
-              {navLinks.map((link) => (
+          <div className="hidden lg:flex items-center space-x-1">
+            {navLinks.map((link) => {
+              const isActive = location.pathname === link.path || 
+                (link.path !== "/" && location.pathname.startsWith(link.path));
+              
+              return (
                 <Link
                   key={link.path}
                   to={link.path}
-                  className="relative px-4 py-2 text-sm font-medium text-gray-700 hover:text-emerald-600 transition-colors duration-200 group"
+                  className={`relative px-3 py-2 text-sm font-medium transition-colors duration-200 rounded-md ${
+                    isActive 
+                      ? "text-emerald-600 bg-emerald-50" 
+                      : "text-gray-700 hover:text-emerald-600 hover:bg-emerald-50/50"
+                  }`}
                 >
                   {link.name}
-                  <span className="absolute bottom-0 left-0 w-full h-0.5 bg-emerald-500 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></span>
+                  {isActive && (
+                    <motion.span 
+                      layoutId="navbar-indicator"
+                      className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-500 mx-3"
+                      transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                    />
+                  )}
                 </Link>
-              ))}
-            </div>
-          </div>
+              );
+            })}
 
-          {/* Actions - Desktop */}
-          <div className="hidden lg:flex items-center space-x-1">
-            <Link 
-              key={"/products#searchSection"}
-              to={"/products"}
-              className="p-2 rounded-full text-gray-600 hover:text-emerald-600 hover:bg-emerald-50 transition-colors duration-200">
-              <Search className="h-5 w-5" />
-            </Link>
+            {/* Notifications */}
+            {isAuthenticated && (
+              <button className="p-2 rounded-full text-gray-600 hover:text-emerald-600 hover:bg-emerald-50 transition-colors duration-200 relative">
+                <Bell className="h-5 w-5" />
+                {notifications > 0 && (
+                  <span className="absolute -top-1 -right-1 flex items-center justify-center w-5 h-5 bg-emerald-500 text-white text-xs font-bold rounded-full">
+                    {notifications}
+                  </span>
+                )}
+              </button>
+            )}
 
+            {/* Cart */}
             <Link
               to="/cart"
               className="p-2 rounded-full text-gray-600 hover:text-emerald-600 hover:bg-emerald-50 transition-colors duration-200 relative"
             >
               <ShoppingCart className="h-5 w-5" />
               {cartCount > 0 && (
-                <span className="absolute -top-1 -right-1 flex items-center justify-center w-5 h-5 bg-emerald-500 text-white text-xs font-bold rounded-full">
+                <motion.span 
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  className="absolute -top-1 -right-1 flex items-center justify-center w-5 h-5 bg-emerald-500 text-white text-xs font-bold rounded-full"
+                >
                   {cartCount}
-                </span>
+                </motion.span>
               )}
             </Link>
 
+            {/* User Menu */}
             {isAuthenticated ? (
               <div className="relative" ref={userMenuRef}>
                 <button
@@ -167,7 +254,9 @@ const NavBar = () => {
                   aria-expanded={isUserMenuOpen}
                   aria-haspopup="true"
                 >
-                  <User className="h-5 w-5" />
+                  <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 font-medium text-sm">
+                    {userName ? userName.charAt(0).toUpperCase() : "U"}
+                  </div>
                   <ChevronDown
                     className={`h-4 w-4 transition-transform duration-200 ${isUserMenuOpen ? "rotate-180" : ""}`}
                   />
@@ -176,15 +265,21 @@ const NavBar = () => {
                 <AnimatePresence>
                   {isUserMenuOpen && (
                     <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 10 }}
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
                       transition={{ duration: 0.2 }}
-                      className="absolute right-0 mt-2 w-56 rounded-xl shadow-lg bg-white ring-1 ring-black ring-opacity-5 py-1 z-10 overflow-hidden"
+                      className="absolute right-0 mt-2 w-64 rounded-xl shadow-lg bg-white ring-1 ring-black ring-opacity-5 py-1 z-10 overflow-hidden"
                     >
                       <div className="px-4 py-3 border-b border-gray-100">
                         <p className="text-sm text-gray-500">Connecté en tant que</p>
-                        <p className="text-sm font-medium text-gray-800 truncate"> {userName ?? 'utilisateur@exemple.com' } </p>
+                        <p className="text-sm font-medium text-gray-800 truncate">{userName ?? 'utilisateur@exemple.com'}</p>
+                        {isAdmin && (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-100 text-emerald-800 mt-1">
+                            <ShieldCheck className="w-3 h-3 mr-1" />
+                            Administrateur
+                          </span>
+                        )}
                       </div>
 
                       <div className="py-1">
@@ -209,7 +304,33 @@ const NavBar = () => {
                           <Heart className="h-4 w-4 mr-3 text-gray-400" />
                           Ma liste de souhaits
                         </Link>
+                        <Link
+                          to="/settings"
+                          className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-emerald-50 hover:text-emerald-600"
+                        >
+                          <Settings className="h-4 w-4 mr-3 text-gray-400" />
+                          Paramètres
+                        </Link>
+                        <Link
+                          to="/help"
+                          className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-emerald-50 hover:text-emerald-600"
+                        >
+                          <HelpCircle className="h-4 w-4 mr-3 text-gray-400" />
+                          Aide et support
+                        </Link>
                       </div>
+
+                      {isAdmin && (
+                        <div className="py-1 border-t border-gray-100">
+                          <Link
+                            to="/admin"
+                            className="flex items-center px-4 py-2 text-sm font-medium text-emerald-700 hover:bg-emerald-50"
+                          >
+                            <ShieldCheck className="h-4 w-4 mr-3 text-emerald-500" />
+                            Panneau d'administration
+                          </Link>
+                        </div>
+                      )}
 
                       <div className="py-1 border-t border-gray-100">
                         <button
@@ -229,6 +350,7 @@ const NavBar = () => {
                 to="/auth"
                 className="flex items-center px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg shadow-sm hover:bg-emerald-500 transition-colors duration-200"
               >
+                <User className="h-4 w-4 mr-2" />
                 <span>Connexion</span>
               </Link>
             )}
@@ -242,9 +364,13 @@ const NavBar = () => {
             >
               <ShoppingCart className="h-5 w-5" />
               {cartCount > 0 && (
-                <span className="absolute -top-1 -right-1 flex items-center justify-center w-5 h-5 bg-emerald-500 text-white text-xs font-bold rounded-full">
+                <motion.span 
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  className="absolute -top-1 -right-1 flex items-center justify-center w-5 h-5 bg-emerald-500 text-white text-xs font-bold rounded-full"
+                >
                   {cartCount}
-                </span>
+                </motion.span>
               )}
             </Link>
 
@@ -255,7 +381,29 @@ const NavBar = () => {
               aria-expanded={isMenuOpen}
             >
               <span className="sr-only">Ouvrir le menu</span>
-              {isMenuOpen ? <X className="block h-6 w-6" /> : <Menu className="block h-6 w-6" />}
+              <AnimatePresence mode="wait" initial={false}>
+                {isMenuOpen ? (
+                  <motion.div
+                    key="close"
+                    initial={{ rotate: -90, opacity: 0 }}
+                    animate={{ rotate: 0, opacity: 1 }}
+                    exit={{ rotate: 90, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <X className="block h-6 w-6" />
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="menu"
+                    initial={{ rotate: 90, opacity: 0 }}
+                    animate={{ rotate: 0, opacity: 1 }}
+                    exit={{ rotate: -90, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <Menu className="block h-6 w-6" />
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </button>
           </div>
         </div>
@@ -273,31 +421,64 @@ const NavBar = () => {
             className="lg:hidden overflow-hidden bg-white shadow-lg"
           >
             <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 max-h-[70vh] overflow-y-auto">
-              <div className="relative mx-2 my-3">
+              <form onSubmit={handleSearch} className="relative mx-2 my-3">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <input
                   type="search"
-                  placeholder="Rechercher..."
-                  className="w-full pl-10 pr-4 py-2 text-sm text-gray-700 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all duration-200"
+                  placeholder="Rechercher des produits..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2.5 text-sm text-gray-700 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all duration-200"
                 />
-              </div>
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </form>
 
-              {navLinks.map((link) => (
-                <Link
-                  key={link.path}
-                  to={link.path}
-                  className="block px-3 py-2.5 rounded-lg text-base font-medium text-gray-700 hover:text-emerald-600 hover:bg-emerald-50 transition-colors duration-200"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  {link.name}
-                </Link>
-              ))}
+              {navLinks.map((link) => {
+                const isActive = location.pathname === link.path || 
+                  (link.path !== "/" && location.pathname.startsWith(link.path));
+                
+                return (
+                  <Link
+                    key={link.path}
+                    to={link.path}
+                    className={`flex items-center px-3 py-2.5 rounded-lg text-base font-medium transition-colors duration-200 ${
+                      isActive 
+                        ? "text-emerald-600 bg-emerald-50" 
+                        : "text-gray-700 hover:text-emerald-600 hover:bg-emerald-50"
+                    }`}
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    {link.name}
+                    {link.path === "/admin" && (
+                      <ShieldCheck className="ml-2 h-4 w-4 text-emerald-500" />
+                    )}
+                  </Link>
+                );
+              })}
 
               <div className="pt-4 pb-1 border-t border-gray-200">
                 {isAuthenticated ? (
                   <>
-                    <div className="px-3 py-2">
-                      <p className="text-xs font-medium text-gray-500">COMPTE UTILISATEUR</p>
+                    <div className="px-3 py-2 flex items-center">
+                      <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 font-medium">
+                        {userName ? userName.charAt(0).toUpperCase() : "U"}
+                      </div>
+                      <div className="ml-3">
+                        <p className="text-sm font-medium text-gray-800">{userName}</p>
+                        {isAdmin && (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-100 text-emerald-800 mt-1">
+                            Administrateur
+                          </span>
+                        )}
+                      </div>
                     </div>
                     <Link
                       to="/account"
@@ -322,6 +503,14 @@ const NavBar = () => {
                     >
                       <Heart className="h-5 w-5 mr-3 text-gray-400" />
                       Ma liste de souhaits
+                    </Link>
+                    <Link
+                      to="/settings"
+                      className="flex items-center px-3 py-2.5 rounded-lg text-base font-medium text-gray-700 hover:text-emerald-600 hover:bg-emerald-50 transition-colors duration-200"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      <Settings className="h-5 w-5 mr-3 text-gray-400" />
+                      Paramètres
                     </Link>
                     <button
                       onClick={() => {
@@ -355,5 +544,4 @@ const NavBar = () => {
   )
 }
 
-export default NavBar
-
+export default NavBar;
