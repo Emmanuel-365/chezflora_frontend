@@ -300,7 +300,7 @@ const ServicesPage = () => {
                       className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-all duration-300 flex flex-col h-full group"
                     >
                       <div className="relative h-48 overflow-hidden">
-                        { service.photos && <img
+                        { service.photos[0] && <img
                           src={service.photos[0].image || "/placeholder.svg?height=400&width=600"}
                           alt={service.nom}
                           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"

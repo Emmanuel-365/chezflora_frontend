@@ -103,7 +103,7 @@ const ServiceDetailPage: React.FC = () => {
             animate={{ opacity: 1 }}
             transition={{ duration: 0.8 }}
           >
-            {service.photos && <img
+            {service.photos[0] && <img
               src={service.photos[0].image || '/images/service-placeholder.jpg'}
               alt={service.nom}
               className="w-full h-full object-cover opacity-50"
