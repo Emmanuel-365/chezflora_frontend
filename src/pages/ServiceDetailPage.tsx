@@ -13,9 +13,13 @@ interface Service {
   id: string;
   nom: string;
   description: string;
-  photos: string[];
+  photos: Photo[];
   is_active: boolean;
   date_creation: string;
+}
+
+interface Photo {
+  image: string;
 }
 
 const ServiceDetailPage: React.FC = () => {
@@ -100,7 +104,7 @@ const ServiceDetailPage: React.FC = () => {
             transition={{ duration: 0.8 }}
           >
             <img
-              src={service.photos[0] || '/images/service-placeholder.jpg'}
+              src={service.photos[0].image || '/images/service-placeholder.jpg'}
               alt={service.nom}
               className="w-full h-full object-cover opacity-50"
             />
