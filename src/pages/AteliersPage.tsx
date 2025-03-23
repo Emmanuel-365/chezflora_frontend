@@ -422,7 +422,7 @@ const AteliersPage = () => {
                           <input
                             type="range"
                             min="0"
-                            max="1000"
+                            max="1000000"
                             step="50"
                             value={priceRange[1]}
                             onChange={handlePriceRangeChange}
@@ -462,7 +462,7 @@ const AteliersPage = () => {
                       pour <span className="font-medium">"{searchQuery}"</span>
                     </span>
                   )}
-                  {priceRange[1] < 1000 && (
+                  {priceRange[1] < 1000000 && (
                     <span>
                       {" "}
                       avec un prix max. de <span className="font-medium">{priceRange[1]} FCFA</span>
