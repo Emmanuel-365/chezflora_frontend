@@ -1,5 +1,8 @@
-import React, { useState, useEffect } from "react";
+"use client";
+
+import React, { useState, useEffect, useContext } from "react";
 import { X } from "lucide-react";
+import { ThemeContext } from "../components/AdminLayout"; // Import du ThemeContext
 
 interface ModalContainerProps {
   isOpen: boolean;
@@ -7,7 +10,7 @@ interface ModalContainerProps {
   children: React.ReactNode;
   title?: string;
   size?: "sm" | "md" | "lg" | "xl";
-  theme?: "light" | "dark"; // Nouvelle prop pour le thème
+  theme?: "light" | "dark"; // Prop optionnelle pour forcer un thème
 }
 
 export const ModalContainer: React.FC<ModalContainerProps> = ({
@@ -16,9 +19,13 @@ export const ModalContainer: React.FC<ModalContainerProps> = ({
   children,
   title,
   size = "md",
-  theme = "dark", // Par défaut : thème clair
+  theme: forcedTheme, // Renommé pour indiquer qu'il est optionnel
 }) => {
   const [isVisible, setIsVisible] = useState(false);
+  const globalTheme = useContext(ThemeContext); // Récupère le thème global
+
+  // Utilise forcedTheme s'il est fourni, sinon fallback sur globalTheme
+  const effectiveTheme = forcedTheme || globalTheme;
 
   useEffect(() => {
     if (isOpen) {
@@ -42,31 +49,31 @@ export const ModalContainer: React.FC<ModalContainerProps> = ({
     xl: "max-w-4xl",
   };
 
-  // Classes conditionnelles basées sur le thème
+  // Classes basées sur Tailwind avec support darkMode: 'class'
   const themeClasses = {
     light: {
-      bg: "bg-[#F5F5F5]", // Fond clair
+      bg: "bg-[#F5F5F5]", // Fond clair (off-white)
       border: "border-[#F5E8C7]", // Bordure beige clair
-      text: "text-soft-brown", // Texte marron doux
+      text: "text-soft-brown", // Texte marron doux (#5C4033)
       overlay: "bg-[#D2B48C]/20", // Overlay beige clair
-      scrollbarThumb: "scrollbar-thumb-[#D2B48C]", // Pouce de la scrollbar
-      scrollbarTrack: "scrollbar-track-[#F5E8C7]", // Piste de la scrollbar
-      hoverText: "hover:text-powder-pink", // Texte au survol
-      focusRing: "focus:ring-[#A8D5BA]", // Anneau de focus vert clair
+      scrollbarThumb: "scrollbar-thumb-[#D2B48C]", // Pouce beige
+      scrollbarTrack: "scrollbar-track-[#F5E8C7]", // Piste beige clair
+      hoverText: "hover:text-powder-pink", // Survol rose (#E07B91)
+      focusRing: "focus:ring-[#A8D5BA]", // Anneau vert clair
     },
     dark: {
-      bg: "bg-[#2D2D2D]", // Fond sombre
+      bg: "bg-[#2D2D2D]", // Fond sombre (proche de darkBg: #2F2F2F)
       border: "border-[#4A3F35]", // Bordure marron foncé
-      text: "text-[#E8DAB2]", // Texte beige clair
+      text: "text-[#E8DAB2]", // Texte beige clair (proche de darkText: #EDEDED)
       overlay: "bg-[#4A3F35]/30", // Overlay marron foncé
       scrollbarThumb: "scrollbar-thumb-[#8CC7A1]", // Pouce vert clair
       scrollbarTrack: "scrollbar-track-[#4A3F35]", // Piste marron foncé
-      hoverText: "hover:text-[#A8D5BA]", // Texte au survol vert clair
-      focusRing: "focus:ring-[#8CC7A1]", // Anneau de focus vert foncé
+      hoverText: "hover:text-[#A8D5BA]", // Survol vert clair
+      focusRing: "focus:ring-[#8CC7A1]", // Anneau vert foncé
     },
   };
 
-  const currentTheme = themeClasses[theme];
+  const currentTheme = themeClasses[effectiveTheme];
 
   return (
     <div
@@ -106,16 +113,17 @@ export const ModalContainer: React.FC<ModalContainerProps> = ({
   );
 };
 
-export const ModalHeader: React.FC<{ children: React.ReactNode; theme?: "light" | "dark" }> = ({
-  children,
-  theme = "light",
-}) => (
-  <div className="mb-4">
-    <h3 className={`text-lg font-medium ${theme === "light" ? "text-soft-brown" : "text-[#E8DAB2]"}`}>
-      {children}
-    </h3>
-  </div>
-);
+// Mise à jour des composants associés pour utiliser ThemeContext
+export const ModalHeader: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const theme = useContext(ThemeContext);
+  return (
+    <div className="mb-4">
+      <h3 className={`text-lg font-medium ${theme === "light" ? "text-soft-brown" : "text-[#E8DAB2]"}`}>
+        {children}
+      </h3>
+    </div>
+  );
+};
 
 export const ModalBody: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <div className="py-2">{children}</div>
