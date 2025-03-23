@@ -71,8 +71,12 @@ interface Article {
   id: string
   title: string
   excerpt: string
-  imageUrl: string
+  Photo: Photo
   link: string
+}
+
+interface Photo {
+  image: string
 }
 
 interface Promotion {
