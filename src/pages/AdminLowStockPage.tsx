@@ -1,8 +1,11 @@
-import React, { useState, useEffect, useContext } from "react";
+"use client";
+
+import React, { useState, useEffect } from "react";
 import api from "../services/api";
-import AdminLayout, { ThemeContext } from "../components/AdminLayout";
+import AdminLayout from "../components/AdminLayout";
 import ButtonPrimary from "../components/ButtonPrimary";
 import { AlertTriangle, Search, Edit, ChevronLeft, ChevronRight } from "lucide-react";
+import { ModalContainer, ModalBody, ModalFooter } from "../components/ModalContainer";
 
 interface LowStockProduct {
   id: string;
@@ -18,7 +21,6 @@ interface LowStockResponse {
 }
 
 const AdminLowStockPage: React.FC = () => {
-  const theme = useContext(ThemeContext); // Récupération du thème via le contexte
   const [lowStockData, setLowStockData] = useState<LowStockResponse | null>(null);
   const [products, setProducts] = useState<LowStockProduct[]>([]);
   const [totalProducts, setTotalProducts] = useState(0);
@@ -47,14 +49,15 @@ const AdminLowStockPage: React.FC = () => {
       });
       console.log(response.data);
       setLowStockData(response.data);
-      setProducts(response.data.products);
-      setTotalProducts(response.data.total_low_stock);
-      setTotalPages(Math.ceil(response.data.total_low_stock / productsPerPage));
+      setProducts(response.data.products || []);
+      setTotalProducts(response.data.total_low_stock || 0);
+      setTotalPages(Math.ceil((response.data.total_low_stock || 0) / productsPerPage));
       setNewSeuil(response.data.seuil.toString());
       setLoading(false);
     } catch (err: any) {
       console.error("Erreur lors du chargement des produits en stock faible:", err.response?.data);
       setError("Erreur lors du chargement des produits en stock faible.");
+      setProducts([]);
       setLoading(false);
     }
   };
@@ -98,7 +101,7 @@ const AdminLowStockPage: React.FC = () => {
           description: "Seuil pour alerter sur un stock faible",
         });
       }
-      setIsEditSeuilModalOpen(false);
+      closeEditSeuilModal();
       fetchLowStock();
     } catch (err: any) {
       console.error("Erreur lors de la mise à jour du seuil:", err.response?.data);
@@ -106,59 +109,86 @@ const AdminLowStockPage: React.FC = () => {
     }
   };
 
+  const renderLowStockPlaceholder = () => (
+    <div className="space-y-6">
+      <div className="bg-lightCard dark:bg-darkCard p-4 rounded-lg shadow-md animate-pulse">
+        <div className="h-5 w-40 bg-gray-300 dark:bg-gray-600 rounded mb-2"></div>
+        <div className="h-8 w-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full text-left text-sm">
+          <thead className="bg-lightCard dark:bg-darkCard">
+            <tr className="border-b border-lightBorder dark:border-darkBorder">
+              {["ID", "Nom", "Stock", "Catégorie"].map((header) => (
+                <th key={header} className="py-3 px-4">
+                  <div className="h-4 w-16 bg-gray-300 dark:bg-gray-600 rounded"></div>
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {Array.from({ length: 5 }).map((_, index) => (
+              <tr key={index} className="border-b border-lightBorder dark:border-darkBorder animate-pulse">
+                <td className="py-3 px-4"><div className="h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded"></div></td>
+                <td className="py-3 px-4"><div className="h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded"></div></td>
+                <td className="py-3 px-4"><div className="h-4 w-12 bg-gray-200 dark:bg-gray-700 rounded"></div></td>
+                <td className="py-3 px-4"><div className="h-4 w-20 bg-gray-200 dark:bg-gray-700 rounded"></div></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+
   return (
     <AdminLayout>
       <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-        <h1 className="text-2xl sm:text-3xl font-serif font-medium text-lightText dark:text-darkText mb-4 sm:mb-6 flex items-center">
+        <h1 className="text-2xl sm:text-3xl font-serif font-medium text-lightText dark:text-darkText mb-6 flex items-center">
           <AlertTriangle className="h-6 w-6 mr-2" /> Produits en Stock Faible
         </h1>
 
+        <div className="mb-6 flex flex-col sm:flex-row gap-4 items-center justify-between">
+          <div className="relative w-full sm:w-64">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={handleSearch}
+              placeholder="Rechercher par nom..."
+              className="w-full pl-10 pr-4 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightBg dark:bg-darkBg text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-soft-green dark:focus:ring-dark-soft-green"
+            />
+          </div>
+          <div className="flex items-center gap-4">
+            <span className="text-sm text-gray-700 dark:text-gray-300">
+              Seuil actuel : <strong>{lowStockData?.seuil ?? "N/A"}</strong> unités
+            </span>
+            <ButtonPrimary
+              onClick={openEditSeuilModal}
+              className="px-4 py-2 bg-blue-500 text-white hover:bg-blue-600 flex items-center"
+            >
+              <Edit className="h-5 w-5 mr-2" /> Modifier le seuil
+            </ButtonPrimary>
+          </div>
+        </div>
+
         {loading ? (
-          <div className="text-center py-16 text-lightText dark:text-darkText">Chargement...</div>
+          renderLowStockPlaceholder()
         ) : error ? (
-          <div className="text-center py-16 text-red-500">{error}</div>
+          <div className="text-center py-8 text-red-500">{error}</div>
         ) : (
           <>
-            {/* Seuil et Recherche */}
-            <div className="mb-6 flex flex-col sm:flex-row gap-4 items-center justify-between">
-              <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
-                <div className="relative w-full sm:w-64">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={handleSearch}
-                    placeholder="Rechercher par nom..."
-                    className="w-full pl-10 pr-4 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightBg dark:bg-darkBg text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-              </div>
-              <div className="flex items-center gap-4">
-                <span className="text-sm text-gray-700 dark:text-gray-300">
-                  Seuil actuel : <strong>{lowStockData?.seuil}</strong> unités
-                </span>
-                <ButtonPrimary
-                  onClick={openEditSeuilModal}
-                  className="px-4 py-2 bg-blue-500 text-white hover:bg-blue-600 flex items-center"
-                >
-                  <Edit className="h-5 w-5 mr-2" /> Modifier le seuil
-                </ButtonPrimary>
-              </div>
-            </div>
-
-            {/* Statistiques */}
             <div className="mb-6">
               <div className="bg-lightCard dark:bg-darkCard p-4 rounded-lg shadow-md">
                 <h2 className="text-lg font-medium text-lightText dark:text-darkText mb-2 flex items-center">
                   <AlertTriangle className="h-5 w-5 mr-2" /> Total Produits en Stock Faible
                 </h2>
                 <p className="text-2xl font-bold text-gray-700 dark:text-gray-300">
-                  {lowStockData?.total_low_stock}
+                  {lowStockData?.total_low_stock ?? 0}
                 </p>
               </div>
             </div>
 
-            {/* Liste des produits */}
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
                 <thead className="bg-lightCard dark:bg-darkCard">
@@ -170,109 +200,97 @@ const AdminLowStockPage: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {products.map((product) => (
-                    <tr
-                      key={product.id}
-                      className="border-b border-lightBorder dark:border-darkBorder hover:bg-gray-100 dark:hover:bg-gray-700"
-                    >
-                      <td className="py-3 px-4 text-gray-700 dark:text-gray-300">{product.id}</td>
-                      <td className="py-3 px-4 text-gray-700 dark:text-gray-300">{product.nom}</td>
-                      <td className="py-3 px-4 text-gray-700 dark:text-gray-300">{product.stock}</td>
-                      <td className="py-3 px-4 text-gray-700 dark:text-gray-300">
-                        {product.categorie__nom || "Sans catégorie"}
+                  {products.length > 0 ? (
+                    products.map((product) => (
+                      <tr
+                        key={product.id}
+                        className="border-b border-lightBorder dark:border-darkBorder hover:bg-gray-100 dark:hover:bg-gray-700"
+                      >
+                        <td className="py-3 px-4 text-gray-700 dark:text-gray-300">{product.id}</td>
+                        <td className="py-3 px-4 text-gray-700 dark:text-gray-300">{product.nom}</td>
+                        <td className="py-3 px-4 text-red-600 dark:text-red-400">{product.stock}</td>
+                        <td className="py-3 px-4 text-gray-700 dark:text-gray-300">
+                          {product.categorie__nom || "Sans catégorie"}
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={4} className="py-3 px-4 text-center text-gray-700 dark:text-gray-300">
+                        Aucun produit en stock faible trouvé.
                       </td>
                     </tr>
-                  ))}
+                  )}
                 </tbody>
               </table>
             </div>
 
-            {/* Pagination */}
             <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
               <p className="text-sm text-gray-700 dark:text-gray-300">
                 Affichage de {(currentPage - 1) * productsPerPage + 1} à{" "}
-                {Math.min(currentPage * productsPerPage, totalProducts)} sur {totalProducts}{" "}
-                produits
+                {Math.min(currentPage * productsPerPage, totalProducts)} sur {totalProducts} produits
               </p>
               <div className="flex gap-2">
                 <ButtonPrimary
                   onClick={handlePrevPage}
                   disabled={currentPage === 1}
-                  className={`px-3 py-2 ${
-                    theme === "light"
-                      ? "bg-lightCard text-gray-700 hover:bg-gray-300"
-                      : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-                  } disabled:opacity-50 flex items-center`}
+                  className="px-3 py-2 bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 flex items-center"
                 >
                   <ChevronLeft className="h-5 w-5 mr-1" /> Précédent
                 </ButtonPrimary>
                 <ButtonPrimary
                   onClick={handleNextPage}
                   disabled={currentPage === totalPages}
-                  className={`px-3 py-2 ${
-                    theme === "light"
-                      ? "bg-lightCard text-gray-700 hover:bg-gray-300"
-                      : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-                  } disabled:opacity-50 flex items-center`}
+                  className="px-3 py-2 bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 flex items-center"
                 >
                   Suivant <ChevronRight className="h-5 w-5 ml-1" />
                 </ButtonPrimary>
               </div>
             </div>
-
-            {/* Modal pour modifier le seuil */}
-            {isEditSeuilModalOpen && (
-              <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-                <div
-                  className={`p-6 rounded-lg shadow-lg w-full max-w-md ${
-                    theme === "light" ? "bg-lightBg" : "bg-darkBg"
-                  }`}
-                >
-                  <h2 className="text-xl font-medium text-lightText dark:text-darkText mb-4 flex items-center">
-                    <Edit className="h-5 w-5 mr-2" /> Modifier le seuil d’alerte
-                  </h2>
-                  <form onSubmit={handleEditSeuil} className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">
-                        Nouveau seuil
-                      </label>
-                      <input
-                        type="number"
-                        value={newSeuil}
-                        onChange={(e) => setNewSeuil(e.target.value)}
-                        className={`w-full px-3 py-2 border ${
-                          theme === "light" ? "border-lightBorder" : "border-darkBorder"
-                        } rounded-lg ${
-                          theme === "light" ? "bg-lightCard" : "bg-darkCard"
-                        } text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                        required
-                        min="1"
-                      />
-                    </div>
-                    <div className="flex gap-2 justify-end">
-                      <ButtonPrimary
-                        type="button"
-                        onClick={closeEditSeuilModal}
-                        className={`px-4 py-2 ${
-                          theme === "light"
-                            ? "bg-lightCard text-gray-700 hover:bg-gray-300"
-                            : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-                        }`}
-                      >
-                        Annuler
-                      </ButtonPrimary>
-                      <ButtonPrimary
-                        type="submit"
-                        className="px-4 py-2 bg-blue-500 text-white hover:bg-blue-600"
-                      >
-                        Enregistrer
-                      </ButtonPrimary>
-                    </div>
-                  </form>
-                </div>
-              </div>
-            )}
           </>
+        )}
+
+        {/* Modal pour modifier le seuil */}
+        {isEditSeuilModalOpen && (
+          <ModalContainer
+            isOpen={isEditSeuilModalOpen}
+            onClose={closeEditSeuilModal}
+            title="Modifier le seuil d’alerte"
+            size="md"
+          >
+            <ModalBody>
+              <form onSubmit={handleEditSeuil} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">
+                    Nouveau seuil
+                  </label>
+                  <input
+                    type="number"
+                    value={newSeuil}
+                    onChange={(e) => setNewSeuil(e.target.value)}
+                    className="w-full px-3 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightBg dark:bg-darkBg text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-soft-green dark:focus:ring-dark-soft-green"
+                    required
+                    min="1"
+                  />
+                </div>
+                <ModalFooter>
+                  <ButtonPrimary
+                    type="button"
+                    onClick={closeEditSeuilModal}
+                    className="px-4 py-2 bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText hover:bg-gray-300 dark:hover:bg-gray-600"
+                  >
+                    Annuler
+                  </ButtonPrimary>
+                  <ButtonPrimary
+                    type="submit"
+                    className="px-4 py-2 bg-blue-500 text-white hover:bg-blue-600"
+                  >
+                    Enregistrer
+                  </ButtonPrimary>
+                </ModalFooter>
+              </form>
+            </ModalBody>
+          </ModalContainer>
         )}
       </div>
     </AdminLayout>
