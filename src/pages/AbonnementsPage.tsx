@@ -15,11 +15,13 @@ import axios from 'axios';
 interface Abonnement {
   id: string;
   type: 'mensuel' | 'hebdomadaire' | 'annuel';
-  prix: string;
+  prix: number; // Changé de string à number
   date_debut: string;
   date_fin: string | null;
   prochaine_livraison: string | null;
+  prochaine_facturation: string | null; // Ajouté
   is_active: boolean;
+  paiement_statut: 'paye_complet' | 'non_paye' | 'en_attente'; // Ajouté
   abonnement_produits: { produit: Product; quantite: number }[];
 }
 
@@ -82,21 +84,19 @@ const AbonnementsPage: React.FC = () => {
       return sum + (product ? product.prix * item.quantity : 0);
     }, 0);
 
-    let finalPrice = 0;
+    let multiplier = 1;
     switch (selectedType) {
       case 'hebdomadaire':
-        finalPrice = basePrice * 4;
+        multiplier = 4; // Estimation pour 4 semaines
         break;
       case 'mensuel':
-        finalPrice = basePrice;
+        multiplier = 1; // Une livraison par mois
         break;
       case 'annuel':
-        finalPrice = basePrice * 12 * 0.9; // Réduction de 10%
+        multiplier = 12 * 0.9; // 12 mois avec 10% de réduction
         break;
-      default:
-        finalPrice = basePrice;
     }
-    return Math.round(finalPrice);
+    return Math.round(basePrice * multiplier);
   };
 
   const handleProductQuantityChange = (productId: string, delta: number) => {
@@ -126,8 +126,23 @@ const AbonnementsPage: React.FC = () => {
       return;
     }
 
-    if (dateFin && new Date(dateDebut) >= new Date(dateFin)) {
+    if (selectedProducts.some(p => p.quantity <= 0)) {
+      setError('Les quantités doivent être supérieures à 0.');
+      return;
+    }
+
+    const debut = new Date(dateDebut);
+    const fin = dateFin ? new Date(dateFin) : null;
+    if (fin && debut >= fin) {
       setError('La date de début doit être antérieure à la date de fin.');
+      return;
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Réinitialise l'heure à minuit
+    
+    if (debut < today) {
+      setError('La date de début ne peut pas être dans le passé.');
       return;
     }
 
@@ -142,17 +157,21 @@ const AbonnementsPage: React.FC = () => {
         date_debut: dateDebut,
         ...(dateFin && { date_fin: dateFin }),
       };
-      await createAbonnement(data);
+      const response = await createAbonnement(data);
       const updatedAbonnements = await getAbonnements();
       setAbonnements(updatedAbonnements.data.results);
       setSelectedProducts([]);
       setDateFin('');
-      setShowSuccessMessage('Votre abonnement a été créé avec succès !');
+      setShowSuccessMessage(`Abonnement créé avec succès ! Prix : ${response.data.prix} FCFA`);
       setTimeout(() => setShowSuccessMessage(null), 5000);
       setActiveTab('mes-abonnements');
       setError(null);
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Une erreur est survenue lors de la création de l\'abonnement.');
+      setError(
+        err.response?.data?.error ||
+        err.response?.data?.produit_quantites?.[0] ||
+        'Une erreur est survenue lors de la création de l\'abonnement.'
+      );
     } finally {
       setSubscribeLoading(false);
     }
@@ -185,35 +204,13 @@ const AbonnementsPage: React.FC = () => {
     }
   };
 
-  const getNextDeliveryDate = (dateDebut: string, type: string, prochaineLivraison?: string | null) => {
-    if (prochaineLivraison) {
-      return new Date(prochaineLivraison).toLocaleDateString('fr-FR', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-      });
-    }
-
-    const startDate = new Date(dateDebut);
-    const today = new Date();
-    let nextDate = new Date(startDate);
-
-    if (startDate > today) {
-      return startDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
-    }
-
-    switch (type) {
-      case 'hebdomadaire':
-        while (nextDate <= today) nextDate.setDate(nextDate.getDate() + 7);
-        break;
-      case 'mensuel':
-        while (nextDate <= today) nextDate.setMonth(nextDate.getMonth() + 1);
-        break;
-      case 'annuel':
-        while (nextDate <= today) nextDate.setFullYear(nextDate.getFullYear() + 1);
-        break;
-    }
-    return nextDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+  const getNextDeliveryDate = (prochaineLivraison: string | null) => {
+    const date = prochaineLivraison ? new Date(prochaineLivraison) : new Date();
+    return date.toLocaleDateString('fr-FR', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    });
   };
 
   if (loading) {
@@ -447,15 +444,23 @@ const AbonnementsPage: React.FC = () => {
                               </p>
                             </div>
                           </div>
-                          {abonnement.is_active && (
-                            <div className="mb-4">
-                              <h4 className="text-sm text-gray-500 mb-1">Prochaine livraison</h4>
-                              <p className="text-gray-800 flex items-center">
-                                <Calendar className="h-4 w-4 mr-2 text-emerald-500" />
-                                {getNextDeliveryDate(abonnement.date_debut, abonnement.type, abonnement.prochaine_livraison)}
+                          <div className="grid grid-cols-2 gap-4 mb-4">
+                            <div>
+                              <h4 className="text-sm text-gray-500 mb-1">Statut du paiement</h4>
+                              <p className={`text-gray-800 capitalize ${abonnement.paiement_statut === 'paye_complet' ? 'text-emerald-600' : 'text-red-600'}`}>
+                                {abonnement.paiement_statut.replace('_', ' ')}
                               </p>
                             </div>
-                          )}
+                            {abonnement.is_active && (
+                              <div>
+                                <h4 className="text-sm text-gray-500 mb-1">Prochaine livraison</h4>
+                                <p className="text-gray-800 flex items-center">
+                                  <Calendar className="h-4 w-4 mr-2 text-emerald-500" />
+                                  {getNextDeliveryDate(abonnement.prochaine_livraison)}
+                                </p>
+                              </div>
+                            )}
+                          </div>
                           {abonnement.is_active && (
                             <ButtonPrimary
                               onClick={() => handleCancel(abonnement.id)}
