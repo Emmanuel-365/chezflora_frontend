@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import { Link, useNavigate, useLocation } from "react-router-dom"
-import { getPublicParameters, getUserProfile, getCartCount } from "../services/api"
+import api, { getPublicParameters, getUserProfile, getCartCount } from "../services/api"
 import { ShoppingCart, User, Menu, X, LogOut, Heart, Package, ChevronDown, Search, Settings, HelpCircle, ShieldCheck } from 'lucide-react'
 import { motion, AnimatePresence } from "framer-motion"
 
@@ -18,7 +18,8 @@ const NavBar = () => {
   const [userName, setUserName] = useState<string | null>(null)
   const [cartCount, setCartCount] = useState(0)
   const [searchQuery, setSearchQuery] = useState("")
-  
+  const [abonnementCount, setAbonnementCount] = useState(0);
+
   const navigate = useNavigate()
   const location = useLocation()
   const userMenuRef = useRef<HTMLDivElement>(null)
@@ -44,33 +45,37 @@ const NavBar = () => {
   useEffect(() => {
     const fetchParamsAndUser = async () => {
       try {
-        const response = await getPublicParameters()
+        const response = await getPublicParameters();
         const paramData = response.data.reduce(
           (acc: { [key: string]: string }, param: { cle: string; valeur: string }) => {
-            acc[param.cle] = param.valeur
-            return acc
+            acc[param.cle] = param.valeur;
+            return acc;
           },
-          {},
-        )
-        setParams(paramData)
-
-        const token = localStorage.getItem("access_token")
+          {}
+        );
+        setParams(paramData);
+  
+        const token = localStorage.getItem("access_token");
         if (token) {
-          const userRes = await getUserProfile()
-          setIsAuthenticated(true)
-          setUserRole(userRes.data.role)
-          setUserName(userRes.data.username)
-
-          // Get cart count
-          const count = await getCartCount()
-          setCartCount(count)
+          const userRes = await getUserProfile();
+          setIsAuthenticated(true);
+          setUserRole(userRes.data.role);
+          setUserName(userRes.data.username);
+  
+          const count = await getCartCount();
+          setCartCount(count);
+  
+          // Nouvelle requête pour les abonnements actifs
+          const abonnementRes = await api.get("abonnements/");
+          const activeAbonnements = abonnementRes.data.filter((ab: any) => ab.is_active).length;
+          setAbonnementCount(activeAbonnements); // Nouvel état
         }
       } catch (error) {
-        console.error("Erreur lors de la récupération des données:", error)
+        console.error("Erreur lors de la récupération des données:", error);
       }
-    }
-    
-    fetchParamsAndUser()
+    };
+  
+    fetchParamsAndUser();
 
     // Close menus when clicking outside
     const handleClickOutside = (event: MouseEvent) => {
@@ -123,10 +128,11 @@ const NavBar = () => {
     { name: "Services", path: "/services" },
     { name: "Réalisations", path: "/realisations" },
     { name: "Blog", path: "/blog" },
-    { name: "Atelier", path: "/ateliers"},
+    { name: "Atelier", path: "/ateliers" },
+    { name: "Abonnements", path: "/abonnements" }, // Ajout ici
     { name: "À propos", path: "/about" },
     { name: "Contact", path: "/contact" },
-  ]
+  ];
 
   // Add admin link if user is admin
   if (isAdmin) {
@@ -204,13 +210,22 @@ const NavBar = () => {
               <div className="relative" ref={userMenuRef}>
                 <button
                   onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                  className="flex items-center space-x-1 p-2 rounded-full text-gray-600 hover:text-emerald-600 hover:bg-emerald-50 transition-colors duration-200"
+                  className="flex items-center space-x-1 p-2 rounded-full text-gray-600 hover:text-emerald-600 hover:bg-emerald-50 transition-colors duration-200 relative"
                   aria-expanded={isUserMenuOpen}
                   aria-haspopup="true"
                 >
                   <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 font-medium text-sm">
                     {userName ? userName.charAt(0).toUpperCase() : "U"}
                   </div>
+                  {abonnementCount > 0 && (
+                    <motion.span
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      className="absolute -top-1 -right-1 flex items-center justify-center w-5 h-5 bg-emerald-500 text-white text-xs font-bold rounded-full"
+                    >
+                      {abonnementCount}
+                    </motion.span>
+                  )}
                   <ChevronDown
                     className={`h-4 w-4 transition-transform duration-200 ${isUserMenuOpen ? "rotate-180" : ""}`}
                   />
@@ -250,6 +265,13 @@ const NavBar = () => {
                         >
                           <Package className="h-4 w-4 mr-3 text-gray-400" />
                           Mes commandes
+                        </Link>
+                        <Link
+                          to="/abonnements"
+                          className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-emerald-50 hover:text-emerald-600"
+                        >
+                          <Package className="h-4 w-4 mr-3 text-gray-400" /> {/* Ou une icône spécifique comme <Calendar /> */}
+                          Mes abonnements
                         </Link>
                         <Link
                           to="/wishlist"
