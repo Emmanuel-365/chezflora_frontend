@@ -1,11 +1,13 @@
+"use client";
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import api from "../services/api";
+import AdminLayout from "../components/AdminLayout";
 import ButtonPrimary from "../components/ButtonPrimary";
-import axios from "axios";
 import { Bar, Pie, Line } from "react-chartjs-2";
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, ArcElement, LineElement, PointElement, Title, Tooltip, Legend } from "chart.js";
 import { Calendar, Users, ShoppingCart, Package, AlertTriangle, DollarSign, BarChart2 } from "lucide-react";
-import AdminLayout from "../components/AdminLayout";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, LineElement, PointElement, Title, Tooltip, Legend);
 
@@ -48,10 +50,6 @@ interface DashboardData {
   };
 }
 
-const Spinner = () => (
-  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500" aria-label="Chargement en cours" />
-);
-
 const AdminDashboardPage: React.FC = () => {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -70,7 +68,7 @@ const AdminDashboardPage: React.FC = () => {
 
       setLoading(true);
       try {
-        const response = await axios.get(`https://chezflora-api.onrender.com/api/utilisateurs/dashboard/?days=${daysFilter}`, {
+        const response = await api.get(`/utilisateurs/dashboard/?days=${daysFilter}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         console.log("Dashboard data:", response.data);
@@ -169,6 +167,29 @@ const AdminDashboardPage: React.FC = () => {
       title: { display: true, text: "" },
     },
   };
+
+  const renderPlaceholder = () => (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {Array.from({ length: 4 }).map((_, index) => (
+          <div key={index} className="bg-lightCard dark:bg-darkCard p-4 rounded-lg shadow-md animate-pulse">
+            <div className="h-5 w-32 bg-gray-300 dark:bg-gray-600 rounded mb-2"></div>
+            <div className="space-y-1">
+              <div className="h-4 w-20 bg-gray-200 dark:bg-gray-700 rounded"></div>
+              <div className="h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded"></div>
+              <div className="h-4 w-28 bg-gray-200 dark:bg-gray-700 rounded"></div>
+            </div>
+          </div>
+        ))}
+      </div>
+      {selectedSection !== "overview" && (
+        <div className="bg-lightCard dark:bg-darkCard p-4 rounded-lg shadow-md">
+          <div className="h-5 w-40 bg-gray-300 dark:bg-gray-600 rounded mb-2"></div>
+          <div className="h-48 sm:h-64 bg-gray-200 dark:bg-gray-700 rounded"></div>
+        </div>
+      )}
+    </div>
+  );
 
   const renderOverview = () => (
     <div className="space-y-6">
@@ -270,19 +291,19 @@ const AdminDashboardPage: React.FC = () => {
         </h2>
         {data?.products.low_stock_details && data.products.low_stock_details.length > 0 ? (
           <table className="w-full text-left text-sm">
-            <thead>
+            <thead className="bg-lightCard dark:bg-darkCard">
               <tr className="border-b border-lightBorder dark:border-darkBorder">
-                <th className="py-2 text-lightText dark:text-darkText">ID</th>
-                <th className="py-2 text-lightText dark:text-darkText">Nom</th>
-                <th className="py-2 text-lightText dark:text-darkText">Stock</th>
+                <th className="py-2 px-4 text-lightText dark:text-darkText">ID</th>
+                <th className="py-2 px-4 text-lightText dark:text-darkText">Nom</th>
+                <th className="py-2 px-4 text-lightText dark:text-darkText">Stock</th>
               </tr>
             </thead>
             <tbody>
               {data.products.low_stock_details.map((product) => (
                 <tr key={product.id} className="border-b border-lightBorder dark:border-darkBorder">
-                  <td className="py-2 text-gray-700 dark:text-gray-300">{product.id}</td>
-                  <td className="py-2 text-gray-700 dark:text-gray-300">{product.nom}</td>
-                  <td className="py-2 text-red-600">{product.stock}</td>
+                  <td className="py-2 px-4 text-gray-700 dark:text-gray-300">{product.id}</td>
+                  <td className="py-2 px-4 text-gray-700 dark:text-gray-300">{product.nom}</td>
+                  <td className="py-2 px-4 text-red-600 dark:text-red-400">{product.stock}</td>
                 </tr>
               ))}
             </tbody>
@@ -365,59 +386,65 @@ const AdminDashboardPage: React.FC = () => {
   return (
     <AdminLayout>
       <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-        <h1 className="text-2xl sm:text-3xl font-serif font-medium text-lightText dark:text-darkText mb-4 sm:mb-6">
+        <h1 className="text-2xl sm:text-3xl font-serif font-medium text-lightText dark:text-darkText mb-6">
           Tableau de bord Admin
         </h1>
 
-        {error && <div className="text-center py-4 text-red-500">{error}</div>}
-
-        <div className="mb-4 sm:mb-6 flex flex-wrap gap-2">
+        <div className="mb-6 flex flex-wrap gap-2">
           <ButtonPrimary
             onClick={() => handleFilterChange(7)}
-            className={`px-3 py-1 sm:px-4 sm:py-2 text-sm sm:text-base ${
-              daysFilter === 7 ? "bg-blue-500 text-white" : "bg-lightCard dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600"
+            className={`px-4 py-2 text-sm sm:text-base ${
+              daysFilter === 7
+                ? "bg-blue-500 text-white hover:bg-blue-600"
+                : "bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText hover:bg-gray-300 dark:hover:bg-gray-600"
             }`}
           >
             7 jours
           </ButtonPrimary>
           <ButtonPrimary
             onClick={() => handleFilterChange(30)}
-            className={`px-3 py-1 sm:px-4 sm:py-2 text-sm sm:text-base ${
-              daysFilter === 30 ? "bg-blue-500 text-white" : "bg-lightCard dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600"
+            className={`px-4 py-2 text-sm sm:text-base ${
+              daysFilter === 30
+                ? "bg-blue-500 text-white hover:bg-blue-600"
+                : "bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText hover:bg-gray-300 dark:hover:bg-gray-600"
             }`}
           >
             30 jours
           </ButtonPrimary>
           <ButtonPrimary
             onClick={() => handleFilterChange(90)}
-            className={`px-3 py-1 sm:px-4 sm:py-2 text-sm sm:text-base ${
-              daysFilter === 90 ? "bg-blue-500 text-white" : "bg-lightCard dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600"
+            className={`px-4 py-2 text-sm sm:text-base ${
+              daysFilter === 90
+                ? "bg-blue-500 text-white hover:bg-blue-600"
+                : "bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText hover:bg-gray-300 dark:hover:bg-gray-600"
             }`}
           >
             90 jours
           </ButtonPrimary>
         </div>
 
-        <div className="mb-4 sm:mb-6 flex flex-wrap gap-2 border-b border-lightBorder dark:border-darkBorder">
+        <div className="mb-6 flex flex-wrap gap-2 border-b border-lightBorder dark:border-darkBorder">
           {["overview", "users", "commands", "products", "ateliers", "payments", "subscriptions"].map((section) => (
             <button
               key={section}
               onClick={() => setSelectedSection(section)}
-              className={`pb-2 px-2 sm:px-4 text-sm sm:text-base ${
+              className={`pb-2 px-4 text-sm sm:text-base ${
                 selectedSection === section
-                  ? "border-b-2 border-blue-500 text-blue-500"
+                  ? "border-b-2 border-blue-500 text-blue-500 dark:text-blue-400"
                   : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100"
               }`}
             >
-              {section.charAt(0).toUpperCase() + section.slice(1) === "Overview" ? "Aperçu" : section.charAt(0).toUpperCase() + section.slice(1)}
+              {section === "overview"
+                ? "Aperçu"
+                : section.charAt(0).toUpperCase() + section.slice(1)}
             </button>
           ))}
         </div>
 
         {loading ? (
-          <div className="flex justify-center py-4">
-            <Spinner />
-          </div>
+          renderPlaceholder()
+        ) : error ? (
+          <div className="text-center py-8 text-red-500">{error}</div>
         ) : (
           <div className="space-y-6">{renderContent()}</div>
         )}
