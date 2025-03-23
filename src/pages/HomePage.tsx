@@ -352,7 +352,7 @@ export default function HomePage() {
             id: a.id,
             title: a.titre,
             excerpt: a.contenu.substring(0, 100) + "...",
-            imageUrl: a.image || "/images/placeholder.jpg",
+            cover: a.cover || "/images/placeholder.jpg",
             link: `/blog/${a.id}`,
           })),
         )
@@ -401,7 +401,6 @@ export default function HomePage() {
     fetchArticles()
     fetchPromotions()
 
-    console.log(articles)
 
     return () => {
       controller.abort()
