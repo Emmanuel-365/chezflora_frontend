@@ -489,7 +489,6 @@ const AdminProductsPage: React.FC = () => {
           onClose={closeAddModal}
           title="Ajouter un produit"
           size="md"
-          theme={theme}
         >          
           <ModalBody>
             <form onSubmit={handleAddProduct} className="space-y-4">
@@ -628,7 +627,7 @@ const AdminProductsPage: React.FC = () => {
         </ModalContainer>
 
         {/* Modal pour modifier un produit */}
-        <ModalContainer isOpen={isEditModalOpen} onClose={closeEditModal} title="Modifier le produit" size="md" theme={theme}>
+        <ModalContainer isOpen={isEditModalOpen} onClose={closeEditModal} title="Modifier le produit" size="md">
           {selectedProduct && (
             <>
               <ModalBody>
@@ -770,7 +769,7 @@ const AdminProductsPage: React.FC = () => {
         </ModalContainer>
 
         {/* Modal pour supprimer un produit */}
-        <ModalContainer isOpen={isDeleteModalOpen} onClose={closeDeleteModal} title="Supprimer le produit" size="sm" theme={theme}>
+        <ModalContainer isOpen={isDeleteModalOpen} onClose={closeDeleteModal} title="Supprimer le produit" size="sm" >
           {selectedProduct && (
             <>
               <ModalBody>
@@ -798,7 +797,7 @@ const AdminProductsPage: React.FC = () => {
         </ModalContainer>
 
         {/* Modal pour voir les détails */}
-        <ModalContainer isOpen={isDetailsModalOpen} onClose={closeDetailsModal} title="Détails du produit" size="lg" theme={theme}>
+        <ModalContainer isOpen={isDetailsModalOpen} onClose={closeDetailsModal} title="Détails du produit" size="lg">
           {selectedProduct && (
             <>
               <ModalBody>
