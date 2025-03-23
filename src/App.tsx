@@ -49,6 +49,7 @@ import AdminRealisationsPage from './pages/AdminRealisationsPage';
 import AdminPaiementsPage from './pages/AdminPayementsPage';
 import AdminParametresPage from './pages/AdminParametresPage';
 import AtelierDetailPage from './pages/AtelierDetailPage';
+import RealisationDetailPage from './pages/RealisationDetailPage';
 
 const App: React.FC = () => (
   <Routes>
@@ -95,6 +96,7 @@ const App: React.FC = () => (
     <Route path="/blog" element={<ArticlesPage />} />
     <Route path="/blog/:id" element={<ArticleDetailPage />} />
     <Route path="/realisations" element={<RealisationsPage />} />
+    <Route path="/realisations/:id" element={<RealisationDetailPage/>}/>
     <Route path="/contact" element={<ContactPage />} />
     <Route path="/about" element={<AboutPage />} />
     <Route path="/ateliers" element={<AteliersPage />} />
