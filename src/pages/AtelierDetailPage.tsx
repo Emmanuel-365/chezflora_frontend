@@ -629,11 +629,11 @@ const AtelierDetailPage = () => {
                         >
                           <Link to={`/ateliers/${relatedAtelier.id}`} className="block">
                             <div className="aspect-w-16 aspect-h-9 bg-gray-100">
-                              <img
+                              {relatedAtelier.Photo.image && <img
                                 src={relatedAtelier.Photo.image || "/placeholder.svg?height=300&width=400"}
                                 alt={relatedAtelier.nom}
                                 className="w-full h-full object-cover"
-                              />
+                              />}
                             </div>
                           </Link>
 
