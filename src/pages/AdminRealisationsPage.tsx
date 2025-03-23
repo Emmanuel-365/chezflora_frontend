@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import api from "../services/api";
 import AdminLayout from "../components/AdminLayout";
 import ButtonPrimary from "../components/ButtonPrimary";
-import { Wrench, Search, Edit, Trash2, PlusCircle, ChevronLeft, ChevronRight } from "lucide-react";
+import { Wrench, Search, Edit, Trash2, PlusCircle, Eye, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { ModalContainer, ModalBody, ModalFooter } from "../components/ModalContainer";
 
 interface Service {
@@ -12,12 +12,18 @@ interface Service {
   nom: string;
 }
 
+interface Photo {
+  id: string;
+  image: string; // URL de l'image
+  uploaded_at: string;
+}
+
 interface Realisation {
   id: string;
   service: Service;
   titre: string;
   description: string;
-  photos: string[];
+  photos: Photo[]; // Changement ici pour utiliser l'interface Photo
   date: string;
   admin: string;
   is_active: boolean;
@@ -45,6 +51,7 @@ const AdminRealisationsPage: React.FC = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false); // Nouveau modal pour les détails
   const [newRealisation, setNewRealisation] = useState({
     service: "",
     titre: "",
@@ -132,10 +139,21 @@ const AdminRealisationsPage: React.FC = () => {
       formData.append("service", newRealisation.service);
       formData.append("titre", newRealisation.titre);
       formData.append("description", newRealisation.description);
-      newRealisation.photos.forEach((photo) => formData.append("photos", photo));
       formData.append("date", newRealisation.date);
       formData.append("is_active", newRealisation.is_active.toString());
-      await api.post("/realisations/", formData, { headers: { "Content-Type": "multipart/form-data" } });
+      const response = await api.post("/realisations/", formData);
+      const realisationId = response.data.id;
+
+      for (const photo of newRealisation.photos) {
+        const photoFormData = new FormData();
+        photoFormData.append("image", photo);
+        photoFormData.append("entity_type", "realisation");
+        photoFormData.append("entity_id", realisationId);
+        await api.post("/photos/", photoFormData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+      }
+
       closeAddModal();
       fetchRealisations();
     } catch (err: any) {
@@ -170,12 +188,20 @@ const AdminRealisationsPage: React.FC = () => {
       formData.append("service", editRealisation.service);
       formData.append("titre", editRealisation.titre);
       formData.append("description", editRealisation.description);
-      editRealisation.photos.forEach((photo) => formData.append("photos", photo));
       formData.append("date", editRealisation.date);
       formData.append("is_active", editRealisation.is_active.toString());
-      await api.put(`/realisations/${selectedRealisation.id}/`, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      await api.put(`/realisations/${selectedRealisation.id}/`, formData);
+
+      for (const photo of editRealisation.photos) {
+        const photoFormData = new FormData();
+        photoFormData.append("image", photo);
+        photoFormData.append("entity_type", "realisation");
+        photoFormData.append("entity_id", selectedRealisation.id);
+        await api.post("/photos/", photoFormData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+      }
+
       closeEditModal();
       fetchRealisations();
     } catch (err: any) {
@@ -203,6 +229,54 @@ const AdminRealisationsPage: React.FC = () => {
     } catch (err: any) {
       console.error("Erreur lors de la suppression de la réalisation:", err.response?.data);
       setErrorRealisations("Erreur lors de la suppression de la réalisation.");
+    }
+  };
+
+  const openDetailsModal = (realisation: Realisation) => {
+    setSelectedRealisation(realisation);
+    setIsDetailsModalOpen(true);
+  };
+
+  const closeDetailsModal = () => {
+    setIsDetailsModalOpen(false);
+    setSelectedRealisation(null);
+  };
+
+  const handleDeletePhoto = async (photoId: string) => {
+    if (!selectedRealisation) return;
+    try {
+      await api.delete(`/photos/${photoId}/`);
+      setSelectedRealisation({
+        ...selectedRealisation,
+        photos: selectedRealisation.photos.filter((photo) => photo.id !== photoId),
+      });
+      fetchRealisations();
+    } catch (err: any) {
+      console.error("Erreur lors de la suppression de la photo:", err.response?.data);
+      setErrorRealisations("Erreur lors de la suppression de la photo.");
+    }
+  };
+
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>, type: "new" | "edit") => {
+    const files = Array.from(e.target.files || []);
+    if (type === "new") {
+      setNewRealisation({ ...newRealisation, photos: [...newRealisation.photos, ...files] });
+    } else {
+      setEditRealisation({ ...editRealisation, photos: [...editRealisation.photos, ...files] });
+    }
+  };
+
+  const removeNewPhoto = (index: number, type: "new" | "edit") => {
+    if (type === "new") {
+      setNewRealisation({
+        ...newRealisation,
+        photos: newRealisation.photos.filter((_, i) => i !== index),
+      });
+    } else {
+      setEditRealisation({
+        ...editRealisation,
+        photos: editRealisation.photos.filter((_, i) => i !== index),
+      });
     }
   };
 
@@ -305,6 +379,12 @@ const AdminRealisationsPage: React.FC = () => {
                     </td>
                     <td className="py-3 px-4 flex gap-2">
                       <ButtonPrimary
+                        onClick={() => openDetailsModal(realisation)}
+                        className="px-2 py-1 bg-gray-500 text-white hover:bg-gray-600 flex items-center text-sm"
+                      >
+                        <Eye className="h-4 w-4 mr-1" /> Détails
+                      </ButtonPrimary>
+                      <ButtonPrimary
                         onClick={() => openEditModal(realisation)}
                         className="px-2 py-1 bg-blue-500 text-white hover:bg-blue-600 flex items-center text-sm"
                       >
@@ -396,10 +476,31 @@ const AdminRealisationsPage: React.FC = () => {
                   <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">Photos</label>
                   <input
                     type="file"
+                    accept="image/*"
                     multiple
-                    onChange={(e) => setNewRealisation({ ...newRealisation, photos: Array.from(e.target.files || []) })}
-                    className="w-full px-3 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText"
+                    onChange={(e) => handlePhotoChange(e, "new")}
+                    className="w-full text-sm text-lightText dark:text-darkText file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-500 file:text-white hover:file:bg-blue-600"
                   />
+                  {newRealisation.photos.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {newRealisation.photos.map((photo, index) => (
+                        <div key={index} className="relative">
+                          <img
+                            src={URL.createObjectURL(photo)}
+                            alt={`Preview ${index}`}
+                            className="w-20 h-20 object-cover rounded"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeNewPhoto(index, "new")}
+                            className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">Date</label>
@@ -483,22 +584,31 @@ const AdminRealisationsPage: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">Photos</label>
+                  <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">Ajouter des photos</label>
                   <input
                     type="file"
+                    accept="image/*"
                     multiple
-                    onChange={(e) => setEditRealisation({ ...editRealisation, photos: Array.from(e.target.files || []) })}
-                    className="w-full px-3 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText"
+                    onChange={(e) => handlePhotoChange(e, "edit")}
+                    className="w-full text-sm text-lightText dark:text-darkText file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-500 file:text-white hover:file:bg-blue-600"
                   />
-                  {selectedRealisation.photos.length > 0 && editRealisation.photos.length === 0 && (
-                    <div className="mt-2 flex gap-2 flex-wrap">
-                      {selectedRealisation.photos.map((photo, index) => (
-                        <img
-                          key={index}
-                          src={photo}
-                          alt="Prévisualisation"
-                          className="h-16 w-16 object-cover rounded"
-                        />
+                  {editRealisation.photos.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {editRealisation.photos.map((photo, index) => (
+                        <div key={index} className="relative">
+                          <img
+                            src={URL.createObjectURL(photo)}
+                            alt={`Preview ${index}`}
+                            className="w-20 h-20 object-cover rounded"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeNewPhoto(index, "edit")}
+                            className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
                       ))}
                     </div>
                   )}
@@ -563,6 +673,67 @@ const AdminRealisationsPage: React.FC = () => {
                 </ButtonPrimary>
               </ModalFooter>
             </ModalBody>
+          </ModalContainer>
+        )}
+
+        {/* Modal de détails */}
+        {isDetailsModalOpen && selectedRealisation && (
+          <ModalContainer isOpen={isDetailsModalOpen} onClose={closeDetailsModal} title="Détails de la réalisation" size="lg">
+            <ModalBody>
+              <div className="space-y-2">
+                <p className="text-lightText dark:text-darkText">
+                  <strong>ID :</strong> {selectedRealisation.id}
+                </p>
+                <p className="text-lightText dark:text-darkText">
+                  <strong>Service :</strong> {selectedRealisation.service.nom}
+                </p>
+                <p className="text-lightText dark:text-darkText">
+                  <strong>Titre :</strong> {selectedRealisation.titre}
+                </p>
+                <p className="text-lightText dark:text-darkText">
+                  <strong>Description :</strong> {selectedRealisation.description || "Aucune"}
+                </p>
+                <p className="text-lightText dark:text-darkText">
+                  <strong>Date :</strong> {new Date(selectedRealisation.date).toLocaleDateString()}
+                </p>
+                <p className="text-lightText dark:text-darkText">
+                  <strong>Statut :</strong> {selectedRealisation.is_active ? "Actif" : "Inactif"}
+                </p>
+                <div>
+                  <strong className="text-lightText dark:text-darkText">Photos :</strong>
+                  {selectedRealisation.photos.length > 0 ? (
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {selectedRealisation.photos.map((photo) => (
+                        <div key={photo.id} className="relative">
+                          <img
+                            src={photo.image}
+                            alt={`Photo ${photo.id}`}
+                            className="w-20 h-20 object-cover rounded"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleDeletePhoto(photo.id)}
+                            className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-lightText dark:text-darkText">Aucune photo</p>
+                  )}
+                </div>
+              </div>
+            </ModalBody>
+            <ModalFooter>
+              <ButtonPrimary
+                onClick={closeDetailsModal}
+                className="px-4 py-2 bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText hover:bg-gray-300 dark:hover:bg-gray-600"
+              >
+                Fermer
+              </ButtonPrimary>
+            </ModalFooter>
           </ModalContainer>
         )}
       </div>
