@@ -18,11 +18,15 @@ interface Realisation {
   id: string
   titre: string
   description: string
-  photos: string[]
+  photos: Photo[]
   date_creation: string
   service: Service
   lieu?: string
   client?: string
+}
+
+interface Photo {
+  image: string;
 }
 
 const RealisationsPage = () => {
@@ -329,7 +333,7 @@ const RealisationsPage = () => {
                           <div className="relative h-56 overflow-hidden bg-gray-100">
                             {realisation.photos && realisation.photos.length > 0 ? (
                               <img
-                                src={realisation.photos[0] || "/placeholder.svg?height=400&width=600"}
+                                src={realisation.photos[0].image || "/placeholder.svg?height=400&width=600"}
                                 alt={realisation.titre}
                                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                               />
@@ -406,7 +410,7 @@ const RealisationsPage = () => {
                             <div className="relative h-56 md:h-full overflow-hidden bg-gray-100">
                               {realisation.photos && realisation.photos.length > 0 ? (
                                 <img
-                                  src={realisation.photos[0] || "/placeholder.svg?height=400&width=600"}
+                                  src={realisation.photos[0].image || "/placeholder.svg?height=400&width=600"}
                                   alt={realisation.titre}
                                   className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
                                 />
@@ -465,7 +469,7 @@ const RealisationsPage = () => {
                                   {realisation.photos.slice(0, 3).map((photo, index) => (
                                     <div key={index} className="w-8 h-8 rounded-full overflow-hidden border-2 border-white">
                                       <img 
-                                        src={photo || "/placeholder.svg?height=100&width=100"} 
+                                        src={photo.image || "/placeholder.svg?height=100&width=100"} 
                                         alt={`${realisation.titre} - photo ${index + 1}`}
                                         className="w-full h-full object-cover"
                                       />
