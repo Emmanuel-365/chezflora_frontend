@@ -1,6 +1,8 @@
-import React, { useState, useEffect, useContext } from "react";
+"use client";
+
+import React, { useState, useEffect } from "react";
 import api from "../services/api";
-import AdminLayout, { ThemeContext } from "../components/AdminLayout"; // Import du ThemeContext
+import AdminLayout from "../components/AdminLayout";
 import ButtonPrimary from "../components/ButtonPrimary";
 import { Bar, Line } from "react-chartjs-2";
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, LineElement, PointElement, Title, Tooltip, Legend } from "chart.js";
@@ -15,7 +17,6 @@ interface RevenueData {
 }
 
 const AdminCommandsRevenuePage: React.FC = () => {
-  const theme = useContext(ThemeContext); // Récupération du thème via le contexte
   const [revenueData, setRevenueData] = useState<RevenueData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -28,7 +29,7 @@ const AdminCommandsRevenuePage: React.FC = () => {
   const fetchRevenueData = async () => {
     setLoading(true);
     try {
-      const response = await api.get("/commandes/revenue/", { params: { days: daysFilter } });
+      const response = await api.get<RevenueData>("/commandes/revenue/", { params: { days: daysFilter } });
       setRevenueData(response.data);
       setLoading(false);
     } catch (err: any) {
@@ -42,15 +43,14 @@ const AdminCommandsRevenuePage: React.FC = () => {
     setDaysFilter(days);
   };
 
-  // Adaptation des couleurs des graphiques en fonction du thème
   const revenueByDayChartData = {
     labels: revenueData ? revenueData.revenue_by_day.map((item) => item.date) : [],
     datasets: [
       {
         label: "Revenus par jour (FCFA)",
         data: revenueData ? revenueData.revenue_by_day.map((item) => parseFloat(item.total)) : [],
-        borderColor: theme === "light" ? "#4CAF50" : "#8CC7A1", // Vert clair en mode sombre
-        backgroundColor: theme === "light" ? "rgba(76, 175, 80, 0.2)" : "rgba(140, 199, 161, 0.2)",
+        borderColor: "#4CAF50", // Vert pour le mode clair
+        backgroundColor: "rgba(76, 175, 80, 0.2)",
         fill: true,
       },
     ],
@@ -62,7 +62,7 @@ const AdminCommandsRevenuePage: React.FC = () => {
       {
         label: "Revenus par statut (FCFA)",
         data: revenueData ? revenueData.revenue_by_status.map((item) => parseFloat(item.total)) : [],
-        backgroundColor: theme === "light" ? "#2196F3" : "#A8D5BA", // Bleu clair -> Vert clair en mode sombre
+        backgroundColor: "#2196F3", // Bleu pour le mode clair
       },
     ],
   };
@@ -75,31 +75,28 @@ const AdminCommandsRevenuePage: React.FC = () => {
       title: { display: true, text: "" },
     },
     scales: {
-      x: { ticks: { color: theme === "light" ? "#374151" : "#D1D5DB" } }, // Gris foncé clair / Gris clair sombre
-      y: { ticks: { color: theme === "light" ? "#374151" : "#D1D5DB" } },
+      x: { ticks: { color: "#374151" } }, // Gris foncé par défaut, ajusté via CSS pour le mode sombre
+      y: { ticks: { color: "#374151" } },
     },
   };
 
-  if (loading) {
-    return (
-      <AdminLayout>
-        <div className="text-center py-16 text-lightText dark:text-darkText">Chargement...</div>
-      </AdminLayout>
-    );
-  }
-
-  if (error) {
-    return (
-      <AdminLayout>
-        <div className="text-center py-16 text-red-500">{error}</div>
-      </AdminLayout>
-    );
-  }
+  const renderChartPlaceholder = () => (
+    <div className="space-y-6">
+      <div className="bg-lightCard dark:bg-darkCard p-4 rounded-lg shadow-md">
+        <h2 className="text-lg font-medium text-lightText dark:text-darkText mb-2">Revenus par jour</h2>
+        <div className="h-48 sm:h-64 bg-gray-200 dark:bg-gray-700 animate-pulse rounded"></div>
+      </div>
+      <div className="bg-lightCard dark:bg-darkCard p-4 rounded-lg shadow-md">
+        <h2 className="text-lg font-medium text-lightText dark:text-darkText mb-2">Revenus par statut</h2>
+        <div className="h-48 sm:h-64 bg-gray-200 dark:bg-gray-700 animate-pulse rounded"></div>
+      </div>
+    </div>
+  );
 
   return (
     <AdminLayout>
       <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-        <h1 className="text-2xl sm:text-3xl font-serif font-medium text-lightText dark:text-darkText mb-4 sm:mb-6 flex items-center">
+        <h1 className="text-2xl sm:text-3xl font-serif font-medium text-lightText dark:text-darkText mb-6 flex items-center">
           <DollarSign className="h-6 w-6 mr-2" /> Revenus des Commandes
         </h1>
 
@@ -108,10 +105,8 @@ const AdminCommandsRevenuePage: React.FC = () => {
             onClick={() => handleFilterChange(7)}
             className={`px-4 py-2 text-sm sm:text-base ${
               daysFilter === 7
-                ? "bg-blue-500 text-white"
-                : theme === "light"
-                ? "bg-lightCard hover:bg-gray-300"
-                : "bg-gray-700 hover:bg-gray-600 text-gray-300"
+                ? "bg-blue-500 text-white hover:bg-blue-600"
+                : "bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText hover:bg-gray-300 dark:hover:bg-gray-600"
             }`}
           >
             7 jours
@@ -120,10 +115,8 @@ const AdminCommandsRevenuePage: React.FC = () => {
             onClick={() => handleFilterChange(30)}
             className={`px-4 py-2 text-sm sm:text-base ${
               daysFilter === 30
-                ? "bg-blue-500 text-white"
-                : theme === "light"
-                ? "bg-lightCard hover:bg-gray-300"
-                : "bg-gray-700 hover:bg-gray-600 text-gray-300"
+                ? "bg-blue-500 text-white hover:bg-blue-600"
+                : "bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText hover:bg-gray-300 dark:hover:bg-gray-600"
             }`}
           >
             30 jours
@@ -132,46 +125,64 @@ const AdminCommandsRevenuePage: React.FC = () => {
             onClick={() => handleFilterChange(90)}
             className={`px-4 py-2 text-sm sm:text-base ${
               daysFilter === 90
-                ? "bg-blue-500 text-white"
-                : theme === "light"
-                ? "bg-lightCard hover:bg-gray-300"
-                : "bg-gray-700 hover:bg-gray-600 text-gray-300"
+                ? "bg-blue-500 text-white hover:bg-blue-600"
+                : "bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText hover:bg-gray-300 dark:hover:bg-gray-600"
             }`}
           >
             90 jours
           </ButtonPrimary>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-          <div className="bg-lightCard dark:bg-darkCard p-4 rounded-lg shadow-md">
-            <h2 className="text-lg font-medium text-lightText dark:text-darkText mb-2 flex items-center">
-              <DollarSign className="h-5 w-5 mr-2" /> Total des Revenus
-            </h2>
-            <p className="text-2xl font-bold text-gray-700 dark:text-gray-300">{revenueData?.total_revenue} FCFA</p>
-          </div>
-        </div>
-
-        <div className="space-y-6">
-          <div className="bg-lightCard dark:bg-darkCard p-4 rounded-lg shadow-md">
-            <h2 className="text-lg font-medium text-lightText dark:text-darkText mb-2">Revenus par jour</h2>
-            <div className="h-48 sm:h-64">
-              <Line
-                data={revenueByDayChartData}
-                options={{ ...chartOptions, plugins: { ...chartOptions.plugins, title: { text: `Revenus sur ${daysFilter} jours` } } }}
-              />
+        {loading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+            <div className="bg-lightCard dark:bg-darkCard p-4 rounded-lg shadow-md animate-pulse">
+              <div className="h-5 w-32 bg-gray-300 dark:bg-gray-600 rounded mb-2"></div>
+              <div className="h-8 w-48 bg-gray-200 dark:bg-gray-700 rounded"></div>
             </div>
           </div>
-
-          <div className="bg-lightCard dark:bg-darkCard p-4 rounded-lg shadow-md">
-            <h2 className="text-lg font-medium text-lightText dark:text-darkText mb-2">Revenus par statut</h2>
-            <div className="h-48 sm:h-64">
-              <Bar
-                data={revenueByStatusChartData}
-                options={{ ...chartOptions, plugins: { ...chartOptions.plugins, title: { text: "Répartition par statut" } } }}
-              />
+        ) : error ? (
+          <div className="text-center py-8 text-red-500">{error}</div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+            <div className="bg-lightCard dark:bg-darkCard p-4 rounded-lg shadow-md">
+              <h2 className="text-lg font-medium text-lightText dark:text-darkText mb-2 flex items-center">
+                <DollarSign className="h-5 w-5 mr-2" /> Total des Revenus
+              </h2>
+              <p className="text-2xl font-bold text-gray-700 dark:text-gray-300">{revenueData?.total_revenue} FCFA</p>
             </div>
           </div>
-        </div>
+        )}
+
+        {loading ? (
+          renderChartPlaceholder()
+        ) : error ? null : (
+          <div className="space-y-6">
+            <div className="bg-lightCard dark:bg-darkCard p-4 rounded-lg shadow-md">
+              <h2 className="text-lg font-medium text-lightText dark:text-darkText mb-2">Revenus par jour</h2>
+              <div className="h-48 sm:h-64">
+                <Line
+                  data={revenueByDayChartData}
+                  options={{
+                    ...chartOptions,
+                    plugins: { ...chartOptions.plugins, title: { text: `Revenus sur ${daysFilter} jours` } },
+                  }}
+                />
+              </div>
+            </div>
+            <div className="bg-lightCard dark:bg-darkCard p-4 rounded-lg shadow-md">
+              <h2 className="text-lg font-medium text-lightText dark:text-darkText mb-2">Revenus par statut</h2>
+              <div className="h-48 sm:h-64">
+                <Bar
+                  data={revenueByStatusChartData}
+                  options={{
+                    ...chartOptions,
+                    plugins: { ...chartOptions.plugins, title: { text: "Répartition par statut" } },
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </AdminLayout>
   );

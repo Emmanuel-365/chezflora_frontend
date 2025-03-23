@@ -1,8 +1,11 @@
-import React, { useState, useEffect, useContext } from "react";
+"use client";
+
+import React, { useState, useEffect } from "react";
 import api from "../services/api";
-import AdminLayout, { ThemeContext } from "../components/AdminLayout";
+import AdminLayout from "../components/AdminLayout";
 import ButtonPrimary from "../components/ButtonPrimary";
 import { MessageSquare, Search, Edit, ChevronLeft, ChevronRight } from "lucide-react";
+import { ModalContainer, ModalBody, ModalFooter } from "../components/ModalContainer";
 
 interface Commentaire {
   id: string;
@@ -22,7 +25,6 @@ interface ApiResponse {
 }
 
 const AdminCommentairesPage: React.FC = () => {
-  const theme = useContext(ThemeContext); // Récupération du thème via le contexte
   const [commentaires, setCommentaires] = useState<Commentaire[]>([]);
   const [totalCommentaires, setTotalCommentaires] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
@@ -51,12 +53,14 @@ const AdminCommentairesPage: React.FC = () => {
           is_active: filterStatus === "all" ? undefined : filterStatus === "active",
         },
       });
-      setCommentaires(response.data.results);
-      setTotalCommentaires(response.data.count);
-      setTotalPages(Math.ceil(response.data.count / commentairesPerPage));
+      setCommentaires(response.data.results || []);
+      setTotalCommentaires(response.data.count || 0);
+      setTotalPages(Math.ceil((response.data.count || 0) / commentairesPerPage));
       setLoading(false);
     } catch (err: any) {
+      console.error("Erreur lors du chargement des commentaires:", err.response?.data);
       setError("Erreur lors du chargement des commentaires.");
+      setCommentaires([]);
       setLoading(false);
     }
   };
@@ -74,6 +78,7 @@ const AdminCommentairesPage: React.FC = () => {
   const handlePrevPage = () => {
     if (currentPage > 1) setCurrentPage(currentPage - 1);
   };
+
   const handleNextPage = () => {
     if (currentPage < totalPages) setCurrentPage(currentPage + 1);
   };
@@ -94,12 +99,42 @@ const AdminCommentairesPage: React.FC = () => {
     if (!selectedCommentaire) return;
     try {
       await api.put(`/commentaires/${selectedCommentaire.id}/`, editCommentaire);
-      setIsEditModalOpen(false);
+      closeEditModal();
       fetchCommentaires();
     } catch (err: any) {
+      console.error("Erreur lors de la mise à jour du commentaire:", err.response?.data);
       setError("Erreur lors de la mise à jour du commentaire.");
     }
   };
+
+  const renderCommentairesPlaceholder = () => (
+    <div className="overflow-x-auto">
+      <table className="w-full text-left text-sm">
+        <thead className="bg-lightCard dark:bg-darkCard">
+          <tr className="border-b border-lightBorder dark:border-darkBorder">
+            {["ID", "Article", "Client", "Texte", "Date", "Statut", "Actions"].map((header) => (
+              <th key={header} className="py-3 px-4">
+                <div className="h-4 w-16 bg-gray-300 dark:bg-gray-600 rounded"></div>
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {Array.from({ length: 5 }).map((_, index) => (
+            <tr key={index} className="border-b border-lightBorder dark:border-darkBorder animate-pulse">
+              <td className="py-3 px-4"><div className="h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded"></div></td>
+              <td className="py-3 px-4"><div className="h-4 w-20 bg-gray-200 dark:bg-gray-700 rounded"></div></td>
+              <td className="py-3 px-4"><div className="h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded"></div></td>
+              <td className="py-3 px-4"><div className="h-4 w-48 bg-gray-200 dark:bg-gray-700 rounded"></div></td>
+              <td className="py-3 px-4"><div className="h-4 w-28 bg-gray-200 dark:bg-gray-700 rounded"></div></td>
+              <td className="py-3 px-4"><div className="h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded"></div></td>
+              <td className="py-3 px-4"><div className="h-6 w-20 bg-gray-300 dark:bg-gray-600 rounded"></div></td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
 
   return (
     <AdminLayout>
@@ -108,36 +143,36 @@ const AdminCommentairesPage: React.FC = () => {
           <MessageSquare className="h-6 w-6 mr-2" /> Gestion des Commentaires
         </h1>
 
+        <div className="mb-6 flex flex-col sm:flex-row gap-4 items-center justify-between">
+          <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+            <div className="relative w-full sm:w-64">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={handleSearch}
+                placeholder="Rechercher par texte..."
+                className="w-full pl-10 pr-4 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightBg dark:bg-darkBg text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-soft-green dark:focus:ring-dark-soft-green"
+              />
+            </div>
+            <select
+              value={filterStatus}
+              onChange={handleFilterStatus}
+              className="px-4 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightBg dark:bg-darkBg text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-soft-green dark:focus:ring-dark-soft-green"
+            >
+              <option value="all">Tous les statuts</option>
+              <option value="active">Actifs</option>
+              <option value="inactive">Inactifs</option>
+            </select>
+          </div>
+        </div>
+
         {loading ? (
-          <div className="text-center py-16 text-lightText dark:text-darkText">Chargement...</div>
+          renderCommentairesPlaceholder()
         ) : error ? (
-          <div className="text-center py-16 text-red-500">{error}</div>
+          <div className="text-center py-8 text-red-500">{error}</div>
         ) : (
           <>
-            <div className="mb-6 flex flex-col sm:flex-row gap-4 items-center justify-between">
-              <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
-                <div className="relative w-full sm:w-64">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={handleSearch}
-                    placeholder="Rechercher par texte..."
-                    className="w-full pl-10 pr-4 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightBg dark:bg-darkBg text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <select
-                  value={filterStatus}
-                  onChange={handleFilterStatus}
-                  className="px-4 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightBg dark:bg-darkBg text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="all">Tous les statuts</option>
-                  <option value="active">Actifs</option>
-                  <option value="inactive">Inactifs</option>
-                </select>
-              </div>
-            </div>
-
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
                 <thead className="bg-lightCard dark:bg-darkCard">
@@ -152,45 +187,49 @@ const AdminCommentairesPage: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {commentaires.map((commentaire) => (
-                    <tr
-                      key={commentaire.id}
-                      className="border-b border-lightBorder dark:border-darkBorder hover:bg-gray-100 dark:hover:bg-gray-700"
-                    >
-                      <td className="py-3 px-4 text-gray-700 dark:text-gray-300">{commentaire.id}</td>
-                      <td className="py-3 px-4 text-gray-700 dark:text-gray-300">{commentaire.article}</td>
-                      <td className="py-3 px-4 text-gray-700 dark:text-gray-300">{commentaire.client}</td>
-                      <td className="py-3 px-4 text-gray-700 dark:text-gray-300 truncate max-w-xs">
-                        {commentaire.texte}
-                      </td>
-                      <td className="py-3 px-4 text-gray-700 dark:text-gray-300">
-                        {new Date(commentaire.date).toLocaleDateString()}
-                      </td>
-                      <td className="py-3 px-4">
-                        <span
-                          className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                            commentaire.is_active
-                              ? theme === "light"
-                                ? "bg-green-100 text-green-800"
-                                : "bg-green-900 text-green-200"
-                              : theme === "light"
-                              ? "bg-red-100 text-red-800"
-                              : "bg-red-900 text-red-200"
-                          }`}
-                        >
-                          {commentaire.is_active ? "Actif" : "Inactif"}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4">
-                        <ButtonPrimary
-                          onClick={() => openEditModal(commentaire)}
-                          className="px-2 py-1 bg-blue-500 text-white hover:bg-blue-600 flex items-center text-sm"
-                        >
-                          <Edit className="h-4 w-4 mr-1" /> Modifier
-                        </ButtonPrimary>
+                  {commentaires.length > 0 ? (
+                    commentaires.map((commentaire) => (
+                      <tr
+                        key={commentaire.id}
+                        className="border-b border-lightBorder dark:border-darkBorder hover:bg-gray-100 dark:hover:bg-gray-700"
+                      >
+                        <td className="py-3 px-4 text-gray-700 dark:text-gray-300">{commentaire.id}</td>
+                        <td className="py-3 px-4 text-gray-700 dark:text-gray-300">{commentaire.article}</td>
+                        <td className="py-3 px-4 text-gray-700 dark:text-gray-300">{commentaire.client}</td>
+                        <td className="py-3 px-4 text-gray-700 dark:text-gray-300 truncate max-w-xs">
+                          {commentaire.texte}
+                        </td>
+                        <td className="py-3 px-4 text-gray-700 dark:text-gray-300">
+                          {new Date(commentaire.date).toLocaleDateString()}
+                        </td>
+                        <td className="py-3 px-4">
+                          <span
+                            className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                              commentaire.is_active
+                                ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                                : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+                            }`}
+                          >
+                            {commentaire.is_active ? "Actif" : "Inactif"}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4">
+                          <ButtonPrimary
+                            onClick={() => openEditModal(commentaire)}
+                            className="px-2 py-1 bg-blue-500 text-white hover:bg-blue-600 flex items-center text-sm"
+                          >
+                            <Edit className="h-4 w-4 mr-1" /> Modifier
+                          </ButtonPrimary>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={7} className="py-3 px-4 text-center text-gray-700 dark:text-gray-300">
+                        Aucun commentaire trouvé.
                       </td>
                     </tr>
-                  ))}
+                  )}
                 </tbody>
               </table>
             </div>
@@ -198,99 +237,77 @@ const AdminCommentairesPage: React.FC = () => {
             <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
               <p className="text-sm text-gray-700 dark:text-gray-300">
                 Affichage de {(currentPage - 1) * commentairesPerPage + 1} à{" "}
-                {Math.min(currentPage * commentairesPerPage, totalCommentaires)} sur {totalCommentaires}{" "}
-                commentaires
+                {Math.min(currentPage * commentairesPerPage, totalCommentaires)} sur {totalCommentaires} commentaires
               </p>
               <div className="flex gap-2">
                 <ButtonPrimary
                   onClick={handlePrevPage}
                   disabled={currentPage === 1}
-                  className={`px-3 py-2 ${
-                    theme === "light"
-                      ? "bg-lightCard text-gray-700 hover:bg-gray-300"
-                      : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-                  } disabled:opacity-50 flex items-center`}
+                  className="px-3 py-2 bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 flex items-center"
                 >
                   <ChevronLeft className="h-5 w-5 mr-1" /> Précédent
                 </ButtonPrimary>
                 <ButtonPrimary
                   onClick={handleNextPage}
                   disabled={currentPage === totalPages}
-                  className={`px-3 py-2 ${
-                    theme === "light"
-                      ? "bg-lightCard text-gray-700 hover:bg-gray-300"
-                      : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-                  } disabled:opacity-50 flex items-center`}
+                  className="px-3 py-2 bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 flex items-center"
                 >
                   Suivant <ChevronRight className="h-5 w-5 ml-1" />
                 </ButtonPrimary>
               </div>
             </div>
-
-            {isEditModalOpen && selectedCommentaire && (
-              <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-                <div
-                  className={`p-6 rounded-lg shadow-lg w-full max-w-md ${
-                    theme === "light" ? "bg-lightBg" : "bg-darkBg"
-                  }`}
-                >
-                  <h2 className="text-xl font-medium text-lightText dark:text-darkText mb-4 flex items-center">
-                    <Edit className="h-5 w-5 mr-2" /> Modifier le commentaire
-                  </h2>
-                  <form onSubmit={handleEditCommentaire} className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">
-                        Texte
-                      </label>
-                      <textarea
-                        value={editCommentaire.texte}
-                        onChange={(e) => setEditCommentaire({ ...editCommentaire, texte: e.target.value })}
-                        className={`w-full px-3 py-2 border ${
-                          theme === "light" ? "border-lightBorder" : "border-darkBorder"
-                        } rounded-lg ${
-                          theme === "light" ? "bg-lightCard" : "bg-darkCard"
-                        } text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                        rows={3}
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">
-                        Actif
-                      </label>
-                      <input
-                        type="checkbox"
-                        checked={editCommentaire.is_active}
-                        onChange={(e) => setEditCommentaire({ ...editCommentaire, is_active: e.target.checked })}
-                        className={`h-5 w-5 text-blue-500 focus:ring-blue-500 ${
-                          theme === "light" ? "border-lightBorder" : "border-darkBorder"
-                        } rounded`}
-                      />
-                    </div>
-                    <div className="flex gap-2 justify-end">
-                      <ButtonPrimary
-                        type="button"
-                        onClick={closeEditModal}
-                        className={`px-4 py-2 ${
-                          theme === "light"
-                            ? "bg-lightCard text-gray-700 hover:bg-gray-300"
-                            : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-                        }`}
-                      >
-                        Annuler
-                      </ButtonPrimary>
-                      <ButtonPrimary
-                        type="submit"
-                        className="px-4 py-2 bg-blue-500 text-white hover:bg-blue-600"
-                      >
-                        Enregistrer
-                      </ButtonPrimary>
-                    </div>
-                  </form>
-                </div>
-              </div>
-            )}
           </>
+        )}
+
+        {/* Modal pour modifier un commentaire */}
+        {isEditModalOpen && selectedCommentaire && (
+          <ModalContainer
+            isOpen={isEditModalOpen}
+            onClose={closeEditModal}
+            title={`Modifier le Commentaire #${selectedCommentaire.id}`}
+            size="md"
+          >
+            <ModalBody>
+              <form onSubmit={handleEditCommentaire} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">Texte</label>
+                  <textarea
+                    value={editCommentaire.texte}
+                    onChange={(e) => setEditCommentaire({ ...editCommentaire, texte: e.target.value })}
+                    className="w-full px-3 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightBg dark:bg-darkBg text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-soft-green dark:focus:ring-dark-soft-green"
+                    rows={3}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="flex items-center text-sm font-medium text-lightText dark:text-darkText mb-1">
+                    <input
+                      type="checkbox"
+                      checked={editCommentaire.is_active}
+                      onChange={(e) => setEditCommentaire({ ...editCommentaire, is_active: e.target.checked })}
+                      className="h-5 w-5 text-soft-green dark:text-dark-soft-green focus:ring-soft-green dark:focus:ring-dark-soft-green border-lightBorder dark:border-darkBorder rounded mr-2"
+                    />
+                    Actif
+                  </label>
+                </div>
+                <ModalFooter>
+                  <ButtonPrimary
+                    type="button"
+                    onClick={closeEditModal}
+                    className="px-4 py-2 bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText hover:bg-gray-300 dark:hover:bg-gray-600"
+                  >
+                    Annuler
+                  </ButtonPrimary>
+                  <ButtonPrimary
+                    type="submit"
+                    className="px-4 py-2 bg-blue-500 text-white hover:bg-blue-600"
+                  >
+                    Enregistrer
+                  </ButtonPrimary>
+                </ModalFooter>
+              </form>
+            </ModalBody>
+          </ModalContainer>
         )}
       </div>
     </AdminLayout>
