@@ -401,6 +401,8 @@ export default function HomePage() {
     fetchArticles()
     fetchPromotions()
 
+    console.log(articles)
+
     return () => {
       controller.abort()
     }
