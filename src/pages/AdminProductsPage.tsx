@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from "react";
-import api from "../services/api";
+import React, { useState, useEffect, useContext } from "react";import api from "../services/api";
 import AdminLayout from "../components/AdminLayout";
 import ButtonPrimary from "../components/ButtonPrimary";
 import { Package, Search, Edit, Trash2, PlusCircle, Eye, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { ModalContainer, ModalBody, ModalFooter } from "../components/ModalContainer";
+import { ThemeContext } from "../components/AdminLayout";
 
 interface Photo {
   id: string;
@@ -45,6 +45,7 @@ const Spinner = () => (
 );
 
 const AdminProductsPage: React.FC = () => {
+  const theme = useContext(ThemeContext);
   const [products, setProducts] = useState<Product[]>([]);
   const [totalProducts, setTotalProducts] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
@@ -483,7 +484,13 @@ const AdminProductsPage: React.FC = () => {
         )}
 
         {/* Modal pour ajouter un produit */}
-        <ModalContainer isOpen={isAddModalOpen} onClose={closeAddModal} title="Ajouter un produit" size="md">
+        <ModalContainer
+          isOpen={isAddModalOpen}
+          onClose={closeAddModal}
+          title="Ajouter un produit"
+          size="md"
+          theme={theme}
+        >          
           <ModalBody>
             <form onSubmit={handleAddProduct} className="space-y-4">
               <div>
@@ -621,7 +628,7 @@ const AdminProductsPage: React.FC = () => {
         </ModalContainer>
 
         {/* Modal pour modifier un produit */}
-        <ModalContainer isOpen={isEditModalOpen} onClose={closeEditModal} title="Modifier le produit" size="md">
+        <ModalContainer isOpen={isEditModalOpen} onClose={closeEditModal} title="Modifier le produit" size="md" theme={theme}>
           {selectedProduct && (
             <>
               <ModalBody>
@@ -763,7 +770,7 @@ const AdminProductsPage: React.FC = () => {
         </ModalContainer>
 
         {/* Modal pour supprimer un produit */}
-        <ModalContainer isOpen={isDeleteModalOpen} onClose={closeDeleteModal} title="Supprimer le produit" size="sm">
+        <ModalContainer isOpen={isDeleteModalOpen} onClose={closeDeleteModal} title="Supprimer le produit" size="sm" theme={theme}>
           {selectedProduct && (
             <>
               <ModalBody>
@@ -791,7 +798,7 @@ const AdminProductsPage: React.FC = () => {
         </ModalContainer>
 
         {/* Modal pour voir les détails */}
-        <ModalContainer isOpen={isDetailsModalOpen} onClose={closeDetailsModal} title="Détails du produit" size="lg">
+        <ModalContainer isOpen={isDetailsModalOpen} onClose={closeDetailsModal} title="Détails du produit" size="lg" theme={theme}>
           {selectedProduct && (
             <>
               <ModalBody>

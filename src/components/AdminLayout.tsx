@@ -1,9 +1,11 @@
 "use client";
 
-import React, { useState, useEffect, Suspense, useCallback } from "react";
-// import { useLocation } from "react-router-dom";
+import React, { createContext, useContext, useState, useEffect, useCallback, Suspense } from "react";
 import AdminSidebar from "../components/AdminSidebar";
 import { Sun, Moon } from "lucide-react";
+
+// Création du ThemeContext
+export const ThemeContext = createContext<"light" | "dark">("light");
 
 const applyTheme = () => {
   const isDark = localStorage.getItem("theme") === "dark" || (!localStorage.getItem("theme") && window.matchMedia("(prefers-color-scheme: dark)").matches);
@@ -19,7 +21,6 @@ const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   });
   const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 768);
   const [isDarkMode, setIsDarkMode] = useState(applyTheme);
-  // const location = useLocation();
 
   const toggleSidebar = useCallback(() => {
     setIsSidebarOpen((prev: boolean) => {
@@ -57,54 +58,54 @@ const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   }, []);
 
   const contentMargin = isSidebarOpen ? "ml-[250px]" : isDesktop ? "ml-[80px]" : "ml-[60px]";
+  const theme = isDarkMode ? "dark" : "light"; // Thème dérivé de isDarkMode
 
   return (
-    <div className="flex min-h-screen">
-      {/* Sidebar rendue indépendamment du Suspense */}
-      <div
-        className={`fixed top-0 left-0 h-full transition-transform duration-300 ease-in-out z-50 ${
-          isSidebarOpen ? "translate-x-0" : "-translate-x-full"
-        } md:translate-x-0`}
-        aria-hidden={!isSidebarOpen && !isDesktop}
-      >
-        <AdminSidebar isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
-      </div>
-
-      {/* Contenu principal avec Suspense */}
-      <div className="flex-1 w-full transition-all duration-300">
-        <div className={`min-h-screen ${contentMargin} transition-all duration-300 bg-lightBg dark:bg-darkBg`}>
-          <header className="flex justify-end p-4">
-            <button
-              onClick={toggleDarkMode}
-              className="p-2 rounded-full bg-cream-beige dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600"
-              aria-label={isDarkMode ? "Passer au mode clair" : "Passer au mode sombre"}
-            >
-              {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
-            </button>
-          </header>
-          <main className="px-4 pb-6">
-            <Suspense
-              fallback={
-                <div className="flex items-center justify-center min-h-[calc(100vh-64px)]">
-                  <Spinner />
-                </div>
-              }
-            >
-              {children}
-            </Suspense>
-          </main>
-        </div>
-      </div>
-
-      {/* Overlay pour mobile */}
-      {isSidebarOpen && !isDesktop && (
+    <ThemeContext.Provider value={theme}>
+      <div className="flex min-h-screen">
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-40"
-          onClick={toggleSidebar}
-          aria-label="Fermer la barre latérale"
-        />
-      )}
-    </div>
+          className={`fixed top-0 left-0 h-full transition-transform duration-300 ease-in-out z-50 ${
+            isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+          } md:translate-x-0`}
+          aria-hidden={!isSidebarOpen && !isDesktop}
+        >
+          <AdminSidebar isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
+        </div>
+
+        <div className="flex-1 w-full transition-all duration-300">
+          <div className={`min-h-screen ${contentMargin} transition-all duration-300 bg-lightBg dark:bg-darkBg`}>
+            <header className="flex justify-end p-4">
+              <button
+                onClick={toggleDarkMode}
+                className="p-2 rounded-full bg-cream-beige dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600"
+                aria-label={isDarkMode ? "Passer au mode clair" : "Passer au mode sombre"}
+              >
+                {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
+              </button>
+            </header>
+            <main className="px-4 pb-6">
+              <Suspense
+                fallback={
+                  <div className="flex items-center justify-center min-h-[calc(100vh-64px)]">
+                    <Spinner />
+                  </div>
+                }
+              >
+                {children}
+              </Suspense>
+            </main>
+          </div>
+        </div>
+
+        {isSidebarOpen && !isDesktop && (
+          <div
+            className="fixed inset-0 bg-black bg-opacity-50 z-40"
+            onClick={toggleSidebar}
+            aria-label="Fermer la barre latérale"
+          />
+        )}
+      </div>
+    </ThemeContext.Provider>
   );
 };
 
@@ -113,3 +114,6 @@ const Spinner = () => (
 );
 
 export default AdminLayout;
+
+// Hook utilitaire pour accéder au thème
+export const useTheme = () => useContext(ThemeContext);

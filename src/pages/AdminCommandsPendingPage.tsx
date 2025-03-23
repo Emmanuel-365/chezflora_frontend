@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import api from "../services/api";
 import AdminLayout from "../components/AdminLayout";
 import ButtonPrimary from "../components/ButtonPrimary";
 import { ShoppingCart, Search, Eye, XCircle, ChevronLeft, ChevronRight } from "lucide-react";
 import { ModalContainer, ModalBody, ModalFooter } from "../components/ModalContainer";
+import { ThemeContext } from "../components/AdminLayout"; // Import du contexte
 
 interface Commande {
   id: string;
@@ -27,6 +28,7 @@ const Spinner = () => (
 );
 
 const AdminCommandsPendingPage: React.FC = () => {
+  const theme = useContext(ThemeContext); // Utilisation du contexte
   const [commands, setCommands] = useState<Commande[]>([]);
   const [totalCommands, setTotalCommands] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
@@ -37,14 +39,10 @@ const AdminCommandsPendingPage: React.FC = () => {
   const [selectedCommand, setSelectedCommand] = useState<Commande | null>(null);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
-  const [theme, setTheme] = useState<"light" | "dark">("light"); // Exemple : thème dynamique
   const commandsPerPage = 10;
 
   useEffect(() => {
     fetchPendingCommands();
-    // Exemple : détecter le thème actuel (à adapter selon ton système de thème)
-    const currentTheme = document.documentElement.classList.contains("dark") ? "dark" : "light";
-    setTheme(currentTheme);
   }, [currentPage, searchQuery]);
 
   const fetchPendingCommands = async () => {
