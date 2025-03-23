@@ -3,7 +3,7 @@ import api from "../services/api";
 import AdminLayout, { ThemeContext } from "../components/AdminLayout";
 import ButtonPrimary from "../components/ButtonPrimary";
 import { Wrench, Search, Edit, Trash2, PlusCircle, ChevronLeft, ChevronRight } from "lucide-react";
-import { ModalContainer, ModalHeader, ModalBody, ModalFooter } from "../components/ModalContainer";
+import { ModalContainer, ModalBody, ModalFooter } from "../components/ModalContainer";
 
 interface Service {
   id: string;
