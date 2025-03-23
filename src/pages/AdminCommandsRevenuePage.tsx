@@ -1,21 +1,21 @@
-import React, { useState, useEffect } from 'react';
-import api from '../services/api';
-import AdminLayout from '../components/AdminLayout';
-import ButtonPrimary from '../components/ButtonPrimary';
-import { Bar, Line } from 'react-chartjs-2';
-import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, LineElement, PointElement, Title, Tooltip, Legend } from 'chart.js';
-import { DollarSign } from 'lucide-react';
+import React, { useState, useEffect, useContext } from "react";
+import api from "../services/api";
+import AdminLayout, { ThemeContext } from "../components/AdminLayout"; // Import du ThemeContext
+import ButtonPrimary from "../components/ButtonPrimary";
+import { Bar, Line } from "react-chartjs-2";
+import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, LineElement, PointElement, Title, Tooltip, Legend } from "chart.js";
+import { DollarSign } from "lucide-react";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, Title, Tooltip, Legend);
 
 interface RevenueData {
   total_revenue: string;
-  revenue_by_day: { date: string; total: string }[]; // 'date' reste correct car c’est la clé renvoyée dans la réponse
+  revenue_by_day: { date: string; total: string }[];
   revenue_by_status: { statut: string; total: string }[];
 }
 
 const AdminCommandsRevenuePage: React.FC = () => {
-  
+  const theme = useContext(ThemeContext); // Récupération du thème via le contexte
   const [revenueData, setRevenueData] = useState<RevenueData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -28,12 +28,12 @@ const AdminCommandsRevenuePage: React.FC = () => {
   const fetchRevenueData = async () => {
     setLoading(true);
     try {
-      const response = await api.get('/commandes/revenue/', { params: { days: daysFilter } });
+      const response = await api.get("/commandes/revenue/", { params: { days: daysFilter } });
       setRevenueData(response.data);
       setLoading(false);
     } catch (err: any) {
-      console.error('Erreur lors du chargement des données de revenus:', err.response?.data);
-      setError('Erreur lors du chargement des données de revenus.');
+      console.error("Erreur lors du chargement des données de revenus:", err.response?.data);
+      setError("Erreur lors du chargement des données de revenus.");
       setLoading(false);
     }
   };
@@ -42,14 +42,15 @@ const AdminCommandsRevenuePage: React.FC = () => {
     setDaysFilter(days);
   };
 
+  // Adaptation des couleurs des graphiques en fonction du thème
   const revenueByDayChartData = {
     labels: revenueData ? revenueData.revenue_by_day.map((item) => item.date) : [],
     datasets: [
       {
-        label: 'Revenus par jour (FCFA)',
+        label: "Revenus par jour (FCFA)",
         data: revenueData ? revenueData.revenue_by_day.map((item) => parseFloat(item.total)) : [],
-        borderColor: '#4CAF50',
-        backgroundColor: 'rgba(76, 175, 80, 0.2)',
+        borderColor: theme === "light" ? "#4CAF50" : "#8CC7A1", // Vert clair en mode sombre
+        backgroundColor: theme === "light" ? "rgba(76, 175, 80, 0.2)" : "rgba(140, 199, 161, 0.2)",
         fill: true,
       },
     ],
@@ -59,9 +60,9 @@ const AdminCommandsRevenuePage: React.FC = () => {
     labels: revenueData ? revenueData.revenue_by_status.map((item) => item.statut) : [],
     datasets: [
       {
-        label: 'Revenus par statut (FCFA)',
+        label: "Revenus par statut (FCFA)",
         data: revenueData ? revenueData.revenue_by_status.map((item) => parseFloat(item.total)) : [],
-        backgroundColor: '#2196F3',
+        backgroundColor: theme === "light" ? "#2196F3" : "#A8D5BA", // Bleu clair -> Vert clair en mode sombre
       },
     ],
   };
@@ -69,15 +70,30 @@ const AdminCommandsRevenuePage: React.FC = () => {
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
-    plugins: { legend: { position: 'top' as const }, title: { display: true, text: '' } },
+    plugins: {
+      legend: { position: "top" as const },
+      title: { display: true, text: "" },
+    },
+    scales: {
+      x: { ticks: { color: theme === "light" ? "#374151" : "#D1D5DB" } }, // Gris foncé clair / Gris clair sombre
+      y: { ticks: { color: theme === "light" ? "#374151" : "#D1D5DB" } },
+    },
   };
 
   if (loading) {
-    return <div className="text-center py-16 text-lightText dark:text-darkText">Chargement...</div>;
+    return (
+      <AdminLayout>
+        <div className="text-center py-16 text-lightText dark:text-darkText">Chargement...</div>
+      </AdminLayout>
+    );
   }
 
   if (error) {
-    return <div className="text-center py-16 text-red-500">{error}</div>;
+    return (
+      <AdminLayout>
+        <div className="text-center py-16 text-red-500">{error}</div>
+      </AdminLayout>
+    );
   }
 
   return (
@@ -90,19 +106,37 @@ const AdminCommandsRevenuePage: React.FC = () => {
         <div className="mb-6 flex flex-wrap gap-2">
           <ButtonPrimary
             onClick={() => handleFilterChange(7)}
-            className={`px-4 py-2 text-sm sm:text-base ${daysFilter === 7 ? 'bg-blue-500 text-white' : 'bg-lightCard dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600'}`}
+            className={`px-4 py-2 text-sm sm:text-base ${
+              daysFilter === 7
+                ? "bg-blue-500 text-white"
+                : theme === "light"
+                ? "bg-lightCard hover:bg-gray-300"
+                : "bg-gray-700 hover:bg-gray-600 text-gray-300"
+            }`}
           >
             7 jours
           </ButtonPrimary>
           <ButtonPrimary
             onClick={() => handleFilterChange(30)}
-            className={`px-4 py-2 text-sm sm:text-base ${daysFilter === 30 ? 'bg-blue-500 text-white' : 'bg-lightCard dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600'}`}
+            className={`px-4 py-2 text-sm sm:text-base ${
+              daysFilter === 30
+                ? "bg-blue-500 text-white"
+                : theme === "light"
+                ? "bg-lightCard hover:bg-gray-300"
+                : "bg-gray-700 hover:bg-gray-600 text-gray-300"
+            }`}
           >
             30 jours
           </ButtonPrimary>
           <ButtonPrimary
             onClick={() => handleFilterChange(90)}
-            className={`px-4 py-2 text-sm sm:text-base ${daysFilter === 90 ? 'bg-blue-500 text-white' : 'bg-lightCard dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600'}`}
+            className={`px-4 py-2 text-sm sm:text-base ${
+              daysFilter === 90
+                ? "bg-blue-500 text-white"
+                : theme === "light"
+                ? "bg-lightCard hover:bg-gray-300"
+                : "bg-gray-700 hover:bg-gray-600 text-gray-300"
+            }`}
           >
             90 jours
           </ButtonPrimary>
@@ -133,7 +167,7 @@ const AdminCommandsRevenuePage: React.FC = () => {
             <div className="h-48 sm:h-64">
               <Bar
                 data={revenueByStatusChartData}
-                options={{ ...chartOptions, plugins: { ...chartOptions.plugins, title: { text: 'Répartition par statut' } } }}
+                options={{ ...chartOptions, plugins: { ...chartOptions.plugins, title: { text: "Répartition par statut" } } }}
               />
             </div>
           </div>
