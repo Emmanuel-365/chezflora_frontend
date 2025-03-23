@@ -1,8 +1,11 @@
+"use client";
+
 import React, { useState, useEffect } from "react";
 import api from "../services/api";
 import AdminLayout from "../components/AdminLayout";
 import ButtonPrimary from "../components/ButtonPrimary";
 import { ShoppingBag, Search, Eye, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
+import { ModalContainer, ModalBody, ModalFooter } from "../components/ModalContainer";
 
 interface Panier {
   id: string;
@@ -16,10 +19,6 @@ interface ApiResponse {
   next: string | null;
   previous: string | null;
 }
-
-const Spinner = () => (
-  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500" aria-label="Chargement en cours" />
-);
 
 const AdminCartsPage: React.FC = () => {
   const [carts, setCarts] = useState<Panier[]>([]);
@@ -56,7 +55,7 @@ const AdminCartsPage: React.FC = () => {
     } catch (err: any) {
       console.error("Erreur lors du chargement des paniers:", err.response?.data);
       setError("Erreur lors du chargement des paniers.");
-      setCarts([]); // Réinitialiser à un tableau vide en cas d'erreur
+      setCarts([]);
       setLoading(false);
     }
   };
@@ -98,7 +97,7 @@ const AdminCartsPage: React.FC = () => {
     if (!selectedCart) return;
     try {
       await api.delete(`/paniers/${selectedCart.id}/`);
-      setIsDeleteModalOpen(false);
+      closeDeleteModal();
       fetchCarts();
     } catch (err: any) {
       console.error("Erreur lors de la suppression du panier:", err.response?.data);
@@ -106,14 +105,40 @@ const AdminCartsPage: React.FC = () => {
     }
   };
 
+  const renderCartsPlaceholder = () => (
+    <div className="overflow-x-auto">
+      <table className="w-full text-left text-sm">
+        <thead className="bg-lightCard dark:bg-darkCard">
+          <tr className="border-b border-lightBorder dark:border-darkBorder">
+            {["ID", "Utilisateur", "Email", "Nb Articles", "Total", "Actions"].map((header) => (
+              <th key={header} className="py-3 px-4">
+                <div className="h-4 w-16 bg-gray-300 dark:bg-gray-600 rounded"></div>
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {Array.from({ length: 5 }).map((_, index) => (
+            <tr key={index} className="border-b border-lightBorder dark:border-darkBorder animate-pulse">
+              <td className="py-3 px-4"><div className="h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded"></div></td>
+              <td className="py-3 px-4"><div className="h-4 w-32 bg-gray-200 dark:bg-gray-700 rounded"></div></td>
+              <td className="py-3 px-4"><div className="h-4 w-40 bg-gray-200 dark:bg-gray-700 rounded"></div></td>
+              <td className="py-3 px-4"><div className="h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded"></div></td>
+              <td className="py-3 px-4"><div className="h-4 w-20 bg-gray-200 dark:bg-gray-700 rounded"></div></td>
+              <td className="py-3 px-4"><div className="h-6 w-24 bg-gray-300 dark:bg-gray-600 rounded"></div></td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+
   return (
     <AdminLayout>
       <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-        <h1 className="text-2xl sm:text-3xl font-serif font-medium text-lightText dark:text-darkText mb-4 sm:mb-6 flex items-center">
+        <h1 className="text-2xl sm:text-3xl font-serif font-medium text-lightText dark:text-darkText mb-6 flex items-center">
           <ShoppingBag className="h-6 w-6 mr-2" /> Gestion des Paniers
         </h1>
-
-        {error && <div className="text-center py-4 text-red-500">{error}</div>}
 
         <div className="mb-6 flex flex-col sm:flex-row gap-4 items-center justify-between">
           <div className="relative w-full sm:w-64">
@@ -129,9 +154,9 @@ const AdminCartsPage: React.FC = () => {
         </div>
 
         {loading ? (
-          <div className="flex justify-center py-4">
-            <Spinner />
-          </div>
+          renderCartsPlaceholder()
+        ) : error ? (
+          <div className="text-center py-8 text-red-500">{error}</div>
         ) : (
           <>
             <div className="overflow-x-auto">
@@ -147,9 +172,12 @@ const AdminCartsPage: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {Array.isArray(carts) && carts.length > 0 ? (
+                  {carts.length > 0 ? (
                     carts.map((cart) => {
-                      const total = cart.items.reduce((sum, item) => sum + parseFloat(item.produit.prix) * item.quantite, 0);
+                      const total = cart.items.reduce(
+                        (sum, item) => sum + parseFloat(item.produit.prix) * item.quantite,
+                        0
+                      );
                       return (
                         <tr
                           key={cart.id}
@@ -190,21 +218,21 @@ const AdminCartsPage: React.FC = () => {
 
             <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
               <p className="text-sm text-gray-700 dark:text-gray-300">
-                Affichage de {(currentPage - 1) * cartsPerPage + 1} à {Math.min(currentPage * cartsPerPage, totalCarts)} sur {totalCarts}{" "}
-                paniers
+                Affichage de {(currentPage - 1) * cartsPerPage + 1} à{" "}
+                {Math.min(currentPage * cartsPerPage, totalCarts)} sur {totalCarts} paniers
               </p>
               <div className="flex gap-2">
                 <ButtonPrimary
                   onClick={handlePrevPage}
                   disabled={currentPage === 1}
-                  className="px-3 py-2 bg-lightCard dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 flex items-center"
+                  className="px-3 py-2 bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 flex items-center"
                 >
                   <ChevronLeft className="h-5 w-5 mr-1" /> Précédent
                 </ButtonPrimary>
                 <ButtonPrimary
                   onClick={handleNextPage}
                   disabled={currentPage === totalPages}
-                  className="px-3 py-2 bg-lightCard dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 flex items-center"
+                  className="px-3 py-2 bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 flex items-center"
                 >
                   Suivant <ChevronRight className="h-5 w-5 ml-1" />
                 </ButtonPrimary>
@@ -213,12 +241,15 @@ const AdminCartsPage: React.FC = () => {
           </>
         )}
 
+        {/* Modal des détails */}
         {isDetailsModalOpen && selectedCart && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-            <div className="bg-lightBg dark:bg-darkBg p-6 rounded-lg shadow-lg w-full max-w-2xl">
-              <h2 className="text-xl font-medium text-lightText dark:text-darkText mb-4 flex items-center">
-                <Eye className="h-5 w-5 mr-2" /> Détails du Panier de {selectedCart.client.username}
-              </h2>
+          <ModalContainer
+            isOpen={isDetailsModalOpen}
+            onClose={closeDetailsModal}
+            title={`Détails du Panier de ${selectedCart.client.username}`}
+            size="lg"
+          >
+            <ModalBody>
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-sm">
                   <thead className="bg-lightCard dark:bg-darkCard">
@@ -245,41 +276,39 @@ const AdminCartsPage: React.FC = () => {
                   </tbody>
                 </table>
               </div>
-              <div className="mt-4 flex justify-end">
+              <ModalFooter>
                 <ButtonPrimary
                   onClick={closeDetailsModal}
-                  className="px-4 py-2 bg-lightCard dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600"
+                  className="px-4 py-2 bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText hover:bg-gray-300 dark:hover:bg-gray-600"
                 >
                   Fermer
                 </ButtonPrimary>
-              </div>
-            </div>
-          </div>
+              </ModalFooter>
+            </ModalBody>
+          </ModalContainer>
         )}
 
+        {/* Modal de suppression */}
         {isDeleteModalOpen && selectedCart && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-            <div className="bg-lightBg dark:bg-darkBg p-6 rounded-lg shadow-lg w-full max-w-md">
-              <h2 className="text-xl font-medium text-lightText dark:text-darkText mb-4 flex items-center">
-                <Trash2 className="h-5 w-5 mr-2" /> Supprimer le Panier
-              </h2>
+          <ModalContainer isOpen={isDeleteModalOpen} onClose={closeDeleteModal} title="Supprimer le Panier" size="md">
+            <ModalBody>
               <p className="text-gray-700 dark:text-gray-300 mb-4">
                 Êtes-vous sûr de vouloir supprimer le panier de{" "}
                 <span className="font-medium">{selectedCart.client.email}</span> ?
               </p>
-              <div className="flex gap-2 justify-end">
+              <ModalFooter>
                 <ButtonPrimary
                   onClick={closeDeleteModal}
-                  className="px-4 py-2 bg-lightCard dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600"
+                  className="px-4 py-2 bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText hover:bg-gray-300 dark:hover:bg-gray-600"
                 >
                   Annuler
                 </ButtonPrimary>
                 <ButtonPrimary onClick={handleDeleteCart} className="px-4 py-2 bg-red-500 text-white hover:bg-red-600">
                   Supprimer
                 </ButtonPrimary>
-              </div>
-            </div>
-          </div>
+              </ModalFooter>
+            </ModalBody>
+          </ModalContainer>
         )}
       </div>
     </AdminLayout>
