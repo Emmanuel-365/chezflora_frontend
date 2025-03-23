@@ -1,51 +1,58 @@
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { LogIn, Eye, EyeOff, Flower } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import TextFieldCustom from './TextFieldCustom';
-import ButtonPrimary from './ButtonPrimary';
-import AuthForgotPasswordLink from './AuthForgotPasswordLink';
-import { login, getUserProfile } from '../services/api';
+import React, { useState } from "react";
+import { motion } from "framer-motion";
+import { LogIn, Eye, EyeOff, Flower } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import TextFieldCustom from "./TextFieldCustom";
+import ButtonPrimary from "./ButtonPrimary";
+import AuthForgotPasswordLink from "./AuthForgotPasswordLink";
+import { getUserProfile } from "../services/api";
+import { useAuth } from "../contexts/AuthContext"; // Importe useAuth pour synchroniser
 
 interface AuthLoginFormProps {
   className?: string;
 }
 
-const AuthLoginForm: React.FC<AuthLoginFormProps> = ({ className = '' }) => {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+const AuthLoginForm: React.FC<AuthLoginFormProps> = ({ className = "" }) => {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [formError, setFormError] = useState<string>('');
-  
+  const [formError, setFormError] = useState<string>("");
+
   const navigate = useNavigate();
+  const { loginUser } = useAuth(); // Utilise la fonction loginUser de AuthProvider
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!username.trim() || !password.trim()) {
-      setFormError('Veuillez remplir tous les champs');
+      setFormError("Veuillez remplir tous les champs");
       return;
     }
     setIsLoading(true);
-    setFormError('');
+    setFormError("");
+
     try {
-      const response = await login({ username, password });
-      localStorage.setItem('access_token', response.data.access);
-      localStorage.setItem('refresh_token', response.data.refresh)
-      const userRole = (await getUserProfile()).data.role
-      if(userRole == 'admin')
-        navigate('/admin');
-      else
-        navigate('/');
-    } catch (err: any) {
-      if (!err.response) {
-        setFormError('Erreur réseau : impossible de contacter le serveur');
-      } else if (err.response.status === 401 && err.response.data?.detail === 'Utilisateur non actif') {
-        const userId = err.response.data.user_id;
-        localStorage.setItem('pendingUserId', userId);
-        navigate('/otp');
+      // Utilise loginUser de AuthProvider pour gérer la connexion et mettre à jour l'état
+      await loginUser(username, password);
+      const userProfile = await getUserProfile();
+      console.log("Profil récupéré:", userProfile.data); // Log pour vérifier
+      const userRole = userProfile.data.role;
+
+      if (userRole === "admin") {
+        navigate("/admin");
       } else {
-        setFormError(err.response.data?.detail || 'Identifiants incorrects');
+        navigate("/");
+      }
+    } catch (err: any) {
+      console.error("Erreur dans handleSubmit:", err); // Log détaillé
+      if (!err.response) {
+        setFormError("Erreur réseau : impossible de contacter le serveur");
+      } else if (err.response.status === 401 && err.response.data?.detail === "Utilisateur non actif") {
+        const userId = err.response.data.user_id;
+        localStorage.setItem("pendingUserId", userId);
+        navigate("/otp");
+      } else {
+        setFormError(err.response?.data?.detail || "Identifiants incorrects");
       }
     } finally {
       setIsLoading(false);
@@ -70,7 +77,7 @@ const AuthLoginForm: React.FC<AuthLoginFormProps> = ({ className = '' }) => {
         <motion.div
           className="bg-pastel-pink/80 border border-powder-pink rounded-lg p-3 mb-4 text-sm text-soft-brown"
           initial={{ height: 0, opacity: 0 }}
-          animate={{ height: 'auto', opacity: 1 }}
+          animate={{ height: "auto", opacity: 1 }}
           exit={{ height: 0, opacity: 0 }}
         >
           {formError}
@@ -91,7 +98,7 @@ const AuthLoginForm: React.FC<AuthLoginFormProps> = ({ className = '' }) => {
             label="Mot de passe"
             value={password}
             onChange={setPassword}
-            type={showPassword ? 'text' : 'password'}
+            type={showPassword ? "text" : "password"}
             placeholder="Entrez votre mot de passe"
             required
           />
