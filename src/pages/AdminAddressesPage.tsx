@@ -1,8 +1,11 @@
+"use client";
+
 import React, { useState, useEffect } from "react";
 import api from "../services/api";
 import AdminLayout from "../components/AdminLayout";
 import ButtonPrimary from "../components/ButtonPrimary";
 import { MapPin, Search, Edit, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
+import { ModalContainer, ModalBody, ModalFooter } from "../components/ModalContainer";
 
 interface Address {
   id: string;
@@ -24,10 +27,6 @@ interface ApiResponse {
   next: string | null;
   previous: string | null;
 }
-
-const Spinner = () => (
-  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500" aria-label="Chargement en cours" />
-);
 
 const AdminAddressesPage: React.FC = () => {
   const [addresses, setAddresses] = useState<Address[]>([]);
@@ -107,10 +106,9 @@ const AdminAddressesPage: React.FC = () => {
   const handleEditAddress = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedAddress) return;
-
     try {
       await api.put(`/adresses/${selectedAddress.id}/`, editAddress);
-      setIsEditModalOpen(false);
+      closeEditModal();
       fetchAddresses();
     } catch (err: any) {
       console.error("Erreur lors de la mise à jour de l’adresse:", err.response?.data);
@@ -130,10 +128,9 @@ const AdminAddressesPage: React.FC = () => {
 
   const handleDeleteAddress = async () => {
     if (!selectedAddress) return;
-
     try {
       await api.delete(`/adresses/${selectedAddress.id}/`);
-      setIsDeleteModalOpen(false);
+      closeDeleteModal();
       fetchAddresses();
     } catch (err: any) {
       console.error("Erreur lors de la suppression de l’adresse:", err.response?.data);
@@ -141,16 +138,44 @@ const AdminAddressesPage: React.FC = () => {
     }
   };
 
+  const renderAddressesPlaceholder = () => (
+    <div className="overflow-x-auto">
+      <table className="w-full text-left text-sm">
+        <thead className="bg-lightCard dark:bg-darkCard">
+          <tr className="border-b border-lightBorder dark:border-darkBorder">
+            {["ID", "Utilisateur", "Email", "Nom", "Rue", "Ville", "Code Postal", "Pays", "Actions"].map((header) => (
+              <th key={header} className="py-3 px-4">
+                <div className="h-4 w-16 bg-gray-300 dark:bg-gray-600 rounded"></div>
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {Array.from({ length: 5 }).map((_, index) => (
+            <tr key={index} className="border-b border-lightBorder dark:border-darkBorder animate-pulse">
+              <td className="py-3 px-4"><div className="h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded"></div></td>
+              <td className="py-3 px-4"><div className="h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded"></div></td>
+              <td className="py-3 px-4"><div className="h-4 w-32 bg-gray-200 dark:bg-gray-700 rounded"></div></td>
+              <td className="py-3 px-4"><div className="h-4 w-20 bg-gray-200 dark:bg-gray-700 rounded"></div></td>
+              <td className="py-3 px-4"><div className="h-4 w-28 bg-gray-200 dark:bg-gray-700 rounded"></div></td>
+              <td className="py-3 px-4"><div className="h-4 w-20 bg-gray-200 dark:bg-gray-700 rounded"></div></td>
+              <td className="py-3 px-4"><div className="h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded"></div></td>
+              <td className="py-3 px-4"><div className="h-4 w-20 bg-gray-200 dark:bg-gray-700 rounded"></div></td>
+              <td className="py-3 px-4"><div className="h-6 w-24 bg-gray-300 dark:bg-gray-600 rounded"></div></td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+
   return (
     <AdminLayout>
       <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-        <h1 className="text-2xl sm:text-3xl font-serif font-medium text-lightText dark:text-darkText mb-4 sm:mb-6 flex items-center">
+        <h1 className="text-2xl sm:text-3xl font-serif font-medium text-lightText dark:text-darkText mb-6 flex items-center">
           <MapPin className="h-6 w-6 mr-2" /> Gestion des Adresses
         </h1>
 
-        {error && <div className="text-center py-4 text-red-500">{error}</div>}
-
-        {/* Recherche */}
         <div className="mb-6 flex flex-col sm:flex-row gap-4 items-center justify-between">
           <div className="relative w-full sm:w-64">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -158,17 +183,16 @@ const AdminAddressesPage: React.FC = () => {
               type="text"
               value={searchQuery}
               onChange={handleSearch}
-              placeholder="Rechercher par email ou nom d’utilisateur..."
+              placeholder="Rechercher par email ou nom..."
               className="w-full pl-10 pr-4 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightBg dark:bg-darkBg text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
         </div>
 
-        {/* Liste des adresses */}
         {loading ? (
-          <div className="flex justify-center py-4">
-            <Spinner />
-          </div>
+          renderAddressesPlaceholder()
+        ) : error ? (
+          <div className="text-center py-8 text-red-500">{error}</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
@@ -187,7 +211,10 @@ const AdminAddressesPage: React.FC = () => {
               </thead>
               <tbody>
                 {addresses.map((address) => (
-                  <tr key={address.id} className="border-b border-lightBorder dark:border-darkBorder hover:bg-gray-100 dark:hover:bg-gray-700">
+                  <tr
+                    key={address.id}
+                    className="border-b border-lightBorder dark:border-darkBorder hover:bg-gray-100 dark:hover:bg-gray-700"
+                  >
                     <td className="py-3 px-4 text-gray-700 dark:text-gray-300">{address.id}</td>
                     <td className="py-3 px-4 text-gray-700 dark:text-gray-300">{address.client.username}</td>
                     <td className="py-3 px-4 text-gray-700 dark:text-gray-300">{address.client.email}</td>
@@ -217,7 +244,6 @@ const AdminAddressesPage: React.FC = () => {
           </div>
         )}
 
-        {/* Pagination */}
         {!loading && (
           <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
             <p className="text-sm text-gray-700 dark:text-gray-300">
@@ -228,14 +254,14 @@ const AdminAddressesPage: React.FC = () => {
               <ButtonPrimary
                 onClick={handlePrevPage}
                 disabled={currentPage === 1}
-                className="px-3 py-2 bg-lightCard dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 flex items-center"
+                className="px-3 py-2 bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 flex items-center"
               >
                 <ChevronLeft className="h-5 w-5 mr-1" /> Précédent
               </ButtonPrimary>
               <ButtonPrimary
                 onClick={handleNextPage}
                 disabled={currentPage === totalPages}
-                className="px-3 py-2 bg-lightCard dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 flex items-center"
+                className="px-3 py-2 bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 flex items-center"
               >
                 Suivant <ChevronRight className="h-5 w-5 ml-1" />
               </ButtonPrimary>
@@ -243,13 +269,10 @@ const AdminAddressesPage: React.FC = () => {
           </div>
         )}
 
-        {/* Modal pour modifier une adresse */}
+        {/* Modal d'édition */}
         {isEditModalOpen && selectedAddress && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-            <div className="bg-lightBg dark:bg-darkBg p-6 rounded-lg shadow-lg w-full max-w-md">
-              <h2 className="text-xl font-medium text-lightText dark:text-darkText mb-4 flex items-center">
-                <Edit className="h-5 w-5 mr-2" /> Modifier l’adresse
-              </h2>
+          <ModalContainer isOpen={isEditModalOpen} onClose={closeEditModal} title="Modifier l’adresse" size="md">
+            <ModalBody>
               <form onSubmit={handleEditAddress} className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">Nom</label>
@@ -257,7 +280,7 @@ const AdminAddressesPage: React.FC = () => {
                     type="text"
                     value={editAddress.nom}
                     onChange={(e) => setEditAddress({ ...editAddress, nom: e.target.value })}
-                    className="w-full px-3 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-soft-green dark:focus:ring-dark-soft-green"
                     required
                   />
                 </div>
@@ -267,7 +290,7 @@ const AdminAddressesPage: React.FC = () => {
                     type="text"
                     value={editAddress.rue}
                     onChange={(e) => setEditAddress({ ...editAddress, rue: e.target.value })}
-                    className="w-full px-3 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-soft-green dark:focus:ring-dark-soft-green"
                     required
                   />
                 </div>
@@ -277,7 +300,7 @@ const AdminAddressesPage: React.FC = () => {
                     type="text"
                     value={editAddress.ville}
                     onChange={(e) => setEditAddress({ ...editAddress, ville: e.target.value })}
-                    className="w-full px-3 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-soft-green dark:focus:ring-dark-soft-green"
                     required
                   />
                 </div>
@@ -287,7 +310,7 @@ const AdminAddressesPage: React.FC = () => {
                     type="text"
                     value={editAddress.code_postal}
                     onChange={(e) => setEditAddress({ ...editAddress, code_postal: e.target.value })}
-                    className="w-full px-3 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-soft-green dark:focus:ring-dark-soft-green"
                     required
                   />
                 </div>
@@ -297,43 +320,40 @@ const AdminAddressesPage: React.FC = () => {
                     type="text"
                     value={editAddress.pays}
                     onChange={(e) => setEditAddress({ ...editAddress, pays: e.target.value })}
-                    className="w-full px-3 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-soft-green dark:focus:ring-dark-soft-green"
                     required
                   />
                 </div>
-                <div className="flex gap-2 justify-end">
+                <ModalFooter>
                   <ButtonPrimary
                     type="button"
                     onClick={closeEditModal}
-                    className="px-4 py-2 bg-lightCard dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600"
+                    className="px-4 py-2 bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText hover:bg-gray-300 dark:hover:bg-gray-600"
                   >
                     Annuler
                   </ButtonPrimary>
                   <ButtonPrimary type="submit" className="px-4 py-2 bg-blue-500 text-white hover:bg-blue-600">
                     Enregistrer
                   </ButtonPrimary>
-                </div>
+                </ModalFooter>
               </form>
-            </div>
-          </div>
+            </ModalBody>
+          </ModalContainer>
         )}
 
-        {/* Modal pour supprimer une adresse */}
+        {/* Modal de suppression */}
         {isDeleteModalOpen && selectedAddress && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-            <div className="bg-lightBg dark:bg-darkBg p-6 rounded-lg shadow-lg w-full max-w-md">
-              <h2 className="text-xl font-medium text-lightText dark:text-darkText mb-4 flex items-center">
-                <Trash2 className="h-5 w-5 mr-2" /> Supprimer l’adresse
-              </h2>
+          <ModalContainer isOpen={isDeleteModalOpen} onClose={closeDeleteModal} title="Supprimer l’adresse" size="md">
+            <ModalBody>
               <p className="text-gray-700 dark:text-gray-300 mb-4">
                 Êtes-vous sûr de vouloir supprimer l’adresse de{" "}
                 <span className="font-medium">{selectedAddress.client.email}</span> ({selectedAddress.nom}) ?
               </p>
-              <div className="flex gap-2 justify-end">
+              <ModalFooter>
                 <ButtonPrimary
                   type="button"
                   onClick={closeDeleteModal}
-                  className="px-4 py-2 bg-lightCard dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600"
+                  className="px-4 py-2 bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText hover:bg-gray-300 dark:hover:bg-gray-600"
                 >
                   Annuler
                 </ButtonPrimary>
@@ -343,9 +363,9 @@ const AdminAddressesPage: React.FC = () => {
                 >
                   Supprimer
                 </ButtonPrimary>
-              </div>
-            </div>
-          </div>
+              </ModalFooter>
+            </ModalBody>
+          </ModalContainer>
         )}
       </div>
     </AdminLayout>
