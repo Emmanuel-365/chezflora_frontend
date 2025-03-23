@@ -44,12 +44,12 @@ const AbonnementsPage: React.FC = () => {
       try {
         // Toujours charger les produits pour tous
         const productsResponse = await getProducts();
-        setProducts(productsResponse.data);
+        setProducts(productsResponse.data.results);
 
         // Charger les abonnements uniquement si connecté
         if (isAuthenticated) {
           const abonnementsResponse = await getAbonnements();
-          setAbonnements(abonnementsResponse.data);
+          setAbonnements(abonnementsResponse.data.results);
         }
         setLoading(false);
       } catch (err: any) {
