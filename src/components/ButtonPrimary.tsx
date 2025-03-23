@@ -2,13 +2,13 @@ import React from 'react';
 
 interface ButtonPrimaryProps {
   children: React.ReactNode;
-  onClick?: () => void;
-  type?: 'button' | 'submit' | 'reset';
+  onClick?: (e?: React.MouseEvent<HTMLButtonElement> | React.FormEvent) => void | Promise<void>; // Déjà correct, mais clarifions
+  type?: "button" | "submit" | "reset";
   disabled?: boolean;
   className?: string;
   fullWidth?: boolean;
-  size?: 'sm' | 'md' | 'lg';
-  href?: string; // Nouvelle prop pour les liens
+  size?: "sm" | "md" | "lg";
+  href?: string;
 }
 
 const ButtonPrimary: React.FC<ButtonPrimaryProps> = ({
