@@ -438,7 +438,7 @@ export default function HomePage() {
             subtitle="Découvrez notre collection de bouquets artisanaux et plantes d'exception, confectionnés avec passion pour embellir chaque moment de votre vie"
             buttonText="Explorer nos créations"
             buttonLink="/products"
-            backgroundImage="/images/hero-banner.jpg"
+            backgroundImage="./images/hero-banner.jpg"
           />
 
           {/* Quick Actions Bar */}
