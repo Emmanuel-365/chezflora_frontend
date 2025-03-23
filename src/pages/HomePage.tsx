@@ -667,7 +667,7 @@ export default function HomePage() {
                   <div className="bg-light-beige p-6 rounded-xl text-center">
                     <h3 className="font-medium text-soft-brown mb-2">Mensuel</h3>
                     <p className="text-2xl font-bold text-soft-green mb-1">
-                      49€<span className="text-sm font-normal text-soft-brown/60">/mois</span>
+                      29500FCFA<span className="text-sm font-normal text-soft-brown/60">/mois</span>
                     </p>
                     <p className="text-soft-brown/70 text-sm mb-4">Un bouquet par mois</p>
                     <ActionButton text="Choisir" href="/abonnement/mensuel" className="w-full" />
@@ -679,7 +679,7 @@ export default function HomePage() {
                     </div>
                     <h3 className="font-medium text-soft-brown mb-2">Bimensuel</h3>
                     <p className="text-2xl font-bold text-soft-green mb-1">
-                      89€<span className="text-sm font-normal text-soft-brown/60">/mois</span>
+                      49500FCFA<span className="text-sm font-normal text-soft-brown/60">/mois</span>
                     </p>
                     <p className="text-soft-brown/70 text-sm mb-4">Deux bouquets par mois</p>
                     <ActionButton text="Choisir" href="/abonnement/bimensuel" className="w-full" />
@@ -688,7 +688,7 @@ export default function HomePage() {
                   <div className="bg-light-beige p-6 rounded-xl text-center">
                     <h3 className="font-medium text-soft-brown mb-2">Hebdomadaire</h3>
                     <p className="text-2xl font-bold text-soft-green mb-1">
-                      159€<span className="text-sm font-normal text-soft-brown/60">/mois</span>
+                      76000FCFA<span className="text-sm font-normal text-soft-brown/60">/mois</span>
                     </p>
                     <p className="text-soft-brown/70 text-sm mb-4">Un bouquet chaque semaine</p>
                     <ActionButton text="Choisir" href="/abonnement/hebdomadaire" className="w-full" />

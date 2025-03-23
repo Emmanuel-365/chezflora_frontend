@@ -24,7 +24,7 @@ const AteliersPage = () => {
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedMonth, setSelectedMonth] = useState<string | null>(null)
   const [showFilters, setShowFilters] = useState(false)
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000])
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000000])
 
   const navigate = useNavigate()
   const headerRef = useRef(null)
@@ -39,7 +39,6 @@ const AteliersPage = () => {
         setLoading(true)
         const ateliersResponse = await getAteliers()
         const ateliersData = ateliersResponse.data.results || ateliersResponse.data
-        console.log("voici les ateliers" + ateliersResponse)
         // Add some mock data for demonstration
         const ateliersWithMockData = ateliersData.map((atelier: Atelier) => ({
           ...atelier,
@@ -47,7 +46,6 @@ const AteliersPage = () => {
           tags: ["débutant", "avancé", "enfants", "adultes", "saisonnier"][Math.floor(Math.random() * 5)],
           duree: ["1h", "1h30", "2h", "2h30", "3h"][Math.floor(Math.random() * 5)],
         }))
-        console.log(ateliersWithMockData);
 
         setAteliers(ateliersWithMockData)
         setFilteredAteliers(ateliersWithMockData)
@@ -418,8 +416,8 @@ const AteliersPage = () => {
                         <h3 className="text-sm font-medium text-gray-700 mb-4">Filtrer par prix</h3>
                         <div className="mb-4">
                           <div className="flex justify-between mb-2">
-                            <span className="text-xs text-gray-500">0 €</span>
-                            <span className="text-xs text-gray-500">{priceRange[1]} €</span>
+                            <span className="text-xs text-gray-500">0 FCFA</span>
+                            <span className="text-xs text-gray-500">{priceRange[1]} FCFA</span>
                           </div>
                           <input
                             type="range"
@@ -467,7 +465,7 @@ const AteliersPage = () => {
                   {priceRange[1] < 1000 && (
                     <span>
                       {" "}
-                      avec un prix max. de <span className="font-medium">{priceRange[1]} €</span>
+                      avec un prix max. de <span className="font-medium">{priceRange[1]} FCFA</span>
                     </span>
                   )}
                 </p>
@@ -477,7 +475,7 @@ const AteliersPage = () => {
                     onClick={() => {
                       setSelectedMonth(null)
                       setSearchQuery("")
-                      setPriceRange([0, 1000])
+                      setPriceRange([0, 1000000])
                     }}
                     className="text-sm text-emerald-600 hover:text-emerald-700"
                   >
@@ -598,7 +596,7 @@ const AteliersPage = () => {
                           )}
 
                           <div className="flex items-center justify-between mt-auto pt-4 border-t border-gray-100">
-                            <p className="text-emerald-600 font-semibold">{atelier.prix} €</p>
+                            <p className="text-emerald-600 font-semibold">{atelier.prix} FCFA</p>
 
                             <Link
                               to={`/ateliers/${atelier.id}`}
@@ -642,7 +640,7 @@ const AteliersPage = () => {
                     onClick={() => {
                       setSelectedMonth(null)
                       setSearchQuery("")
-                      setPriceRange([0, 1000])
+                      setPriceRange([0, 1000000])
                     }}
                     className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-500 transition-colors"
                   >

@@ -310,7 +310,7 @@ const ServicesPage = () => {
                         )}
                         {service.prix && (
                           <div className="absolute top-4 right-4 bg-emerald-500 text-white px-3 py-1 rounded-full text-sm font-medium">
-                            À partir de {service.prix} €
+                            À partir de {service.prix} FCFA
                           </div>
                         )}
                       </div>
