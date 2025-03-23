@@ -1,8 +1,11 @@
+"use client";
+
 import React, { useState, useEffect } from "react";
 import api from "../services/api";
 import AdminLayout from "../components/AdminLayout";
 import ButtonPrimary from "../components/ButtonPrimary";
 import { FileText, Search, Edit, Trash2, PlusCircle, ChevronLeft, ChevronRight } from "lucide-react";
+import { ModalContainer, ModalBody, ModalFooter } from "../components/ModalContainer";
 
 interface Article {
   id: string;
@@ -20,10 +23,6 @@ interface ApiResponse {
   next: string | null;
   previous: string | null;
 }
-
-const Spinner = () => (
-  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500" aria-label="Chargement en cours" />
-);
 
 const AdminArticlesPage: React.FC = () => {
   const [articles, setArticles] = useState<Article[]>([]);
@@ -59,7 +58,7 @@ const AdminArticlesPage: React.FC = () => {
     } catch (err: any) {
       console.error("Erreur lors du chargement des articles:", err.response?.data);
       setError("Erreur lors du chargement des articles.");
-      setArticles([]); // Réinitialiser à un tableau vide en cas d'erreur
+      setArticles([]);
       setLoading(false);
     }
   };
@@ -72,6 +71,7 @@ const AdminArticlesPage: React.FC = () => {
   const handlePrevPage = () => {
     if (currentPage > 1) setCurrentPage(currentPage - 1);
   };
+
   const handleNextPage = () => {
     if (currentPage < totalPages) setCurrentPage(currentPage + 1);
   };
@@ -81,9 +81,7 @@ const AdminArticlesPage: React.FC = () => {
     setIsAddModalOpen(true);
   };
 
-  const closeAddModal = () => {
-    setIsAddModalOpen(false);
-  };
+  const closeAddModal = () => setIsAddModalOpen(false);
 
   const handleAddArticle = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -94,7 +92,7 @@ const AdminArticlesPage: React.FC = () => {
       if (newArticle.cover) formData.append("cover", newArticle.cover);
       formData.append("is_active", newArticle.is_active.toString());
       await api.post("/articles/", formData, { headers: { "Content-Type": "multipart/form-data" } });
-      setIsAddModalOpen(false);
+      closeAddModal();
       fetchArticles();
     } catch (err: any) {
       console.error("Erreur lors de l’ajout de l’article:", err.response?.data);
@@ -123,7 +121,7 @@ const AdminArticlesPage: React.FC = () => {
       if (editArticle.cover) formData.append("cover", editArticle.cover);
       formData.append("is_active", editArticle.is_active.toString());
       await api.put(`/articles/${selectedArticle.id}/`, formData, { headers: { "Content-Type": "multipart/form-data" } });
-      setIsEditModalOpen(false);
+      closeEditModal();
       fetchArticles();
     } catch (err: any) {
       console.error("Erreur lors de la mise à jour de l’article:", err.response?.data);
@@ -135,6 +133,7 @@ const AdminArticlesPage: React.FC = () => {
     setSelectedArticle(article);
     setIsDeleteModalOpen(true);
   };
+
   const closeDeleteModal = () => {
     setIsDeleteModalOpen(false);
     setSelectedArticle(null);
@@ -144,7 +143,7 @@ const AdminArticlesPage: React.FC = () => {
     if (!selectedArticle) return;
     try {
       await api.delete(`/articles/${selectedArticle.id}/`);
-      setIsDeleteModalOpen(false);
+      closeDeleteModal();
       fetchArticles();
     } catch (err: any) {
       console.error("Erreur lors de la suppression de l’article:", err.response?.data);
@@ -152,14 +151,40 @@ const AdminArticlesPage: React.FC = () => {
     }
   };
 
+  const renderArticlesPlaceholder = () => (
+    <div className="overflow-x-auto">
+      <table className="w-full text-left text-sm">
+        <thead className="bg-lightCard dark:bg-darkCard">
+          <tr className="border-b border-lightBorder dark:border-darkBorder">
+            {["ID", "Titre", "Auteur", "Date", "Statut", "Actions"].map((header) => (
+              <th key={header} className="py-3 px-4">
+                <div className="h-4 w-16 bg-gray-300 dark:bg-gray-600 rounded"></div>
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {Array.from({ length: 5 }).map((_, index) => (
+            <tr key={index} className="border-b border-lightBorder dark:border-darkBorder animate-pulse">
+              <td className="py-3 px-4"><div className="h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded"></div></td>
+              <td className="py-3 px-4"><div className="h-4 w-32 bg-gray-200 dark:bg-gray-700 rounded"></div></td>
+              <td className="py-3 px-4"><div className="h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded"></div></td>
+              <td className="py-3 px-4"><div className="h-4 w-20 bg-gray-200 dark:bg-gray-700 rounded"></div></td>
+              <td className="py-3 px-4"><div className="h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded"></div></td>
+              <td className="py-3 px-4"><div className="h-6 w-24 bg-gray-300 dark:bg-gray-600 rounded"></div></td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+
   return (
     <AdminLayout>
       <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         <h1 className="text-2xl sm:text-3xl font-serif font-medium text-lightText dark:text-darkText mb-6 flex items-center">
           <FileText className="h-6 w-6 mr-2" /> Gestion des Articles
         </h1>
-
-        {error && <div className="text-center py-4 text-red-500">{error}</div>}
 
         <div className="mb-6 flex flex-col sm:flex-row gap-4 items-center justify-between">
           <div className="relative w-full sm:w-64">
@@ -178,31 +203,36 @@ const AdminArticlesPage: React.FC = () => {
         </div>
 
         {loading ? (
-          <div className="flex justify-center py-4">
-            <Spinner />
-          </div>
+          renderArticlesPlaceholder()
+        ) : error ? (
+          <div className="text-center py-8 text-red-500">{error}</div>
         ) : (
           <>
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
                 <thead className="bg-lightCard dark:bg-darkCard">
                   <tr className="border-b border-lightBorder dark:border-darkBorder">
-                    <th className="py-3 px-4">ID</th>
-                    <th className="py-3 px-4">Titre</th>
-                    <th className="py-3 px-4">Auteur</th>
-                    <th className="py-3 px-4">Date</th>
-                    <th className="py-3 px-4">Statut</th>
-                    <th className="py-3 px-4">Actions</th>
+                    <th className="py-3 px-4 text-lightText dark:text-darkText">ID</th>
+                    <th className="py-3 px-4 text-lightText dark:text-darkText">Titre</th>
+                    <th className="py-3 px-4 text-lightText dark:text-darkText">Auteur</th>
+                    <th className="py-3 px-4 text-lightText dark:text-darkText">Date</th>
+                    <th className="py-3 px-4 text-lightText dark:text-darkText">Statut</th>
+                    <th className="py-3 px-4 text-lightText dark:text-darkText">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {Array.isArray(articles) && articles.length > 0 ? (
+                  {articles.length > 0 ? (
                     articles.map((article) => (
-                      <tr key={article.id} className="border-b border-lightBorder dark:border-darkBorder hover:bg-gray-100 dark:hover:bg-gray-700">
+                      <tr
+                        key={article.id}
+                        className="border-b border-lightBorder dark:border-darkBorder hover:bg-gray-100 dark:hover:bg-gray-700"
+                      >
                         <td className="py-3 px-4 text-gray-700 dark:text-gray-300">{article.id}</td>
                         <td className="py-3 px-4 text-gray-700 dark:text-gray-300">{article.titre}</td>
                         <td className="py-3 px-4 text-gray-700 dark:text-gray-300">{article.auteur}</td>
-                        <td className="py-3 px-4 text-gray-700 dark:text-gray-300">{new Date(article.date_publication).toLocaleDateString()}</td>
+                        <td className="py-3 px-4 text-gray-700 dark:text-gray-300">
+                          {new Date(article.date_publication).toLocaleDateString()}
+                        </td>
                         <td className="py-3 px-4">
                           <span
                             className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
@@ -243,21 +273,21 @@ const AdminArticlesPage: React.FC = () => {
 
             <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
               <p className="text-sm text-gray-700 dark:text-gray-300">
-                Affichage de {(currentPage - 1) * articlesPerPage + 1} à {Math.min(currentPage * articlesPerPage, totalArticles)} sur {totalArticles}{" "}
-                articles
+                Affichage de {(currentPage - 1) * articlesPerPage + 1} à{" "}
+                {Math.min(currentPage * articlesPerPage, totalArticles)} sur {totalArticles} articles
               </p>
               <div className="flex gap-2">
                 <ButtonPrimary
                   onClick={handlePrevPage}
                   disabled={currentPage === 1}
-                  className="px-3 py-2 bg-lightCard dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 flex items-center"
+                  className="px-3 py-2 bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 flex items-center"
                 >
                   <ChevronLeft className="h-5 w-5 mr-1" /> Précédent
                 </ButtonPrimary>
                 <ButtonPrimary
                   onClick={handleNextPage}
                   disabled={currentPage === totalPages}
-                  className="px-3 py-2 bg-lightCard dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 flex items-center"
+                  className="px-3 py-2 bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 flex items-center"
                 >
                   Suivant <ChevronRight className="h-5 w-5 ml-1" />
                 </ButtonPrimary>
@@ -266,12 +296,10 @@ const AdminArticlesPage: React.FC = () => {
           </>
         )}
 
+        {/* Modal d'ajout */}
         {isAddModalOpen && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-            <div className="bg-lightBg dark:bg-darkBg p-6 rounded-lg shadow-lg w-full max-w-md">
-              <h2 className="text-xl font-medium text-lightText dark:text-darkText mb-4 flex items-center">
-                <PlusCircle className="h-5 w-5 mr-2" /> Ajouter un article
-              </h2>
+          <ModalContainer isOpen={isAddModalOpen} onClose={closeAddModal} title="Ajouter un article" size="md">
+            <ModalBody>
               <form onSubmit={handleAddArticle} className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">Titre</label>
@@ -279,7 +307,7 @@ const AdminArticlesPage: React.FC = () => {
                     type="text"
                     value={newArticle.titre}
                     onChange={(e) => setNewArticle({ ...newArticle, titre: e.target.value })}
-                    className="w-full px-3 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-soft-green dark:focus:ring-dark-soft-green"
                     required
                   />
                 </div>
@@ -288,7 +316,7 @@ const AdminArticlesPage: React.FC = () => {
                   <textarea
                     value={newArticle.contenu}
                     onChange={(e) => setNewArticle({ ...newArticle, contenu: e.target.value })}
-                    className="w-full px-3 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-soft-green dark:focus:ring-dark-soft-green"
                     rows={5}
                     required
                   />
@@ -310,29 +338,27 @@ const AdminArticlesPage: React.FC = () => {
                     className="h-5 w-5 text-blue-500 focus:ring-blue-500 border-lightBorder dark:border-darkBorder rounded"
                   />
                 </div>
-                <div className="flex gap-2 justify-end">
+                <ModalFooter>
                   <ButtonPrimary
                     type="button"
                     onClick={closeAddModal}
-                    className="px-4 py-2 bg-lightCard dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600"
+                    className="px-4 py-2 bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText hover:bg-gray-300 dark:hover:bg-gray-600"
                   >
                     Annuler
                   </ButtonPrimary>
                   <ButtonPrimary type="submit" className="px-4 py-2 bg-blue-500 text-white hover:bg-blue-600">
                     Ajouter
                   </ButtonPrimary>
-                </div>
+                </ModalFooter>
               </form>
-            </div>
-          </div>
+            </ModalBody>
+          </ModalContainer>
         )}
 
+        {/* Modal d'édition */}
         {isEditModalOpen && selectedArticle && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-            <div className="bg-lightBg dark:bg-darkBg p-6 rounded-lg shadow-lg w-full max-w-md">
-              <h2 className="text-xl font-medium text-lightText dark:text-darkText mb-4 flex items-center">
-                <Edit className="h-5 w-5 mr-2" /> Modifier l’article
-              </h2>
+          <ModalContainer isOpen={isEditModalOpen} onClose={closeEditModal} title="Modifier l’article" size="md">
+            <ModalBody>
               <form onSubmit={handleEditArticle} className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">Titre</label>
@@ -340,7 +366,7 @@ const AdminArticlesPage: React.FC = () => {
                     type="text"
                     value={editArticle.titre}
                     onChange={(e) => setEditArticle({ ...editArticle, titre: e.target.value })}
-                    className="w-full px-3 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-soft-green dark:focus:ring-dark-soft-green"
                     required
                   />
                 </div>
@@ -349,7 +375,7 @@ const AdminArticlesPage: React.FC = () => {
                   <textarea
                     value={editArticle.contenu}
                     onChange={(e) => setEditArticle({ ...editArticle, contenu: e.target.value })}
-                    className="w-full px-3 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-soft-green dark:focus:ring-dark-soft-green"
                     rows={5}
                     required
                   />
@@ -374,46 +400,45 @@ const AdminArticlesPage: React.FC = () => {
                     className="h-5 w-5 text-blue-500 focus:ring-blue-500 border-lightBorder dark:border-darkBorder rounded"
                   />
                 </div>
-                <div className="flex gap-2 justify-end">
+                <ModalFooter>
                   <ButtonPrimary
                     type="button"
                     onClick={closeEditModal}
-                    className="px-4 py-2 bg-lightCard dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600"
+                    className="px-4 py-2 bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText hover:bg-gray-300 dark:hover:bg-gray-600"
                   >
                     Annuler
                   </ButtonPrimary>
                   <ButtonPrimary type="submit" className="px-4 py-2 bg-blue-500 text-white hover:bg-blue-600">
                     Enregistrer
                   </ButtonPrimary>
-                </div>
+                </ModalFooter>
               </form>
-            </div>
-          </div>
+            </ModalBody>
+          </ModalContainer>
         )}
 
+        {/* Modal de suppression */}
         {isDeleteModalOpen && selectedArticle && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-            <div className="bg-lightBg dark:bg-darkBg p-6 rounded-lg shadow-lg w-full max-w-md">
-              <h2 className="text-xl font-medium text-lightText dark:text-darkText mb-4 flex items-center">
-                <Trash2 className="h-5 w-5 mr-2" /> Supprimer l’article
-              </h2>
+          <ModalContainer isOpen={isDeleteModalOpen} onClose={closeDeleteModal} title="Supprimer l’article" size="md">
+            <ModalBody>
               <p className="text-gray-700 dark:text-gray-300 mb-4">
-                Êtes-vous sûr de vouloir supprimer l’article <span className="font-medium">{selectedArticle.titre}</span> ?
+                Êtes-vous sûr de vouloir supprimer l’article{" "}
+                <span className="font-medium">{selectedArticle.titre}</span> ?
               </p>
-              <div className="flex gap-2 justify-end">
+              <ModalFooter>
                 <ButtonPrimary
                   type="button"
                   onClick={closeDeleteModal}
-                  className="px-4 py-2 bg-lightCard dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600"
+                  className="px-4 py-2 bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText hover:bg-gray-300 dark:hover:bg-gray-600"
                 >
                   Annuler
                 </ButtonPrimary>
                 <ButtonPrimary onClick={handleDeleteArticle} className="px-4 py-2 bg-red-500 text-white hover:bg-red-600">
                   Supprimer
                 </ButtonPrimary>
-              </div>
-            </div>
-          </div>
+              </ModalFooter>
+            </ModalBody>
+          </ModalContainer>
         )}
       </div>
     </AdminLayout>
