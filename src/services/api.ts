@@ -151,6 +151,7 @@ export const createAbonnement = (data: { type: string; produit_ids: string[] }) 
   api.post('/abonnements/', data);
 export const cancelAbonnement = (id: string) => api.delete(`/abonnements/${id}/`);
 export const getAteliers = () => api.get('/ateliers/');
+export const getAtelier = (id: string) => api.get(`/ateliers/${id}`)
 export const inscrireAtelier = (atelierId: string) => api.post(`/ateliers/${atelierId}/s_inscrire/`);
 export const desinscrireAtelier = (atelierId: string) =>
   api.post(`/ateliers/${atelierId}/desinscription/`);

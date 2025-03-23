@@ -21,6 +21,11 @@ export interface User {
     participants: { utilisateur: Utilisateur; date_inscription: string; statut: string }[];
     tags: string;
     lieu: string;
+    Photo: Photo;
+  }
+
+  interface Photo {
+    image: string;
   }
 
   interface Utilisateur {
