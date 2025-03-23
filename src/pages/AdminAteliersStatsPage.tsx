@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState, useEffect } from "react";
 import api from "../services/api";
 import AdminLayout from "../components/AdminLayout";
@@ -14,10 +16,6 @@ interface AtelierStats {
   total_revenus: string;
   inscriptions_by_atelier: { atelier__nom: string; total: number }[];
 }
-
-const Spinner = () => (
-  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500" aria-label="Chargement en cours" />
-);
 
 const AdminAteliersStatsPage: React.FC = () => {
   const [statsData, setStatsData] = useState<AtelierStats | null>(null);
@@ -38,7 +36,7 @@ const AdminAteliersStatsPage: React.FC = () => {
     } catch (err: any) {
       console.error("Erreur lors du chargement des statistiques des ateliers:", err.response?.data);
       setError("Erreur lors du chargement des statistiques des ateliers.");
-      setStatsData(null); // Réinitialiser à null en cas d'erreur
+      setStatsData(null);
       setLoading(false);
     }
   };
@@ -54,6 +52,8 @@ const AdminAteliersStatsPage: React.FC = () => {
         label: "Inscriptions par atelier",
         data: statsData?.inscriptions_by_atelier.map((item) => item.total) || [],
         backgroundColor: "#2196F3",
+        borderColor: "#1976D2",
+        borderWidth: 1,
       },
     ],
   };
@@ -63,9 +63,35 @@ const AdminAteliersStatsPage: React.FC = () => {
     maintainAspectRatio: false,
     plugins: {
       legend: { position: "top" as const },
-      title: { display: true, text: `Inscriptions sur ${daysFilter} jours` },
+      title: { display: true, text: `Inscriptions sur ${daysFilter} jours`, font: { size: 16 } },
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        title: { display: true, text: "Nombre d'inscriptions" },
+      },
+      x: {
+        title: { display: true, text: "Ateliers" },
+      },
     },
   };
+
+  const renderStatsPlaceholder = () => (
+    <div className="space-y-6 animate-pulse">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {Array.from({ length: 3 }).map((_, index) => (
+          <div key={index} className="bg-lightCard dark:bg-darkCard p-4 rounded-lg shadow-md">
+            <div className="h-5 w-32 bg-gray-300 dark:bg-gray-600 rounded mb-2"></div>
+            <div className="h-8 w-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
+          </div>
+        ))}
+      </div>
+      <div className="bg-lightCard dark:bg-darkCard p-4 rounded-lg shadow-md">
+        <div className="h-5 w-48 bg-gray-300 dark:bg-gray-600 rounded mb-4"></div>
+        <div className="h-80 w-full bg-gray-200 dark:bg-gray-700 rounded"></div>
+      </div>
+    </div>
+  );
 
   return (
     <AdminLayout>
@@ -74,33 +100,26 @@ const AdminAteliersStatsPage: React.FC = () => {
           <BarChart2 className="h-6 w-6 mr-2" /> Statistiques des Ateliers
         </h1>
 
-        {error && <div className="text-center py-4 text-red-500">{error}</div>}
-
         <div className="mb-6 flex flex-wrap gap-2">
-          <ButtonPrimary
-            onClick={() => handleFilterChange(7)}
-            className={`px-4 py-2 ${daysFilter === 7 ? "bg-blue-500 text-white" : "bg-lightCard dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600"}`}
-          >
-            7 jours
-          </ButtonPrimary>
-          <ButtonPrimary
-            onClick={() => handleFilterChange(30)}
-            className={`px-4 py-2 ${daysFilter === 30 ? "bg-blue-500 text-white" : "bg-lightCard dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600"}`}
-          >
-            30 jours
-          </ButtonPrimary>
-          <ButtonPrimary
-            onClick={() => handleFilterChange(90)}
-            className={`px-4 py-2 ${daysFilter === 90 ? "bg-blue-500 text-white" : "bg-lightCard dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600"}`}
-          >
-            90 jours
-          </ButtonPrimary>
+          {[7, 30, 90].map((days) => (
+            <ButtonPrimary
+              key={days}
+              onClick={() => handleFilterChange(days)}
+              className={`px-4 py-2 ${
+                daysFilter === days
+                  ? "bg-blue-500 text-white hover:bg-blue-600"
+                  : "bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText hover:bg-gray-300 dark:hover:bg-gray-600"
+              }`}
+            >
+              {days} jours
+            </ButtonPrimary>
+          ))}
         </div>
 
         {loading ? (
-          <div className="flex justify-center py-4">
-            <Spinner />
-          </div>
+          renderStatsPlaceholder()
+        ) : error ? (
+          <div className="text-center py-8 text-red-500">{error}</div>
         ) : (
           <div className="space-y-6">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -133,7 +152,7 @@ const AdminAteliersStatsPage: React.FC = () => {
                   <Bar data={inscriptionsChartData} options={chartOptions} />
                 </div>
               ) : (
-                <p className="text-center text-gray-700 dark:text-gray-300">Aucune inscription à afficher.</p>
+                <p className="text-center text-gray-700 dark:text-gray-300 py-4">Aucune inscription à afficher.</p>
               )}
             </div>
           </div>
