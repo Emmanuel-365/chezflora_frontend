@@ -31,7 +31,7 @@ const AuthLoginForm: React.FC<AuthLoginFormProps> = ({ className = '' }) => {
     try {
       const response = await login({ username, password });
       localStorage.setItem('access_token', response.data.access);
-
+      localStorage.setItem('refresh_token', response.data.refresh)
       const userRole = (await getUserProfile()).data.role
       if(userRole == 'admin')
         navigate('/admin');

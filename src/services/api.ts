@@ -195,4 +195,7 @@ export const getCartCount = async () => {
   return cart.data.results[0].items.length;
 };
 
+export const refreshToken = (refresh: string) =>
+  api.post("/token/refresh/", { refresh });
+
 export default api;
