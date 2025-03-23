@@ -53,7 +53,7 @@ const AdminRealisationsPage: React.FC = () => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false); // Nouveau modal pour les détails
   const [newRealisation, setNewRealisation] = useState({
-    service: "",
+    service_id: "",
     titre: "",
     description: "",
     photos: [] as File[],
@@ -61,7 +61,7 @@ const AdminRealisationsPage: React.FC = () => {
     is_active: true,
   });
   const [editRealisation, setEditRealisation] = useState({
-    service: "",
+    service_id: "",
     titre: "",
     description: "",
     photos: [] as File[],
@@ -120,7 +120,7 @@ const AdminRealisationsPage: React.FC = () => {
 
   const openAddModal = () => {
     setNewRealisation({
-      service: services[0]?.id || "",
+      service_id: services[0]?.id || "",
       titre: "",
       description: "",
       photos: [],
@@ -136,7 +136,7 @@ const AdminRealisationsPage: React.FC = () => {
     e.preventDefault();
     try {
       const formData = new FormData();
-      formData.append("service", newRealisation.service);
+      formData.append("service", newRealisation.service_id);
       formData.append("titre", newRealisation.titre);
       formData.append("description", newRealisation.description);
       formData.append("date", newRealisation.date);
@@ -165,7 +165,7 @@ const AdminRealisationsPage: React.FC = () => {
   const openEditModal = (realisation: Realisation) => {
     setSelectedRealisation(realisation);
     setEditRealisation({
-      service: realisation.service.id,
+      service_id: realisation.service.id,
       titre: realisation.titre,
       description: realisation.description,
       photos: [],
@@ -185,7 +185,7 @@ const AdminRealisationsPage: React.FC = () => {
     if (!selectedRealisation) return;
     try {
       const formData = new FormData();
-      formData.append("service", editRealisation.service);
+      formData.append("service", editRealisation.service_id);
       formData.append("titre", editRealisation.titre);
       formData.append("description", editRealisation.description);
       formData.append("date", editRealisation.date);
@@ -440,8 +440,8 @@ const AdminRealisationsPage: React.FC = () => {
                     <div className="text-center py-2 text-red-500">{errorServices}</div>
                   ) : (
                     <select
-                      value={newRealisation.service}
-                      onChange={(e) => setNewRealisation({ ...newRealisation, service: e.target.value })}
+                      value={newRealisation.service_id}
+                      onChange={(e) => setNewRealisation({ ...newRealisation, service_id: e.target.value })}
                       className="w-full px-3 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-soft-green dark:focus:ring-dark-soft-green"
                       required
                     >
@@ -551,8 +551,8 @@ const AdminRealisationsPage: React.FC = () => {
                     <div className="text-center py-2 text-red-500">{errorServices}</div>
                   ) : (
                     <select
-                      value={editRealisation.service}
-                      onChange={(e) => setEditRealisation({ ...editRealisation, service: e.target.value })}
+                      value={editRealisation.service_id}
+                      onChange={(e) => setEditRealisation({ ...editRealisation, service_id: e.target.value })}
                       className="w-full px-3 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-soft-green dark:focus:ring-dark-soft-green"
                       required
                     >
