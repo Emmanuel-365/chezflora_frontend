@@ -21,6 +21,7 @@ interface Photo {
 interface Realisation {
   id: string;
   service: Service;
+  service_id: string;
   titre: string;
   description: string;
   photos: Photo[]; // Changement ici pour utiliser l'interface Photo
@@ -136,7 +137,7 @@ const AdminRealisationsPage: React.FC = () => {
     e.preventDefault();
     try {
       const formData = new FormData();
-      formData.append("service", newRealisation.service_id);
+      formData.append("service_id", newRealisation.service_id);
       formData.append("titre", newRealisation.titre);
       formData.append("description", newRealisation.description);
       formData.append("date", newRealisation.date);
