@@ -1,35 +1,20 @@
+"use client";
+
 import React, { useState, useEffect } from "react";
 import api from "../services/api";
 import AdminLayout from "../components/AdminLayout";
 import ButtonPrimary from "../components/ButtonPrimary";
 import { ShoppingCart, Search, Eye, XCircle, ChevronLeft, ChevronRight } from "lucide-react";
+import { ModalContainer, ModalBody, ModalFooter } from "../components/ModalContainer";
 
 interface Commande {
   id: string;
-  client: {
-    id: string;
-    username: string;
-    email: string;
-  };
+  client: { id: string; username: string; email: string };
   total: string;
   statut: "en_attente" | "en_cours" | "expediee" | "livree" | "annulee";
   date: string;
-  adresse: {
-    nom: string;
-    rue: string;
-    ville: string;
-    code_postal: string;
-    pays: string;
-  };
-  lignes: {
-    id: string;
-    produit: {
-      id: string;
-      nom: string;
-    };
-    quantite: number;
-    prix_unitaire: string;
-  }[];
+  adresse: { nom: string; rue: string; ville: string; code_postal: string; pays: string };
+  lignes: { id: string; produit: { id: string; nom: string }; quantite: number; prix_unitaire: string }[];
 }
 
 interface ApiResponse {
@@ -38,10 +23,6 @@ interface ApiResponse {
   next: string | null;
   previous: string | null;
 }
-
-const Spinner = () => (
-  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500" aria-label="Chargement en cours" />
-);
 
 const AdminCommandsPage: React.FC = () => {
   const [commands, setCommands] = useState<Commande[]>([]);
@@ -80,7 +61,7 @@ const AdminCommandsPage: React.FC = () => {
     } catch (err: any) {
       console.error("Erreur lors du chargement des commandes:", err.response?.data);
       setError("Erreur lors du chargement des commandes.");
-      setCommands([]); // Réinitialiser à un tableau vide en cas d'erreur
+      setCommands([]);
       setLoading(false);
     }
   };
@@ -127,7 +108,7 @@ const AdminCommandsPage: React.FC = () => {
     if (!selectedCommand) return;
     try {
       await api.post(`/commandes/${selectedCommand.id}/cancel/`);
-      setIsCancelModalOpen(false);
+      closeCancelModal();
       fetchCommands();
     } catch (err: any) {
       console.error("Erreur lors de l’annulation de la commande:", err.response?.data);
@@ -135,16 +116,42 @@ const AdminCommandsPage: React.FC = () => {
     }
   };
 
+  const renderCommandsPlaceholder = () => (
+    <div className="overflow-x-auto">
+      <table className="w-full text-left text-sm">
+        <thead className="bg-lightCard dark:bg-darkCard">
+          <tr className="border-b border-lightBorder dark:border-darkBorder">
+            {["ID", "Utilisateur", "Email", "Total", "Statut", "Date", "Actions"].map((header) => (
+              <th key={header} className="py-3 px-4">
+                <div className="h-4 w-16 bg-gray-300 dark:bg-gray-600 rounded"></div>
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {Array.from({ length: 5 }).map((_, index) => (
+            <tr key={index} className="border-b border-lightBorder dark:border-darkBorder animate-pulse">
+              <td className="py-3 px-4"><div className="h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded"></div></td>
+              <td className="py-3 px-4"><div className="h-4 w-32 bg-gray-200 dark:bg-gray-700 rounded"></div></td>
+              <td className="py-3 px-4"><div className="h-4 w-40 bg-gray-200 dark:bg-gray-700 rounded"></div></td>
+              <td className="py-3 px-4"><div className="h-4 w-20 bg-gray-200 dark:bg-gray-700 rounded"></div></td>
+              <td className="py-3 px-4"><div className="h-4 w-20 bg-gray-200 dark:bg-gray-700 rounded"></div></td>
+              <td className="py-3 px-4"><div className="h-4 w-28 bg-gray-200 dark:bg-gray-700 rounded"></div></td>
+              <td className="py-3 px-4"><div className="h-6 w-24 bg-gray-300 dark:bg-gray-600 rounded"></div></td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+
   return (
     <AdminLayout>
       <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-        <h1 className="text-2xl sm:text-3xl font-serif font-medium text-lightText dark:text-darkText mb-4 sm:mb-6 flex items-center">
+        <h1 className="text-2xl sm:text-3xl font-serif font-medium text-lightText dark:text-darkText mb-6 flex items-center">
           <ShoppingCart className="h-6 w-6 mr-2" /> Gestion des Commandes
         </h1>
 
-        {error && <div className="text-center py-4 text-red-500">{error}</div>}
-
-        {/* Filtres et Recherche */}
         <div className="mb-6 flex flex-col sm:flex-row gap-4 items-center justify-between">
           <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
             <div className="relative w-full sm:w-64">
@@ -154,13 +161,13 @@ const AdminCommandsPage: React.FC = () => {
                 value={searchQuery}
                 onChange={handleSearch}
                 placeholder="Rechercher par nom d’utilisateur..."
-                className="w-full pl-10 pr-4 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightBg dark:bg-darkBg text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full pl-10 pr-4 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightBg dark:bg-darkBg text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-soft-green dark:focus:ring-dark-soft-green"
               />
             </div>
             <select
               value={filterStatus}
               onChange={handleFilterStatus}
-              className="px-4 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightBg dark:bg-darkBg text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="px-4 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightBg dark:bg-darkBg text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-soft-green dark:focus:ring-dark-soft-green"
             >
               <option value="all">Tous les statuts</option>
               <option value="en_attente">En attente</option>
@@ -173,12 +180,11 @@ const AdminCommandsPage: React.FC = () => {
         </div>
 
         {loading ? (
-          <div className="flex justify-center py-4">
-            <Spinner />
-          </div>
+          renderCommandsPlaceholder()
+        ) : error ? (
+          <div className="text-center py-8 text-red-500">{error}</div>
         ) : (
           <>
-            {/* Liste des commandes */}
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
                 <thead className="bg-lightCard dark:bg-darkCard">
@@ -193,7 +199,7 @@ const AdminCommandsPage: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {Array.isArray(commands) && commands.length > 0 ? (
+                  {commands.length > 0 ? (
                     commands.map((command) => (
                       <tr
                         key={command.id}
@@ -217,7 +223,7 @@ const AdminCommandsPage: React.FC = () => {
                                 : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
                             }`}
                           >
-                            {command.statut.charAt(0).toUpperCase() + command.statut.slice(1)}
+                            {command.statut.charAt(0).toUpperCase() + command.statut.slice(1).replace("_", " ")}
                           </span>
                         </td>
                         <td className="py-3 px-4 text-gray-700 dark:text-gray-300">
@@ -252,7 +258,6 @@ const AdminCommandsPage: React.FC = () => {
               </table>
             </div>
 
-            {/* Pagination */}
             <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
               <p className="text-sm text-gray-700 dark:text-gray-300">
                 Affichage de {(currentPage - 1) * commandsPerPage + 1} à{" "}
@@ -262,14 +267,14 @@ const AdminCommandsPage: React.FC = () => {
                 <ButtonPrimary
                   onClick={handlePrevPage}
                   disabled={currentPage === 1}
-                  className="px-3 py-2 bg-lightCard dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 flex items-center"
+                  className="px-3 py-2 bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 flex items-center"
                 >
                   <ChevronLeft className="h-5 w-5 mr-1" /> Précédent
                 </ButtonPrimary>
                 <ButtonPrimary
                   onClick={handleNextPage}
                   disabled={currentPage === totalPages}
-                  className="px-3 py-2 bg-lightCard dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 flex items-center"
+                  className="px-3 py-2 bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 flex items-center"
                 >
                   Suivant <ChevronRight className="h-5 w-5 ml-1" />
                 </ButtonPrimary>
@@ -280,12 +285,14 @@ const AdminCommandsPage: React.FC = () => {
 
         {/* Modal pour voir les détails */}
         {isDetailsModalOpen && selectedCommand && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-            <div className="bg-lightBg dark:bg-darkBg p-6 rounded-lg shadow-lg w-full max-w-2xl max-h-[90vh] flex flex-col">
-              <h2 className="text-xl font-medium text-lightText dark:text-darkText mb-4 flex items-center shrink-0">
-                <Eye className="h-5 w-5 mr-2" /> Détails de la Commande #{selectedCommand.id}
-              </h2>
-              <div className="space-y-4 overflow-y-auto flex-1 scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200">
+          <ModalContainer
+            isOpen={isDetailsModalOpen}
+            onClose={closeDetailsModal}
+            title={`Détails de la Commande #${selectedCommand.id}`}
+            size="lg"
+          >
+            <ModalBody>
+              <div className="space-y-4">
                 <div>
                   <p className="text-gray-700 dark:text-gray-300">
                     <strong>Utilisateur :</strong> {selectedCommand.client.username} ({selectedCommand.client.email})
@@ -294,7 +301,8 @@ const AdminCommandsPage: React.FC = () => {
                     <strong>Total :</strong> {selectedCommand.total} FCFA
                   </p>
                   <p className="text-gray-700 dark:text-gray-300">
-                    <strong>Statut :</strong> {selectedCommand.statut.charAt(0).toUpperCase() + selectedCommand.statut.slice(1)}
+                    <strong>Statut :</strong>{" "}
+                    {selectedCommand.statut.charAt(0).toUpperCase() + selectedCommand.statut.slice(1).replace("_", " ")}
                   </p>
                   <p className="text-gray-700 dark:text-gray-300">
                     <strong>Date :</strong> {new Date(selectedCommand.date).toLocaleString()}
@@ -334,43 +342,39 @@ const AdminCommandsPage: React.FC = () => {
                   </table>
                 </div>
               </div>
-              <div className="mt-4 flex justify-end shrink-0">
+              <ModalFooter>
                 <ButtonPrimary
                   onClick={closeDetailsModal}
-                  className="px-4 py-2 bg-lightCard dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600"
+                  className="px-4 py-2 bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText hover:bg-gray-300 dark:hover:bg-gray-600"
                 >
                   Fermer
                 </ButtonPrimary>
-              </div>
-            </div>
-          </div>
+              </ModalFooter>
+            </ModalBody>
+          </ModalContainer>
         )}
 
         {/* Modal pour annuler une commande */}
         {isCancelModalOpen && selectedCommand && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-            <div className="bg-lightBg dark:bg-darkBg p-6 rounded-lg shadow-lg w-full max-w-md">
-              <h2 className="text-xl font-medium text-lightText dark:text-darkText mb-4 flex items-center">
-                <XCircle className="h-5 w-5 mr-2" /> Annuler la Commande
-              </h2>
+          <ModalContainer isOpen={isCancelModalOpen} onClose={closeCancelModal} title="Annuler la Commande" size="md">
+            <ModalBody>
               <p className="text-gray-700 dark:text-gray-300 mb-4">
                 Êtes-vous sûr de vouloir annuler la commande #{selectedCommand.id} de{" "}
                 <span className="font-medium">{selectedCommand.client.email}</span> ?
               </p>
-              <div className="flex gap-2 justify-end">
+              <ModalFooter>
                 <ButtonPrimary
-                  type="button"
                   onClick={closeCancelModal}
-                  className="px-4 py-2 bg-lightCard dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600"
+                  className="px-4 py-2 bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText hover:bg-gray-300 dark:hover:bg-gray-600"
                 >
                   Annuler
                 </ButtonPrimary>
                 <ButtonPrimary onClick={handleCancelCommand} className="px-4 py-2 bg-red-500 text-white hover:bg-red-600">
                   Confirmer
                 </ButtonPrimary>
-              </div>
-            </div>
-          </div>
+              </ModalFooter>
+            </ModalBody>
+          </ModalContainer>
         )}
       </div>
     </AdminLayout>

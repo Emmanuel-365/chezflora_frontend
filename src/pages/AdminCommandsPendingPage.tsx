@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useContext } from "react";
+"use client";
+
+import React, { useState, useEffect} from "react";
 import api from "../services/api";
 import AdminLayout from "../components/AdminLayout";
 import ButtonPrimary from "../components/ButtonPrimary";
 import { ShoppingCart, Search, Eye, XCircle, ChevronLeft, ChevronRight } from "lucide-react";
 import { ModalContainer, ModalBody, ModalFooter } from "../components/ModalContainer";
-import { ThemeContext } from "../components/AdminLayout"; // Import du contexte
 
 interface Commande {
   id: string;
@@ -23,12 +24,7 @@ interface ApiResponse {
   previous: string | null;
 }
 
-const Spinner = () => (
-  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500" aria-label="Chargement en cours" />
-);
-
 const AdminCommandsPendingPage: React.FC = () => {
-  const theme = useContext(ThemeContext); // Utilisation du contexte
   const [commands, setCommands] = useState<Commande[]>([]);
   const [totalCommands, setTotalCommands] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
@@ -104,10 +100,9 @@ const AdminCommandsPendingPage: React.FC = () => {
 
   const handleCancelCommand = async () => {
     if (!selectedCommand) return;
-
     try {
       await api.post(`/commandes/${selectedCommand.id}/cancel/`);
-      setIsCancelModalOpen(false);
+      closeCancelModal();
       fetchPendingCommands();
     } catch (err: any) {
       console.error("Erreur lors de l’annulation de la commande:", err.response?.data);
@@ -115,14 +110,40 @@ const AdminCommandsPendingPage: React.FC = () => {
     }
   };
 
+  const renderCommandsPlaceholder = () => (
+    <div className="overflow-x-auto">
+      <table className="w-full text-left text-sm">
+        <thead className="bg-lightCard dark:bg-darkCard">
+          <tr className="border-b border-lightBorder dark:border-darkBorder">
+            {["ID", "Utilisateur", "Email", "Total", "Date", "Actions"].map((header) => (
+              <th key={header} className="py-3 px-4">
+                <div className="h-4 w-16 bg-gray-300 dark:bg-gray-600 rounded"></div>
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {Array.from({ length: 5 }).map((_, index) => (
+            <tr key={index} className="border-b border-lightBorder dark:border-darkBorder animate-pulse">
+              <td className="py-3 px-4"><div className="h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded"></div></td>
+              <td className="py-3 px-4"><div className="h-4 w-32 bg-gray-200 dark:bg-gray-700 rounded"></div></td>
+              <td className="py-3 px-4"><div className="h-4 w-40 bg-gray-200 dark:bg-gray-700 rounded"></div></td>
+              <td className="py-3 px-4"><div className="h-4 w-20 bg-gray-200 dark:bg-gray-700 rounded"></div></td>
+              <td className="py-3 px-4"><div className="h-4 w-28 bg-gray-200 dark:bg-gray-700 rounded"></div></td>
+              <td className="py-3 px-4"><div className="h-6 w-24 bg-gray-300 dark:bg-gray-600 rounded"></div></td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+
   return (
     <AdminLayout>
       <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-        <h1 className="text-2xl sm:text-3xl font-serif font-medium text-lightText dark:text-darkText mb-4 sm:mb-6 flex items-center">
+        <h1 className="text-2xl sm:text-3xl font-serif font-medium text-lightText dark:text-darkText mb-6 flex items-center">
           <ShoppingCart className="h-6 w-6 mr-2" /> Commandes en Attente
         </h1>
-
-        {error && <div className="text-center py-4 text-red-500">{error}</div>}
 
         <div className="mb-6 flex flex-col sm:flex-row gap-4 items-center justify-between">
           <div className="relative w-full sm:w-64">
@@ -132,15 +153,15 @@ const AdminCommandsPendingPage: React.FC = () => {
               value={searchQuery}
               onChange={handleSearch}
               placeholder="Rechercher par nom d’utilisateur..."
-              className="w-full pl-10 pr-4 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightBg dark:bg-darkBg text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full pl-10 pr-4 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightBg dark:bg-darkBg text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-soft-green dark:focus:ring-dark-soft-green"
             />
           </div>
         </div>
 
         {loading ? (
-          <div className="flex justify-center py-4">
-            <Spinner />
-          </div>
+          renderCommandsPlaceholder()
+        ) : error ? (
+          <div className="text-center py-8 text-red-500">{error}</div>
         ) : (
           <>
             <div className="overflow-x-auto">
@@ -156,7 +177,7 @@ const AdminCommandsPendingPage: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {Array.isArray(commands) && commands.length > 0 ? (
+                  {commands.length > 0 ? (
                     commands.map((command) => (
                       <tr
                         key={command.id}
@@ -205,14 +226,14 @@ const AdminCommandsPendingPage: React.FC = () => {
                 <ButtonPrimary
                   onClick={handlePrevPage}
                   disabled={currentPage === 1}
-                  className="px-3 py-2 bg-lightCard dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 flex items-center"
+                  className="px-3 py-2 bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 flex items-center"
                 >
                   <ChevronLeft className="h-5 w-5 mr-1" /> Précédent
                 </ButtonPrimary>
                 <ButtonPrimary
                   onClick={handleNextPage}
                   disabled={currentPage === totalPages}
-                  className="px-3 py-2 bg-lightCard dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 flex items-center"
+                  className="px-3 py-2 bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 flex items-center"
                 >
                   Suivant <ChevronRight className="h-5 w-5 ml-1" />
                 </ButtonPrimary>
@@ -222,137 +243,92 @@ const AdminCommandsPendingPage: React.FC = () => {
         )}
 
         {/* Modal pour les détails */}
-        <ModalContainer
-          isOpen={isDetailsModalOpen}
-          onClose={closeDetailsModal}
-          title={`Détails de la Commande #${selectedCommand?.id || ""}`}
-          size="lg"
-        >
-          {selectedCommand && (
-            <>
-              <ModalBody>
-                <div className="space-y-4">
-                  <div>
-                    <p className={theme === "light" ? "text-gray-700" : "text-gray-300"}>
-                      <strong>Utilisateur :</strong> {selectedCommand.client.username} (
-                      {selectedCommand.client.email})
-                    </p>
-                    <p className={theme === "light" ? "text-gray-700" : "text-gray-300"}>
-                      <strong>Total :</strong> {selectedCommand.total} FCFA
-                    </p>
-                    <p className={theme === "light" ? "text-gray-700" : "text-gray-300"}>
-                      <strong>Date :</strong> {new Date(selectedCommand.date).toLocaleString()}
-                    </p>
-                  </div>
-                  <div>
-                    <h3 className={`text-lg font-medium ${theme === "light" ? "text-lightText" : "text-darkText"} mb-2`}>
-                      Adresse de livraison
-                    </h3>
-                    <p className={theme === "light" ? "text-gray-700" : "text-gray-300"}>
-                      {selectedCommand.adresse.nom}
-                    </p>
-                    <p className={theme === "light" ? "text-gray-700" : "text-gray-300"}>
-                      {selectedCommand.adresse.rue}
-                    </p>
-                    <p className={theme === "light" ? "text-gray-700" : "text-gray-300"}>
-                      {selectedCommand.adresse.ville}, {selectedCommand.adresse.code_postal},{" "}
-                      {selectedCommand.adresse.pays}
-                    </p>
-                  </div>
-                  <div className="overflow-x-auto">
-                    <h3 className={`text-lg font-medium ${theme === "light" ? "text-lightText" : "text-darkText"} mb-2`}>
-                      Produits
-                    </h3>
-                    <table className="w-full text-left text-sm">
-                      <thead className={theme === "light" ? "bg-lightCard" : "bg-darkCard"}>
-                        <tr className={`border-b ${theme === "light" ? "border-lightBorder" : "border-darkBorder"}`}>
-                          <th className={`py-3 px-4 ${theme === "light" ? "text-lightText" : "text-darkText"}`}>
-                            ID Produit
-                          </th>
-                          <th className={`py-3 px-4 ${theme === "light" ? "text-lightText" : "text-darkText"}`}>
-                            Nom
-                          </th>
-                          <th className={`py-3 px-4 ${theme === "light" ? "text-lightText" : "text-darkText"}`}>
-                            Quantité
-                          </th>
-                          <th className={`py-3 px-4 ${theme === "light" ? "text-lightText" : "text-darkText"}`}>
-                            Prix Unitaire
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {selectedCommand.lignes.map((ligne) => (
-                          <tr
-                            key={ligne.id}
-                            className={`border-b ${theme === "light" ? "border-lightBorder" : "border-darkBorder"}`}
-                          >
-                            <td className={`py-3 px-4 ${theme === "light" ? "text-gray-700" : "text-gray-300"}`}>
-                              {ligne.produit.id}
-                            </td>
-                            <td className={`py-3 px-4 ${theme === "light" ? "text-gray-700" : "text-gray-300"}`}>
-                              {ligne.produit.nom}
-                            </td>
-                            <td className={`py-3 px-4 ${theme === "light" ? "text-gray-700" : "text-gray-300"}`}>
-                              {ligne.quantite}
-                            </td>
-                            <td className={`py-3 px-4 ${theme === "light" ? "text-gray-700" : "text-gray-300"}`}>
-                              {ligne.prix_unitaire} FCFA
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+        {isDetailsModalOpen && selectedCommand && (
+          <ModalContainer
+            isOpen={isDetailsModalOpen}
+            onClose={closeDetailsModal}
+            title={`Détails de la Commande #${selectedCommand.id}`}
+            size="lg"
+          >
+            <ModalBody>
+              <div className="space-y-4">
+                <div>
+                  <p className="text-gray-700 dark:text-gray-300">
+                    <strong>Utilisateur :</strong> {selectedCommand.client.username} ({selectedCommand.client.email})
+                  </p>
+                  <p className="text-gray-700 dark:text-gray-300">
+                    <strong>Total :</strong> {selectedCommand.total} FCFA
+                  </p>
+                  <p className="text-gray-700 dark:text-gray-300">
+                    <strong>Date :</strong> {new Date(selectedCommand.date).toLocaleString()}
+                  </p>
                 </div>
-              </ModalBody>
+                <div>
+                  <h3 className="text-lg font-medium text-lightText dark:text-darkText mb-2">Adresse de livraison</h3>
+                  <p className="text-gray-700 dark:text-gray-300">{selectedCommand.adresse.nom}</p>
+                  <p className="text-gray-700 dark:text-gray-300">{selectedCommand.adresse.rue}</p>
+                  <p className="text-gray-700 dark:text-gray-300">
+                    {selectedCommand.adresse.ville}, {selectedCommand.adresse.code_postal}, {selectedCommand.adresse.pays}
+                  </p>
+                </div>
+                <div className="overflow-x-auto">
+                  <h3 className="text-lg font-medium text-lightText dark:text-darkText mb-2">Produits</h3>
+                  <table className="w-full text-left text-sm">
+                    <thead className="bg-lightCard dark:bg-darkCard">
+                      <tr className="border-b border-lightBorder dark:border-darkBorder">
+                        <th className="py-3 px-4 text-lightText dark:text-darkText">ID Produit</th>
+                        <th className="py-3 px-4 text-lightText dark:text-darkText">Nom</th>
+                        <th className="py-3 px-4 text-lightText dark:text-darkText">Quantité</th>
+                        <th className="py-3 px-4 text-lightText dark:text-darkText">Prix Unitaire</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {selectedCommand.lignes.map((ligne) => (
+                        <tr key={ligne.id} className="border-b border-lightBorder dark:border-darkBorder">
+                          <td className="py-3 px-4 text-gray-700 dark:text-gray-300">{ligne.produit.id}</td>
+                          <td className="py-3 px-4 text-gray-700 dark:text-gray-300">{ligne.produit.nom}</td>
+                          <td className="py-3 px-4 text-gray-700 dark:text-gray-300">{ligne.quantite}</td>
+                          <td className="py-3 px-4 text-gray-700 dark:text-gray-300">{ligne.prix_unitaire} FCFA</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
               <ModalFooter>
                 <ButtonPrimary
                   onClick={closeDetailsModal}
-                  className={`px-4 py-2 ${
-                    theme === "light" ? "bg-[#F5E8C7] text-soft-brown hover:bg-[#E8DAB2]" : "bg-[#4A3F35] text-[#E8DAB2] hover:bg-[#5A4A3F]"
-                  }`}
+                  className="px-4 py-2 bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText hover:bg-gray-300 dark:hover:bg-gray-600"
                 >
                   Fermer
                 </ButtonPrimary>
               </ModalFooter>
-            </>
-          )}
-        </ModalContainer>
+            </ModalBody>
+          </ModalContainer>
+        )}
 
         {/* Modal pour annuler */}
-        <ModalContainer
-          isOpen={isCancelModalOpen}
-          onClose={closeCancelModal}
-          title="Annuler la Commande"
-          size="sm"
-        >
-          {selectedCommand && (
-            <>
-              <ModalBody>
-                <p className={theme === "light" ? "text-gray-700" : "text-gray-300"}>
-                  Êtes-vous sûr de vouloir annuler la commande #{selectedCommand.id} de{" "}
-                  <span className="font-medium">{selectedCommand.client.email}</span> ?
-                </p>
-              </ModalBody>
+        {isCancelModalOpen && selectedCommand && (
+          <ModalContainer isOpen={isCancelModalOpen} onClose={closeCancelModal} title="Annuler la Commande" size="md">
+            <ModalBody>
+              <p className="text-gray-700 dark:text-gray-300 mb-4">
+                Êtes-vous sûr de vouloir annuler la commande #{selectedCommand.id} de{" "}
+                <span className="font-medium">{selectedCommand.client.email}</span> ?
+              </p>
               <ModalFooter>
                 <ButtonPrimary
                   onClick={closeCancelModal}
-                  className={`px-4 py-2 ${
-                    theme === "light" ? "bg-[#F5E8C7] text-soft-brown hover:bg-[#E8DAB2]" : "bg-[#4A3F35] text-[#E8DAB2] hover:bg-[#5A4A3F]"
-                  }`}
+                  className="px-4 py-2 bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText hover:bg-gray-300 dark:hover:bg-gray-600"
                 >
                   Annuler
                 </ButtonPrimary>
-                <ButtonPrimary
-                  onClick={handleCancelCommand}
-                  className="px-4 py-2 bg-red-500 text-white hover:bg-red-600"
-                >
+                <ButtonPrimary onClick={handleCancelCommand} className="px-4 py-2 bg-red-500 text-white hover:bg-red-600">
                   Confirmer
                 </ButtonPrimary>
               </ModalFooter>
-            </>
-          )}
-        </ModalContainer>
+            </ModalBody>
+          </ModalContainer>
+        )}
       </div>
     </AdminLayout>
   );
