@@ -11,16 +11,16 @@ import ButtonPrimary from '../components/ButtonPrimary';
 import { getAbonnements, createAbonnement, getProducts } from '../services/api';
 import axios from 'axios';
 
+// Interfaces mises à jour
 interface Abonnement {
   id: string;
   type: 'mensuel' | 'hebdomadaire' | 'annuel';
-  produit_ids: { id: string; nom: string; prix: number; photos: string[] }[];
   prix: string;
   date_debut: string;
   date_fin: string | null;
   prochaine_livraison: string | null;
   is_active: boolean;
-  produits: Product[]
+  abonnement_produits: { produit: Product; quantite: number }[];
 }
 
 interface Product {
@@ -30,11 +30,16 @@ interface Product {
   photos: string[];
 }
 
+interface SelectedProduct {
+  id: string;
+  quantity: number;
+}
+
 const AbonnementsPage: React.FC = () => {
   const [abonnements, setAbonnements] = useState<Abonnement[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedType, setSelectedType] = useState<'mensuel' | 'hebdomadaire' | 'annuel'>('mensuel');
-  const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
+  const [selectedProducts, setSelectedProducts] = useState<SelectedProduct[]>([]);
   const [dateDebut, setDateDebut] = useState<string>(new Date().toISOString().split('T')[0]);
   const [dateFin, setDateFin] = useState<string>('');
   const [loading, setLoading] = useState(true);
@@ -48,16 +53,13 @@ const AbonnementsPage: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Toujours charger les produits pour tous
         const productsResponse = await getProducts();
         setProducts(productsResponse.data.results);
 
-        // Charger les abonnements uniquement si connecté
         if (isAuthenticated) {
           const abonnementsResponse = await getAbonnements();
           setAbonnements(abonnementsResponse.data.results);
         } else {
-          // Si non connecté, montrer directement l'onglet de création
           setActiveTab('creer');
         }
         setLoading(false);
@@ -75,13 +77,13 @@ const AbonnementsPage: React.FC = () => {
   }, [navigate, isAuthenticated]);
 
   const calculateEstimatedPrice = () => {
-    const basePrice = products
-      .filter((p) => selectedProducts.includes(p.id))
-      .reduce((sum, p) => sum + p.prix, 0);
-    
+    const basePrice = selectedProducts.reduce((sum, item) => {
+      const product = products.find(p => p.id === item.id);
+      return sum + (product ? product.prix * item.quantity : 0);
+    }, 0);
+
     let finalPrice = 0;
-    
-    switch(selectedType) {
+    switch (selectedType) {
       case 'hebdomadaire':
         finalPrice = basePrice * 4;
         break;
@@ -89,14 +91,28 @@ const AbonnementsPage: React.FC = () => {
         finalPrice = basePrice;
         break;
       case 'annuel':
-        // Réduction de 10% pour les abonnements annuels
-        finalPrice = (basePrice * 12) * 0.9;
+        finalPrice = basePrice * 12 * 0.9; // Réduction de 10%
         break;
       default:
         finalPrice = basePrice;
     }
-    
     return Math.round(finalPrice);
+  };
+
+  const handleProductQuantityChange = (productId: string, delta: number) => {
+    const existing = selectedProducts.find(p => p.id === productId);
+    if (existing) {
+      const newQuantity = existing.quantity + delta;
+      if (newQuantity <= 0) {
+        setSelectedProducts(selectedProducts.filter(p => p.id !== productId));
+      } else {
+        setSelectedProducts(selectedProducts.map(p =>
+          p.id === productId ? { ...p, quantity: newQuantity } : p
+        ));
+      }
+    } else if (delta > 0) {
+      setSelectedProducts([...selectedProducts, { id: productId, quantity: 1 }]);
+    }
   };
 
   const handleSubscribe = async () => {
@@ -119,7 +135,10 @@ const AbonnementsPage: React.FC = () => {
     try {
       const data = {
         type: selectedType,
-        produit_ids: selectedProducts,
+        produit_quantites: selectedProducts.map(p => ({
+          produit_id: p.id,
+          quantite: p.quantity,
+        })),
         date_debut: dateDebut,
         ...(dateFin && { date_fin: dateFin }),
       };
@@ -166,44 +185,35 @@ const AbonnementsPage: React.FC = () => {
     }
   };
 
-  const getNextDeliveryDate = (dateDebut: string, type: string) => {
+  const getNextDeliveryDate = (dateDebut: string, type: string, prochaineLivraison?: string | null) => {
+    if (prochaineLivraison) {
+      return new Date(prochaineLivraison).toLocaleDateString('fr-FR', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+      });
+    }
+
     const startDate = new Date(dateDebut);
     const today = new Date();
     let nextDate = new Date(startDate);
-    
-    // Si la date de début est dans le futur, c'est la prochaine livraison
+
     if (startDate > today) {
-      return startDate.toLocaleDateString('fr-FR', { 
-        day: 'numeric', 
-        month: 'long', 
-        year: 'numeric' 
-      });
+      return startDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
     }
-    
-    // Sinon, calculer la prochaine date selon le type d'abonnement
-    switch(type) {
+
+    switch (type) {
       case 'hebdomadaire':
-        while (nextDate <= today) {
-          nextDate.setDate(nextDate.getDate() + 7);
-        }
+        while (nextDate <= today) nextDate.setDate(nextDate.getDate() + 7);
         break;
       case 'mensuel':
-        while (nextDate <= today) {
-          nextDate.setMonth(nextDate.getMonth() + 1);
-        }
+        while (nextDate <= today) nextDate.setMonth(nextDate.getMonth() + 1);
         break;
       case 'annuel':
-        while (nextDate <= today) {
-          nextDate.setFullYear(nextDate.getFullYear() + 1);
-        }
+        while (nextDate <= today) nextDate.setFullYear(nextDate.getFullYear() + 1);
         break;
     }
-    
-    return nextDate.toLocaleDateString('fr-FR', { 
-      day: 'numeric', 
-      month: 'long', 
-      year: 'numeric' 
-    });
+    return nextDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
   };
 
   if (loading) {
@@ -239,7 +249,7 @@ const AbonnementsPage: React.FC = () => {
           </div>
 
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-            <motion.div 
+            <motion.div
               className="text-center"
               initial={{ y: 20 }}
               animate={{ y: 0 }}
@@ -249,9 +259,8 @@ const AbonnementsPage: React.FC = () => {
               <p className="text-xl max-w-3xl mx-auto mb-8">
                 Recevez régulièrement des fleurs fraîches et des créations florales uniques directement chez vous.
               </p>
-              
               {!isAuthenticated && (
-                <ButtonPrimary 
+                <ButtonPrimary
                   onClick={() => navigate('/auth', { state: { from: '/abonnements' } })}
                   className="bg-white text-emerald-600 hover:bg-gray-100 transition-colors"
                 >
@@ -262,7 +271,7 @@ const AbonnementsPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Message de succès */}
+        {/* Messages */}
         <AnimatePresence>
           {showSuccessMessage && (
             <motion.div
@@ -274,18 +283,11 @@ const AbonnementsPage: React.FC = () => {
             >
               <CheckCircle className="w-5 h-5 mr-2 text-emerald-500" />
               <span className="flex-grow">{showSuccessMessage}</span>
-              <button
-                onClick={() => setShowSuccessMessage(null)}
-                className="ml-2 text-emerald-500 hover:text-emerald-700"
-              >
+              <button onClick={() => setShowSuccessMessage(null)} className="ml-2 text-emerald-500 hover:text-emerald-700">
                 <X className="w-4 h-4" />
               </button>
             </motion.div>
           )}
-        </AnimatePresence>
-
-        {/* Message d'erreur */}
-        <AnimatePresence>
           {error && (
             <motion.div
               className="fixed top-20 right-4 z-50 bg-red-100 border border-red-200 text-red-800 px-4 py-3 rounded-lg shadow-md flex items-center max-w-md"
@@ -296,10 +298,7 @@ const AbonnementsPage: React.FC = () => {
             >
               <AlertCircle className="w-5 h-5 mr-2 text-red-500" />
               <span className="flex-grow">{error}</span>
-              <button
-                onClick={() => setError(null)}
-                className="ml-2 text-red-500 hover:text-red-700"
-              >
+              <button onClick={() => setError(null)} className="ml-2 text-red-500 hover:text-red-700">
                 <X className="w-4 h-4" />
               </button>
             </motion.div>
@@ -307,14 +306,13 @@ const AbonnementsPage: React.FC = () => {
         </AnimatePresence>
 
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mb-16">
-          {/* Avantages des abonnements */}
+          {/* Avantages */}
           <div className="mb-12">
             <h2 className="text-2xl md:text-3xl font-serif font-medium text-gray-800 mb-8 text-center">
               Pourquoi s'abonner chez Flora ?
             </h2>
-            
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <motion.div 
+              <motion.div
                 className="bg-white rounded-xl shadow-sm p-6 text-center"
                 whileHover={{ y: -5 }}
                 transition={{ duration: 0.2 }}
@@ -327,8 +325,7 @@ const AbonnementsPage: React.FC = () => {
                   Recevez automatiquement vos fleurs préférées selon la fréquence que vous choisissez.
                 </p>
               </motion.div>
-              
-              <motion.div 
+              <motion.div
                 className="bg-white rounded-xl shadow-sm p-6 text-center"
                 whileHover={{ y: -5 }}
                 transition={{ duration: 0.2 }}
@@ -341,8 +338,7 @@ const AbonnementsPage: React.FC = () => {
                   Bénéficiez de tarifs préférentiels et de réductions exclusives sur nos créations.
                 </p>
               </motion.div>
-              
-              <motion.div 
+              <motion.div
                 className="bg-white rounded-xl shadow-sm p-6 text-center"
                 whileHover={{ y: -5 }}
                 transition={{ duration: 0.2 }}
@@ -385,13 +381,10 @@ const AbonnementsPage: React.FC = () => {
             </div>
           )}
 
-          {/* Section Mes abonnements (connecté uniquement) */}
+          {/* Mes abonnements */}
           {isAuthenticated && activeTab === 'mes-abonnements' && (
             <div className="space-y-6 mb-12">
-              <h2 className="text-2xl font-serif font-medium text-gray-800 mb-6">
-                Vos abonnements actifs
-              </h2>
-              
+              <h2 className="text-2xl font-serif font-medium text-gray-800 mb-6">Vos abonnements actifs</h2>
               {abonnements.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <AnimatePresence>
@@ -412,24 +405,24 @@ const AbonnementsPage: React.FC = () => {
                             {abonnement.is_active ? 'Actif' : 'Inactif'}
                           </span>
                         </div>
-                        
                         <div className="p-6">
                           <div className="mb-4">
                             <h4 className="text-sm text-gray-500 mb-2">Produits inclus</h4>
                             <div className="flex flex-wrap gap-2">
-                              {abonnement.produits.map((p) => (
-                                <div key={p.id} className="flex items-center bg-gray-50 rounded-lg p-2">
-                                  <img 
-                                    src={p.photos[0] || '/placeholder.svg?height=40&width=40'} 
-                                    alt={p.nom} 
-                                    className="w-10 h-10 object-cover rounded-md mr-2" 
+                              {abonnement.abonnement_produits.map((item) => (
+                                <div key={item.produit.id} className="flex items-center bg-gray-50 rounded-lg p-2">
+                                  <img
+                                    src={item.produit.photos[0] || '/placeholder.svg?height=40&width=40'}
+                                    alt={item.produit.nom}
+                                    className="w-10 h-10 object-cover rounded-md mr-2"
                                   />
-                                  <span className="text-gray-800 text-sm">{p.nom}</span>
+                                  <span className="text-gray-800 text-sm">
+                                    {item.produit.nom} (x{item.quantite})
+                                  </span>
                                 </div>
                               ))}
                             </div>
                           </div>
-                          
                           <div className="grid grid-cols-2 gap-4 mb-4">
                             <div>
                               <h4 className="text-sm text-gray-500 mb-1">Prix</h4>
@@ -440,7 +433,6 @@ const AbonnementsPage: React.FC = () => {
                               <p className="text-gray-800">{getFrequencyText(abonnement.type)}</p>
                             </div>
                           </div>
-                          
                           <div className="grid grid-cols-2 gap-4 mb-4">
                             <div>
                               <h4 className="text-sm text-gray-500 mb-1">Date de début</h4>
@@ -451,30 +443,19 @@ const AbonnementsPage: React.FC = () => {
                             <div>
                               <h4 className="text-sm text-gray-500 mb-1">Date de fin</h4>
                               <p className="text-gray-800">
-                                {abonnement.date_fin 
-                                  ? new Date(abonnement.date_fin).toLocaleDateString('fr-FR') 
-                                  : 'Non définie'}
+                                {abonnement.date_fin ? new Date(abonnement.date_fin).toLocaleDateString('fr-FR') : 'Non définie'}
                               </p>
                             </div>
                           </div>
-                          
                           {abonnement.is_active && (
                             <div className="mb-4">
                               <h4 className="text-sm text-gray-500 mb-1">Prochaine livraison</h4>
                               <p className="text-gray-800 flex items-center">
                                 <Calendar className="h-4 w-4 mr-2 text-emerald-500" />
-                                {abonnement.prochaine_livraison 
-                                  ? new Date(abonnement.prochaine_livraison).toLocaleDateString('fr-FR', {
-                                      day: 'numeric',
-                                      month: 'long',
-                                      year: 'numeric'
-                                    })
-                                  : getNextDeliveryDate(abonnement.date_debut, abonnement.type)
-                                }
+                                {getNextDeliveryDate(abonnement.date_debut, abonnement.type, abonnement.prochaine_livraison)}
                               </p>
                             </div>
                           )}
-                          
                           {abonnement.is_active && (
                             <ButtonPrimary
                               onClick={() => handleCancel(abonnement.id)}
@@ -508,7 +489,7 @@ const AbonnementsPage: React.FC = () => {
             </div>
           )}
 
-          {/* Section Créer un abonnement */}
+          {/* Créer un abonnement */}
           {(activeTab === 'creer' || !isAuthenticated) && (
             <div className="mb-12">
               <div className="bg-white rounded-xl shadow-sm overflow-hidden">
@@ -516,11 +497,8 @@ const AbonnementsPage: React.FC = () => {
                   <h2 className="text-2xl font-medium">
                     {isAuthenticated ? 'Créer un nouvel abonnement' : 'Créez votre abonnement sur mesure'}
                   </h2>
-                  <p className="text-emerald-100">
-                    Personnalisez votre abonnement selon vos préférences
-                  </p>
+                  <p className="text-emerald-100">Personnalisez votre abonnement selon vos préférences</p>
                 </div>
-                
                 <div className="p-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div>
@@ -539,7 +517,6 @@ const AbonnementsPage: React.FC = () => {
                             <RefreshCw className="h-6 w-6 mx-auto mb-2" />
                             <span className="block font-medium">Hebdomadaire</span>
                           </button>
-                          
                           <button
                             type="button"
                             onClick={() => setSelectedType('mensuel')}
@@ -552,7 +529,6 @@ const AbonnementsPage: React.FC = () => {
                             <Calendar className="h-6 w-6 mx-auto mb-2" />
                             <span className="block font-medium">Mensuel</span>
                           </button>
-                          
                           <button
                             type="button"
                             onClick={() => setSelectedType('annuel')}
@@ -568,7 +544,6 @@ const AbonnementsPage: React.FC = () => {
                           </button>
                         </div>
                       </div>
-                      
                       <div className="mb-6">
                         <label className="block text-gray-700 font-medium mb-2">Date de début</label>
                         <input
@@ -579,7 +554,6 @@ const AbonnementsPage: React.FC = () => {
                           className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                         />
                       </div>
-                      
                       <div className="mb-6">
                         <label className="block text-gray-700 font-medium mb-2">
                           Date de fin <span className="text-gray-500 font-normal">(optionnel)</span>
@@ -596,61 +570,58 @@ const AbonnementsPage: React.FC = () => {
                         </p>
                       </div>
                     </div>
-                    
                     <div>
                       <div className="mb-6">
                         <label className="block text-gray-700 font-medium mb-2">Produits à inclure</label>
                         <div className="border border-gray-300 rounded-lg overflow-hidden">
                           <div className="max-h-80 overflow-y-auto p-2">
-                            {products.map((product) => (
-                              <div 
-                                key={product.id} 
-                                className={`flex items-center p-3 mb-2 rounded-lg border transition-colors ${
-                                  selectedProducts.includes(product.id)
-                                    ? 'border-emerald-500 bg-emerald-50'
-                                    : 'border-gray-200 hover:border-emerald-200 hover:bg-gray-50'
-                                }`}
-                              >
-                                <div className="flex-shrink-0 mr-3">
-                                  <img 
-                                    src={product.photos[0] || '/placeholder.svg?height=60&width=60'} 
-                                    alt={product.nom} 
-                                    className="w-16 h-16 object-cover rounded-md" 
-                                  />
-                                </div>
-                                
-                                <div className="flex-grow">
-                                  <h4 className="font-medium text-gray-800">{product.nom}</h4>
-                                  <p className="text-emerald-600 font-medium">{product.prix} FCFA</p>
-                                </div>
-                                
-                                <div className="flex-shrink-0 ml-2">
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      if (selectedProducts.includes(product.id)) {
-                                        setSelectedProducts(selectedProducts.filter(id => id !== product.id));
-                                      } else {
-                                        setSelectedProducts([...selectedProducts, product.id]);
-                                      }
-                                    }}
-                                    className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                                      selectedProducts.includes(product.id)
-                                        ? 'bg-emerald-500 text-white'
-                                        : 'bg-gray-200 text-gray-600 hover:bg-emerald-100'
-                                    }`}
-                                  >
-                                    {selectedProducts.includes(product.id) ? (
-                                      <Minus className="h-4 w-4" />
-                                    ) : (
-                                      <Plus className="h-4 w-4" />
+                            {products.map((product) => {
+                              const selected = selectedProducts.find(p => p.id === product.id);
+                              return (
+                                <div
+                                  key={product.id}
+                                  className={`flex items-center p-3 mb-2 rounded-lg border transition-colors ${
+                                    selected ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200 hover:border-emerald-200 hover:bg-gray-50'
+                                  }`}
+                                >
+                                  <div className="flex-shrink-0 mr-3">
+                                    <img
+                                      src={product.photos[0] || '/placeholder.svg?height=60&width=60'}
+                                      alt={product.nom}
+                                      className="w-16 h-16 object-cover rounded-md"
+                                    />
+                                  </div>
+                                  <div className="flex-grow">
+                                    <h4 className="font-medium text-gray-800">{product.nom}</h4>
+                                    <p className="text-emerald-600 font-medium">{product.prix} FCFA</p>
+                                  </div>
+                                  <div className="flex-shrink-0 ml-2 flex items-center space-x-2">
+                                    {selected && (
+                                      <>
+                                        <button
+                                          type="button"
+                                          onClick={() => handleProductQuantityChange(product.id, -1)}
+                                          className="w-8 h-8 rounded-full bg-gray-200 text-gray-600 hover:bg-emerald-100 flex items-center justify-center"
+                                        >
+                                          <Minus className="h-4 w-4" />
+                                        </button>
+                                        <span className="text-gray-800 font-medium">{selected.quantity}</span>
+                                      </>
                                     )}
-                                  </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleProductQuantityChange(product.id, 1)}
+                                      className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                                        selected ? 'bg-emerald-500 text-white' : 'bg-gray-200 text-gray-600 hover:bg-emerald-100'
+                                      }`}
+                                    >
+                                      <Plus className="h-4 w-4" />
+                                    </button>
+                                  </div>
                                 </div>
-                              </div>
-                            ))}
+                              );
+                            })}
                           </div>
-                          
                           {products.length === 0 && (
                             <div className="p-4 text-center text-gray-500">
                               Aucun produit disponible pour l'abonnement.
@@ -658,7 +629,6 @@ const AbonnementsPage: React.FC = () => {
                           )}
                         </div>
                       </div>
-                      
                       {selectedProducts.length > 0 && (
                         <div className="bg-emerald-50 rounded-lg p-4 mb-6">
                           <h3 className="font-medium text-gray-800 mb-2">Récapitulatif</h3>
@@ -675,13 +645,10 @@ const AbonnementsPage: React.FC = () => {
                             <span className="text-xl font-bold text-emerald-600">{calculateEstimatedPrice()} FCFA</span>
                           </div>
                           {selectedType === 'annuel' && (
-                            <p className="text-sm text-emerald-600 mt-2">
-                              Économisez 10% avec l'abonnement annuel !
-                            </p>
+                            <p className="text-sm text-emerald-600 mt-2">Économisez 10% avec l'abonnement annuel !</p>
                           )}
                         </div>
                       )}
-                      
                       <ButtonPrimary
                         onClick={handleSubscribe}
                         disabled={subscribeLoading || selectedProducts.length === 0}
@@ -704,67 +671,47 @@ const AbonnementsPage: React.FC = () => {
               </div>
             </div>
           )}
-          
-          {/* FAQ Section */}
+
+          {/* FAQ */}
           <div className="bg-white rounded-xl shadow-sm overflow-hidden mb-12">
             <div className="p-6">
-              <h2 className="text-2xl font-serif font-medium text-gray-800 mb-6">
-                Questions fréquentes
-              </h2>
-              
+              <h2 className="text-2xl font-serif font-medium text-gray-800 mb-6">Questions fréquentes</h2>
               <div className="space-y-4">
                 <div className="border-b border-gray-200 pb-4">
-                  <h3 className="text-lg font-medium text-gray-800 mb-2">
-                    Comment fonctionne l'abonnement floral ?
-                  </h3>
+                  <h3 className="text-lg font-medium text-gray-800 mb-2">Comment fonctionne l'abonnement floral ?</h3>
                   <p className="text-gray-600">
-                    Vous choisissez les produits que vous souhaitez recevoir régulièrement, la fréquence de livraison 
-                    (hebdomadaire, mensuelle ou annuelle) et la date de début. Nous nous occupons du reste et vous 
-                    livrons automatiquement selon le calendrier choisi.
+                    Vous choisissez les produits et leurs quantités, la fréquence de livraison (hebdomadaire, mensuelle ou annuelle) et la date de début. Nous livrons automatiquement selon votre calendrier.
                   </p>
                 </div>
-                
                 <div className="border-b border-gray-200 pb-4">
-                  <h3 className="text-lg font-medium text-gray-800 mb-2">
-                    Puis-je modifier mon abonnement ?
-                  </h3>
+                  <h3 className="text-lg font-medium text-gray-800 mb-2">Puis-je modifier mon abonnement ?</h3>
                   <p className="text-gray-600">
-                    Pour le moment, les modifications ne sont pas possibles. Si vous souhaitez changer les produits 
-                    ou la fréquence, nous vous recommandons d'annuler votre abonnement actuel et d'en créer un nouveau.
+                    Pour l’instant, annulez votre abonnement actuel et créez-en un nouveau pour changer produits, quantités ou fréquence.
                   </p>
                 </div>
-                
                 <div className="border-b border-gray-200 pb-4">
-                  <h3 className="text-lg font-medium text-gray-800 mb-2">
-                    Comment sont calculés les prix ?
-                  </h3>
+                  <h3 className="text-lg font-medium text-gray-800 mb-2">Comment sont calculés les prix ?</h3>
                   <p className="text-gray-600">
-                    Le prix est calculé en fonction des produits sélectionnés et de la fréquence choisie. 
-                    Les abonnements annuels bénéficient d'une réduction de 10% sur le prix total.
+                    Le prix dépend des produits, de leurs quantités et de la fréquence. Les abonnements annuels bénéficient d’une réduction de 10%.
                   </p>
                 </div>
-                
                 <div className="border-b border-gray-200 pb-4">
-                  <h3 className="text-lg font-medium text-gray-800 mb-2">
-                    Comment puis-je annuler mon abonnement ?
-                  </h3>
+                  <h3 className="text-lg font-medium text-gray-800 mb-2">Comment puis-je annuler mon abonnement ?</h3>
                   <p className="text-gray-600">
-                    Vous pouvez annuler votre abonnement à tout moment depuis votre espace personnel. 
-                    L'annulation prendra effet immédiatement et vous ne serez plus débité pour les livraisons futures.
+                    Annulez à tout moment depuis votre espace personnel. L’annulation est immédiate et stoppe les futures livraisons.
                   </p>
                 </div>
               </div>
             </div>
           </div>
-          
+
           {/* Call to Action */}
           <div className="bg-emerald-50 rounded-xl p-8 text-center">
             <h2 className="text-2xl font-serif font-medium text-gray-800 mb-4">
               Prêt à recevoir des fleurs fraîches régulièrement ?
             </h2>
             <p className="text-gray-600 max-w-2xl mx-auto mb-6">
-              Créez votre abonnement personnalisé dès aujourd'hui et profitez de la beauté des fleurs 
-              fraîches livrées directement chez vous selon votre calendrier préféré.
+              Créez votre abonnement personnalisé dès aujourd’hui et profitez de fleurs fraîches livrées chez vous.
             </p>
             <ButtonPrimary
               onClick={() => {
@@ -777,7 +724,7 @@ const AbonnementsPage: React.FC = () => {
               }}
               className="bg-emerald-600 hover:bg-emerald-500 transition-colors"
             >
-              {isAuthenticated ? "Créer mon abonnement" : "Se connecter pour commencer"}
+              {isAuthenticated ? 'Créer mon abonnement' : 'Se connecter pour commencer'}
             </ButtonPrimary>
           </div>
         </div>
