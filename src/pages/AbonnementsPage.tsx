@@ -266,7 +266,7 @@ const AbonnementsPage: React.FC = () => {
               </div>
               {selectedProducts.length > 0 && (
                 <p className="text-soft-brown font-medium">
-                  Prix estimé : {calculateEstimatedPrice().toFixed(2)} FCFA
+                  Prix estimé : {calculateEstimatedPrice()} FCFA
                 </p>
               )}
               <ButtonPrimary
