@@ -3,6 +3,7 @@ import api from "../services/api";
 import AdminLayout, { ThemeContext } from "../components/AdminLayout";
 import ButtonPrimary from "../components/ButtonPrimary";
 import { Wrench, Search, Edit, Trash2, PlusCircle, ChevronLeft, ChevronRight } from "lucide-react";
+import { ModalContainer, ModalHeader, ModalBody, ModalFooter } from "../components/ModalContainer";
 
 interface Service {
   id: string;
@@ -358,14 +359,16 @@ const AdminRealisationsPage: React.FC = () => {
         </div>
 
         {isAddModalOpen && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-            <div className="p-6 rounded-lg shadow-lg w-full max-w-md bg-lightBg dark:bg-darkBg">
-              <h2 className="text-xl font-medium text-lightText dark:text-darkText mb-4 flex items-center">
-                <PlusCircle className="h-5 w-5 mr-2" /> Ajouter une réalisation
-              </h2>
+          <ModalContainer
+            isOpen={isAddModalOpen}
+            onClose={closeAddModal}
+            title="Ajouter une réalisation"
+            size="md"
+          >
+            <ModalBody>
               <form onSubmit={handleAddRealisation} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">
+                  <label className="block text-sm font-medium text-soft-brown dark:text-[#E8DAB2] mb-1">
                     Service
                   </label>
                   {loadingServices ? (
@@ -378,7 +381,7 @@ const AdminRealisationsPage: React.FC = () => {
                     <select
                       value={newRealisation.service}
                       onChange={(e) => setNewRealisation({ ...newRealisation, service: e.target.value })}
-                      className="w-full px-3 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-[#F5E8C7] dark:border-[#4A3F35] rounded-lg bg-[#F5F5F5] dark:bg-[#2D2D2D] text-soft-brown dark:text-[#E8DAB2] focus:outline-none focus:ring-2 focus:ring-[#A8D5BA] dark:focus:ring-[#8CC7A1]"
                       required
                     >
                       {services.map((service) => (
@@ -390,77 +393,77 @@ const AdminRealisationsPage: React.FC = () => {
                   )}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">
+                  <label className="block text-sm font-medium text-soft-brown dark:text-[#E8DAB2] mb-1">
                     Titre
                   </label>
                   <input
                     type="text"
                     value={newRealisation.titre}
                     onChange={(e) => setNewRealisation({ ...newRealisation, titre: e.target.value })}
-                    className="w-full px-3 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-[#F5E8C7] dark:border-[#4A3F35] rounded-lg bg-[#F5F5F5] dark:bg-[#2D2D2D] text-soft-brown dark:text-[#E8DAB2] focus:outline-none focus:ring-2 focus:ring-[#A8D5BA] dark:focus:ring-[#8CC7A1]"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">
+                  <label className="block text-sm font-medium text-soft-brown dark:text-[#E8DAB2] mb-1">
                     Description
                   </label>
                   <textarea
                     value={newRealisation.description}
                     onChange={(e) => setNewRealisation({ ...newRealisation, description: e.target.value })}
-                    className="w-full px-3 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-[#F5E8C7] dark:border-[#4A3F35] rounded-lg bg-[#F5F5F5] dark:bg-[#2D2D2D] text-soft-brown dark:text-[#E8DAB2] focus:outline-none focus:ring-2 focus:ring-[#A8D5BA] dark:focus:ring-[#8CC7A1]"
                     rows={3}
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">
+                  <label className="block text-sm font-medium text-soft-brown dark:text-[#E8DAB2] mb-1">
                     Photos
                   </label>
                   <input
                     type="file"
                     multiple
                     onChange={(e) => setNewRealisation({ ...newRealisation, photos: Array.from(e.target.files || []) })}
-                    className="w-full px-3 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText"
+                    className="w-full px-3 py-2 border border-[#F5E8C7] dark:border-[#4A3F35] rounded-lg bg-[#F5F5F5] dark:bg-[#2D2D2D] text-soft-brown dark:text-[#E8DAB2]"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">
+                  <label className="block text-sm font-medium text-soft-brown dark:text-[#E8DAB2] mb-1">
                     Date
                   </label>
                   <input
                     type="date"
                     value={newRealisation.date}
                     onChange={(e) => setNewRealisation({ ...newRealisation, date: e.target.value })}
-                    className="w-full px-3 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-[#F5E8C7] dark:border-[#4A3F35] rounded-lg bg-[#F5F5F5] dark:bg-[#2D2D2D] text-soft-brown dark:text-[#E8DAB2] focus:outline-none focus:ring-2 focus:ring-[#A8D5BA] dark:focus:ring-[#8CC7A1]"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">
+                  <label className="block text-sm font-medium text-soft-brown dark:text-[#E8DAB2] mb-1">
                     Actif
                   </label>
                   <input
                     type="checkbox"
                     checked={newRealisation.is_active}
                     onChange={(e) => setNewRealisation({ ...newRealisation, is_active: e.target.checked })}
-                    className="h-5 w-5 text-blue-500 focus:ring-blue-500 border-lightBorder dark:border-darkBorder rounded"
+                    className="h-5 w-5 text-blue-500 focus:ring-blue-500 border-[#F5E8C7] dark:border-[#4A3F35] rounded"
                   />
                 </div>
-                <div className="flex gap-2 justify-end">
+                <ModalFooter>
                   <ButtonPrimary
                     type="button"
                     onClick={closeAddModal}
-                    className="px-4 py-2 bg-lightCard dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600"
+                    className="px-4 py-2 bg-[#F5F5F5] dark:bg-[#4A3F35] text-soft-brown dark:text-[#E8DAB2] hover:bg-gray-300 dark:hover:bg-gray-600"
                   >
                     Annuler
                   </ButtonPrimary>
                   <ButtonPrimary type="submit" className="px-4 py-2 bg-blue-500 text-white hover:bg-blue-600">
                     Ajouter
                   </ButtonPrimary>
-                </div>
+                </ModalFooter>
               </form>
-            </div>
-          </div>
+            </ModalBody>
+          </ModalContainer>
         )}
 
         {isEditModalOpen && selectedRealisation && (
