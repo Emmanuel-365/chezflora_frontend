@@ -1,9 +1,8 @@
-import React, { useState, useEffect, useContext } from "react";import api from "../services/api";
+import React, { useState, useEffect} from "react";import api from "../services/api";
 import AdminLayout from "../components/AdminLayout";
 import ButtonPrimary from "../components/ButtonPrimary";
 import { Package, Search, Edit, Trash2, PlusCircle, Eye, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { ModalContainer, ModalBody, ModalFooter } from "../components/ModalContainer";
-import { ThemeContext } from "../components/AdminLayout";
 
 interface Photo {
   id: string;
@@ -45,7 +44,6 @@ const Spinner = () => (
 );
 
 const AdminProductsPage: React.FC = () => {
-  const theme = useContext(ThemeContext);
   const [products, setProducts] = useState<Product[]>([]);
   const [totalProducts, setTotalProducts] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
