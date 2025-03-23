@@ -4,14 +4,20 @@ import React, { useState, useEffect } from "react";
 import api from "../services/api";
 import AdminLayout from "../components/AdminLayout";
 import ButtonPrimary from "../components/ButtonPrimary";
-import { Wrench, Search, Edit, Trash2, PlusCircle, ChevronLeft, ChevronRight } from "lucide-react";
+import { Wrench, Search, Edit, Trash2, PlusCircle, Eye, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { ModalContainer, ModalBody, ModalFooter } from "../components/ModalContainer";
+
+interface Photo {
+  id: string;
+  image: string; // URL de l'image
+  uploaded_at: string;
+}
 
 interface Service {
   id: string;
   nom: string;
   description: string;
-  photos: string[];
+  photos: Photo[]; // Changement ici pour utiliser l'interface Photo
   is_active: boolean;
   date_creation: string;
 }
@@ -35,6 +41,7 @@ const AdminServicesPage: React.FC = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false); // Nouveau modal pour les détails
   const [newService, setNewService] = useState({
     nom: "",
     description: "",
@@ -100,11 +107,19 @@ const AdminServicesPage: React.FC = () => {
       formData.append("nom", newService.nom);
       formData.append("description", newService.description);
       formData.append("is_active", String(newService.is_active));
-      newService.photos.forEach((photo) => formData.append("photos", photo));
+      const response = await api.post("/services/", formData);
+      const serviceId = response.data.id;
 
-      await api.post("/services/", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      for (const photo of newService.photos) {
+        const photoFormData = new FormData();
+        photoFormData.append("image", photo);
+        photoFormData.append("entity_type", "service");
+        photoFormData.append("entity_id", serviceId);
+        await api.post("/photos/", photoFormData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+      }
+
       closeAddModal();
       fetchServices();
     } catch (err: any) {
@@ -118,7 +133,7 @@ const AdminServicesPage: React.FC = () => {
     setEditService({
       nom: service.nom,
       description: service.description,
-      photos: [], // Photos existantes non ré-éditées ici, nouvelles ajoutées via input
+      photos: [],
       is_active: service.is_active,
     });
     setIsEditModalOpen(true);
@@ -138,11 +153,18 @@ const AdminServicesPage: React.FC = () => {
       formData.append("nom", editService.nom);
       formData.append("description", editService.description);
       formData.append("is_active", String(editService.is_active));
-      editService.photos.forEach((photo) => formData.append("photos", photo));
+      await api.put(`/services/${selectedService.id}/`, formData);
 
-      await api.put(`/services/${selectedService.id}/`, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      for (const photo of editService.photos) {
+        const photoFormData = new FormData();
+        photoFormData.append("image", photo);
+        photoFormData.append("entity_type", "service");
+        photoFormData.append("entity_id", selectedService.id);
+        await api.post("/photos/", photoFormData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+      }
+
       closeEditModal();
       fetchServices();
     } catch (err: any) {
@@ -174,14 +196,40 @@ const AdminServicesPage: React.FC = () => {
     }
   };
 
+  const openDetailsModal = (service: Service) => {
+    setSelectedService(service);
+    setIsDetailsModalOpen(true);
+  };
+
+  const closeDetailsModal = () => {
+    setIsDetailsModalOpen(false);
+    setSelectedService(null);
+  };
+
+  const handleDeletePhoto = async (photoId: string) => {
+    if (!selectedService) return;
+
+    try {
+      await api.delete(`/photos/${photoId}/`);
+      setSelectedService({
+        ...selectedService,
+        photos: selectedService.photos.filter((photo) => photo.id !== photoId),
+      });
+      fetchServices(); // Rafraîchir la liste pour refléter les changements
+    } catch (err: any) {
+      console.error("Erreur lors de la suppression de la photo:", err.response?.data);
+      setError("Erreur lors de la suppression de la photo.");
+    }
+  };
+
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>, type: "new" | "edit") => {
     const files = e.target.files;
     if (files) {
       const photoFiles = Array.from(files);
       if (type === "new") {
-        setNewService({ ...newService, photos: photoFiles });
+        setNewService({ ...newService, photos: [...newService.photos, ...photoFiles] });
       } else {
-        setEditService({ ...editService, photos: photoFiles });
+        setEditService({ ...editService, photos: [...editService.photos, ...photoFiles] });
       }
     }
   };
@@ -278,6 +326,12 @@ const AdminServicesPage: React.FC = () => {
                       </td>
                       <td className="py-3 px-4 flex gap-2">
                         <ButtonPrimary
+                          onClick={() => openDetailsModal(service)} // Bouton pour voir les détails
+                          className="px-2 py-1 bg-gray-500 text-white hover:bg-gray-600 flex items-center text-sm"
+                        >
+                          <Eye className="h-4 w-4 mr-1" /> Détails
+                        </ButtonPrimary>
+                        <ButtonPrimary
                           onClick={() => openEditModal(service)}
                           className="px-2 py-1 bg-blue-500 text-white hover:bg-blue-600 flex items-center text-sm"
                         >
@@ -350,18 +404,20 @@ const AdminServicesPage: React.FC = () => {
                 <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">Photos</label>
                 <input
                   type="file"
+                  accept="image/*"
                   multiple
                   onChange={(e) => handlePhotoChange(e, "new")}
-                  className="w-full px-3 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightBg dark:bg-darkBg text-lightText dark:text-darkText file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 dark:file:bg-darkCard file:text-blue-700 dark:file:text-darkText hover:file:bg-blue-100 dark:hover:file:bg-gray-600"
+                  className="w-full text-sm text-lightText dark:text-darkText file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-500 file:text-white hover:file:bg-blue-600"
                 />
                 {newService.photos.length > 0 && (
                   <div className="mt-2 flex flex-wrap gap-2">
                     {newService.photos.map((photo, index) => (
-                      <span
-                        key={index}
-                        className="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-xs flex items-center"
-                      >
-                        {photo.name}
+                      <div key={index} className="relative">
+                        <img
+                          src={URL.createObjectURL(photo)}
+                          alt={`Preview ${index}`}
+                          className="w-20 h-20 object-cover rounded"
+                        />
                         <button
                           type="button"
                           onClick={() =>
@@ -370,11 +426,11 @@ const AdminServicesPage: React.FC = () => {
                               photos: newService.photos.filter((_, i) => i !== index),
                             })
                           }
-                          className="ml-1 text-blue-600 dark:text-blue-300 hover:text-blue-800 dark:hover:text-blue-100"
+                          className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1"
                         >
-                          ×
+                          <X className="h-4 w-4" />
                         </button>
-                      </span>
+                      </div>
                     ))}
                   </div>
                 )}
@@ -432,23 +488,23 @@ const AdminServicesPage: React.FC = () => {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">
-                      Photos (nouvelles uniquement)
-                    </label>
+                    <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">Ajouter des photos</label>
                     <input
                       type="file"
+                      accept="image/*"
                       multiple
                       onChange={(e) => handlePhotoChange(e, "edit")}
-                      className="w-full px-3 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightBg dark:bg-darkBg text-lightText dark:text-darkText file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 dark:file:bg-darkCard file:text-blue-700 dark:file:text-darkText hover:file:bg-blue-100 dark:hover:file:bg-gray-600"
+                      className="w-full text-sm text-lightText dark:text-darkText file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-500 file:text-white hover:file:bg-blue-600"
                     />
                     {editService.photos.length > 0 && (
                       <div className="mt-2 flex flex-wrap gap-2">
                         {editService.photos.map((photo, index) => (
-                          <span
-                            key={index}
-                            className="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-xs flex items-center"
-                          >
-                            {photo.name}
+                          <div key={index} className="relative">
+                            <img
+                              src={URL.createObjectURL(photo)}
+                              alt={`Preview ${index}`}
+                              className="w-20 h-20 object-cover rounded"
+                            />
                             <button
                               type="button"
                               onClick={() =>
@@ -457,17 +513,12 @@ const AdminServicesPage: React.FC = () => {
                                   photos: editService.photos.filter((_, i) => i !== index),
                                 })
                               }
-                              className="ml-1 text-blue-600 dark:text-blue-300 hover:text-blue-800 dark:hover:text-blue-100"
+                              className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1"
                             >
-                              ×
+                              <X className="h-4 w-4" />
                             </button>
-                          </span>
+                          </div>
                         ))}
-                      </div>
-                    )}
-                    {selectedService.photos.length > 0 && (
-                      <div className="mt-2 text-sm text-gray-700 dark:text-gray-300">
-                        Photos existantes : {selectedService.photos.length} (non modifiables ici)
                       </div>
                     )}
                   </div>
@@ -522,6 +573,67 @@ const AdminServicesPage: React.FC = () => {
                   className="px-4 py-2 bg-red-500 text-white hover:bg-red-600"
                 >
                   Supprimer
+                </ButtonPrimary>
+              </ModalFooter>
+            </>
+          )}
+        </ModalContainer>
+
+        {/* Modal pour voir les détails et supprimer les photos */}
+        <ModalContainer isOpen={isDetailsModalOpen} onClose={closeDetailsModal} title="Détails du service" size="lg">
+          {selectedService && (
+            <>
+              <ModalBody>
+                <div className="space-y-2">
+                  <p className="text-lightText dark:text-darkText">
+                    <strong>ID :</strong> {selectedService.id}
+                  </p>
+                  <p className="text-lightText dark:text-darkText">
+                    <strong>Nom :</strong> {selectedService.nom}
+                  </p>
+                  <p className="text-lightText dark:text-darkText">
+                    <strong>Description :</strong> {selectedService.description || "Aucune"}
+                  </p>
+                  <p className="text-lightText dark:text-darkText">
+                    <strong>Statut :</strong> {selectedService.is_active ? "Actif" : "Inactif"}
+                  </p>
+                  <p className="text-lightText dark:text-darkText">
+                    <strong>Date de création :</strong>{" "}
+                    {new Date(selectedService.date_creation).toLocaleDateString()}
+                  </p>
+                  <div>
+                    <strong className="text-lightText dark:text-darkText">Photos :</strong>
+                    {selectedService.photos.length > 0 ? (
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {selectedService.photos.map((photo) => (
+                          <div key={photo.id} className="relative">
+                            <img
+                              src={photo.image}
+                              alt={`Photo ${photo.id}`}
+                              className="w-20 h-20 object-cover rounded"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => handleDeletePhoto(photo.id)}
+                              className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1"
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-lightText dark:text-darkText">Aucune photo</p>
+                    )}
+                  </div>
+                </div>
+              </ModalBody>
+              <ModalFooter>
+                <ButtonPrimary
+                  onClick={closeDetailsModal}
+                  className="px-4 py-2 bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText hover:bg-gray-300 dark:hover:bg-gray-600"
+                >
+                  Fermer
                 </ButtonPrimary>
               </ModalFooter>
             </>
