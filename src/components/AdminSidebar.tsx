@@ -292,14 +292,6 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ isOpen, toggleSidebar }) =>
               isActive={isActive("/admin/services")}
             />
             <SidebarSubItem
-              label="Ajouter un service"
-              isOpen={isOpen}
-              onClick={() => navigate("/admin/services/add")}
-              textVariants={textVariants}
-              isMobile={isMobile}
-              isActive={isActive("/admin/services/add")}
-            />
-            <SidebarSubItem
               label="Devis"
               isOpen={isOpen}
               onClick={() => navigate("/admin/devis")}
