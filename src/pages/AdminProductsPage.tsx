@@ -1,4 +1,7 @@
-import React, { useState, useEffect} from "react";import api from "../services/api";
+"use client";
+
+import React, { useState, useEffect } from "react";
+import api from "../services/api";
 import AdminLayout from "../components/AdminLayout";
 import ButtonPrimary from "../components/ButtonPrimary";
 import { Package, Search, Edit, Trash2, PlusCircle, Eye, ChevronLeft, ChevronRight, X } from "lucide-react";
@@ -38,10 +41,6 @@ interface Promotion {
   id: string;
   nom: string;
 }
-
-const Spinner = () => (
-  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500" aria-label="Chargement en cours" />
-);
 
 const AdminProductsPage: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -98,8 +97,7 @@ const AdminProductsPage: React.FC = () => {
           is_active: filterStatus !== "all" ? filterStatus : undefined,
         },
       });
-      const results = Array.isArray(response.data.results) ? response.data.results : [];
-      setProducts(results);
+      setProducts(response.data.results || []);
       setTotalProducts(response.data.count || 0);
       setTotalPages(Math.ceil((response.data.count || 0) / productsPerPage));
       setLoading(false);
@@ -114,7 +112,7 @@ const AdminProductsPage: React.FC = () => {
   const fetchCategories = async () => {
     try {
       const response = await api.get("/categories/");
-      setCategories(Array.isArray(response.data.results) ? response.data.results : []);
+      setCategories(response.data.results || response.data || []);
     } catch (err: any) {
       console.error("Erreur lors du chargement des catégories:", err.response?.data);
       setError("Erreur lors du chargement des catégories.");
@@ -125,7 +123,7 @@ const AdminProductsPage: React.FC = () => {
   const fetchPromotions = async () => {
     try {
       const response = await api.get("/promotions/");
-      setPromotions(Array.isArray(response.data.results) ? response.data.results : []);
+      setPromotions(response.data.results || response.data || []);
     } catch (err: any) {
       console.error("Erreur lors du chargement des promotions:", err.response?.data);
       setError("Erreur lors du chargement des promotions.");
@@ -169,8 +167,8 @@ const AdminProductsPage: React.FC = () => {
     setIsAddModalOpen(false);
   };
 
-  const handleAddProduct = async (e?: React.FormEvent | React.MouseEvent<HTMLButtonElement>) => {
-    if (e) e.preventDefault(); // Vérifie que e existe avant d’appeler preventDefault
+  const handleAddProduct = async (e: React.FormEvent) => {
+    e.preventDefault();
     try {
       const productData = {
         nom: newProduct.nom,
@@ -194,7 +192,7 @@ const AdminProductsPage: React.FC = () => {
         });
       }
 
-      setIsAddModalOpen(false);
+      closeAddModal();
       fetchProducts();
     } catch (err: any) {
       console.error("Erreur lors de l’ajout du produit:", err.response?.data);
@@ -222,8 +220,8 @@ const AdminProductsPage: React.FC = () => {
     setSelectedProduct(null);
   };
 
-  const handleEditProduct = async (e?: React.FormEvent | React.MouseEvent<HTMLButtonElement>) => {
-    if (e) e.preventDefault(); // Vérifie que e existe avant d’appeler preventDefault
+  const handleEditProduct = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (!selectedProduct) return;
 
     try {
@@ -248,7 +246,7 @@ const AdminProductsPage: React.FC = () => {
         });
       }
 
-      setIsEditModalOpen(false);
+      closeEditModal();
       fetchProducts();
     } catch (err: any) {
       console.error("Erreur lors de la mise à jour du produit:", err.response?.data);
@@ -271,7 +269,7 @@ const AdminProductsPage: React.FC = () => {
 
     try {
       await api.delete(`/produits/${selectedProduct.id}/`);
-      setIsDeleteModalOpen(false);
+      closeDeleteModal();
       fetchProducts();
     } catch (err: any) {
       console.error("Erreur lors de la suppression du produit:", err.response?.data);
@@ -330,14 +328,43 @@ const AdminProductsPage: React.FC = () => {
     }
   };
 
+  const renderProductsPlaceholder = () => (
+    <div className="overflow-x-auto">
+      <table className="w-full text-left text-sm">
+        <thead className="bg-lightCard dark:bg-darkCard">
+          <tr className="border-b border-lightBorder dark:border-darkBorder">
+            {["ID", "Nom", "Prix", "Stock", "Statut", "Catégorie", "Promotions", "Photos", "Actions"].map((header) => (
+              <th key={header} className="py-3 px-4">
+                <div className="h-4 w-16 bg-gray-300 dark:bg-gray-600 rounded"></div>
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {Array.from({ length: 5 }).map((_, index) => (
+            <tr key={index} className="border-b border-lightBorder dark:border-darkBorder animate-pulse">
+              <td className="py-3 px-4"><div className="h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded"></div></td>
+              <td className="py-3 px-4"><div className="h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded"></div></td>
+              <td className="py-3 px-4"><div className="h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded"></div></td>
+              <td className="py-3 px-4"><div className="h-4 w-12 bg-gray-200 dark:bg-gray-700 rounded"></div></td>
+              <td className="py-3 px-4"><div className="h-4 w-12 bg-gray-200 dark:bg-gray-700 rounded"></div></td>
+              <td className="py-3 px-4"><div className="h-4 w-20 bg-gray-200 dark:bg-gray-700 rounded"></div></td>
+              <td className="py-3 px-4"><div className="h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded"></div></td>
+              <td className="py-3 px-4"><div className="h-4 w-12 bg-gray-200 dark:bg-gray-700 rounded"></div></td>
+              <td className="py-3 px-4"><div className="h-6 w-20 bg-gray-300 dark:bg-gray-600 rounded"></div></td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+
   return (
     <AdminLayout>
       <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-        <h1 className="text-2xl sm:text-3xl font-serif font-medium text-lightText dark:text-darkText mb-4 sm:mb-6 flex items-center">
+        <h1 className="text-2xl sm:text-3xl font-serif font-medium text-lightText dark:text-darkText mb-6 flex items-center">
           <Package className="h-6 w-6 mr-2" /> Gestion des Produits
         </h1>
-
-        {error && <div className="text-center py-4 text-red-500">{error}</div>}
 
         <div className="mb-6 flex flex-col sm:flex-row gap-4 items-center justify-between">
           <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
@@ -348,13 +375,13 @@ const AdminProductsPage: React.FC = () => {
                 value={searchQuery}
                 onChange={handleSearch}
                 placeholder="Rechercher par nom ou description..."
-                className="w-full pl-10 pr-4 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightBg dark:bg-darkBg text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full pl-10 pr-4 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightBg dark:bg-darkBg text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-soft-green dark:focus:ring-dark-soft-green"
               />
             </div>
             <select
               value={filterStatus}
               onChange={handleFilterStatus}
-              className="px-4 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightBg dark:bg-darkBg text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full sm:w-40 px-3 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightBg dark:bg-darkBg text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-soft-green dark:focus:ring-dark-soft-green"
             >
               <option value="all">Tous les statuts</option>
               <option value="true">Actif</option>
@@ -370,9 +397,9 @@ const AdminProductsPage: React.FC = () => {
         </div>
 
         {loading ? (
-          <div className="flex justify-center py-4">
-            <Spinner />
-          </div>
+          renderProductsPlaceholder()
+        ) : error ? (
+          <div className="text-center py-8 text-red-500">{error}</div>
         ) : (
           <>
             <div className="overflow-x-auto">
@@ -391,7 +418,7 @@ const AdminProductsPage: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {Array.isArray(products) && products.length > 0 ? (
+                  {products.length > 0 ? (
                     products.map((product) => (
                       <tr
                         key={product.id}
@@ -465,14 +492,14 @@ const AdminProductsPage: React.FC = () => {
                 <ButtonPrimary
                   onClick={handlePrevPage}
                   disabled={currentPage === 1}
-                  className="px-3 py-2 bg-lightCard dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 flex items-center"
+                  className="px-3 py-2 bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 flex items-center"
                 >
                   <ChevronLeft className="h-5 w-5 mr-1" /> Précédent
                 </ButtonPrimary>
                 <ButtonPrimary
                   onClick={handleNextPage}
                   disabled={currentPage === totalPages}
-                  className="px-3 py-2 bg-lightCard dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 flex items-center"
+                  className="px-3 py-2 bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 flex items-center"
                 >
                   Suivant <ChevronRight className="h-5 w-5 ml-1" />
                 </ButtonPrimary>
@@ -482,60 +509,55 @@ const AdminProductsPage: React.FC = () => {
         )}
 
         {/* Modal pour ajouter un produit */}
-        <ModalContainer
-          isOpen={isAddModalOpen}
-          onClose={closeAddModal}
-          title="Ajouter un produit"
-          size="md"
-        >          
+        <ModalContainer isOpen={isAddModalOpen} onClose={closeAddModal} title="Ajouter un produit" size="md">
           <ModalBody>
             <form onSubmit={handleAddProduct} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-soft-brown mb-1">Nom</label>
+                <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">Nom</label>
                 <input
                   type="text"
                   value={newProduct.nom}
                   onChange={(e) => setNewProduct({ ...newProduct, nom: e.target.value })}
-                  className="w-full px-3 py-2 border border-[#F5E8C7] rounded-lg bg-[#F5F5F5] text-soft-brown focus:outline-none focus:ring-2 focus:ring-[#A8D5BA]"
+                  className="w-full px-3 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightBg dark:bg-darkBg text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-soft-green dark:focus:ring-dark-soft-green"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-soft-brown mb-1">Prix (FCFA)</label>
+                <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">Prix (FCFA)</label>
                 <input
                   type="number"
                   step="0.01"
                   value={newProduct.prix}
                   onChange={(e) => setNewProduct({ ...newProduct, prix: e.target.value })}
-                  className="w-full px-3 py-2 border border-[#F5E8C7] rounded-lg bg-[#F5F5F5] text-soft-brown focus:outline-none focus:ring-2 focus:ring-[#A8D5BA]"
+                  className="w-full px-3 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightBg dark:bg-darkBg text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-soft-green dark:focus:ring-dark-soft-green"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-soft-brown mb-1">Stock</label>
+                <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">Stock</label>
                 <input
                   type="number"
                   value={newProduct.stock}
                   onChange={(e) => setNewProduct({ ...newProduct, stock: e.target.value })}
-                  className="w-full px-3 py-2 border border-[#F5E8C7] rounded-lg bg-[#F5F5F5] text-soft-brown focus:outline-none focus:ring-2 focus:ring-[#A8D5BA]"
+                  className="w-full px-3 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightBg dark:bg-darkBg text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-soft-green dark:focus:ring-dark-soft-green"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-soft-brown mb-1">Actif</label>
+                <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">Actif</label>
                 <input
                   type="checkbox"
                   checked={newProduct.is_active}
                   onChange={(e) => setNewProduct({ ...newProduct, is_active: e.target.checked })}
-                  className="h-5 w-5 text-[#A8D5BA] focus:ring-[#A8D5BA] border-[#F5E8C7] rounded"
+                  className="h-5 w-5 text-soft-green dark:text-dark-soft-green focus:ring-soft-green dark:focus:ring-dark-soft-green border-lightBorder dark:border-darkBorder rounded"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-soft-brown mb-1">Catégorie</label>
+                <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">Catégorie</label>
                 <select
                   value={newProduct.categorie}
                   onChange={(e) => setNewProduct({ ...newProduct, categorie: e.target.value })}
-                  className="w-full px-3 py-2 border border-[#F5E8C7] rounded-lg bg-[#F5F5F5] text-soft-brown focus:outline-none focus:ring-2 focus:ring-[#A8D5BA]"
+                  className="w-full px-3 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightBg dark:bg-darkBg text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-soft-green dark:focus:ring-dark-soft-green"
                 >
                   <option value="">Sans catégorie</option>
                   {categories.map((cat) => (
@@ -546,7 +568,7 @@ const AdminProductsPage: React.FC = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-soft-brown mb-1">Promotions</label>
+                <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">Promotions</label>
                 <div className="space-y-2 max-h-40 overflow-y-auto">
                   {promotions.map((promo) => (
                     <div key={promo.id} className="flex items-center">
@@ -555,30 +577,30 @@ const AdminProductsPage: React.FC = () => {
                         value={promo.id}
                         checked={newProduct.promotions.includes(promo.id)}
                         onChange={(e) => handlePromotionChange(e, "new")}
-                        className="h-4 w-4 text-[#A8D5BA] focus:ring-[#A8D5BA] border-[#F5E8C7] rounded"
+                        className="h-4 w-4 text-soft-green dark:text-dark-soft-green focus:ring-soft-green dark:focus:ring-dark-soft-green border-lightBorder dark:border-darkBorder rounded"
                       />
-                      <label className="ml-2 text-sm text-soft-brown">{promo.nom}</label>
+                      <label className="ml-2 text-sm text-lightText dark:text-darkText">{promo.nom}</label>
                     </div>
                   ))}
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-soft-brown mb-1">Description</label>
+                <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">Description</label>
                 <textarea
                   value={newProduct.description}
                   onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
-                  className="w-full px-3 py-2 border border-[#F5E8C7] rounded-lg bg-[#F5F5F5] text-soft-brown focus:outline-none focus:ring-2 focus:ring-[#A8D5BA]"
+                  className="w-full px-3 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightBg dark:bg-darkBg text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-soft-green dark:focus:ring-dark-soft-green"
                   rows={3}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-soft-brown mb-1">Photos</label>
+                <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">Photos</label>
                 <input
                   type="file"
                   accept="image/*"
                   multiple
                   onChange={(e) => handlePhotoChange(e, "new")}
-                  className="w-full text-sm text-soft-brown file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-[#A8D5BA] file:text-white hover:file:bg-[#8CC7A1]"
+                  className="w-full text-sm text-lightText dark:text-darkText file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-500 file:text-white hover:file:bg-blue-600"
                 />
                 {newProduct.photos.length > 0 && (
                   <div className="mt-2 flex flex-wrap gap-2">
@@ -611,13 +633,13 @@ const AdminProductsPage: React.FC = () => {
           <ModalFooter>
             <ButtonPrimary
               onClick={closeAddModal}
-              className="px-4 py-2 bg-[#F5E8C7] text-soft-brown hover:bg-[#E8DAB2]"
+              className="px-4 py-2 bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText hover:bg-gray-300 dark:hover:bg-gray-600"
             >
               Annuler
             </ButtonPrimary>
             <ButtonPrimary
-              onClick={(e) => handleAddProduct(e)}
-              className="px-4 py-2 bg-[#A8D5BA] text-white hover:bg-[#8CC7A1]"
+              onClick={handleAddProduct}
+              className="px-4 py-2 bg-blue-500 text-white hover:bg-blue-600"
             >
               Ajouter
             </ButtonPrimary>
@@ -631,51 +653,51 @@ const AdminProductsPage: React.FC = () => {
               <ModalBody>
                 <form onSubmit={handleEditProduct} className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-soft-brown mb-1">Nom</label>
+                    <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">Nom</label>
                     <input
                       type="text"
                       value={editProduct.nom}
                       onChange={(e) => setEditProduct({ ...editProduct, nom: e.target.value })}
-                      className="w-full px-3 py-2 border border-[#F5E8C7] rounded-lg bg-[#F5F5F5] text-soft-brown focus:outline-none focus:ring-2 focus:ring-[#A8D5BA]"
+                      className="w-full px-3 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightBg dark:bg-darkBg text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-soft-green dark:focus:ring-dark-soft-green"
                       required
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-soft-brown mb-1">Prix (FCFA)</label>
+                    <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">Prix (FCFA)</label>
                     <input
                       type="number"
                       step="0.01"
                       value={editProduct.prix}
                       onChange={(e) => setEditProduct({ ...editProduct, prix: e.target.value })}
-                      className="w-full px-3 py-2 border border-[#F5E8C7] rounded-lg bg-[#F5F5F5] text-soft-brown focus:outline-none focus:ring-2 focus:ring-[#A8D5BA]"
+                      className="w-full px-3 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightBg dark:bg-darkBg text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-soft-green dark:focus:ring-dark-soft-green"
                       required
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-soft-brown mb-1">Stock</label>
+                    <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">Stock</label>
                     <input
                       type="number"
                       value={editProduct.stock}
                       onChange={(e) => setEditProduct({ ...editProduct, stock: e.target.value })}
-                      className="w-full px-3 py-2 border border-[#F5E8C7] rounded-lg bg-[#F5F5F5] text-soft-brown focus:outline-none focus:ring-2 focus:ring-[#A8D5BA]"
+                      className="w-full px-3 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightBg dark:bg-darkBg text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-soft-green dark:focus:ring-dark-soft-green"
                       required
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-soft-brown mb-1">Actif</label>
+                    <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">Actif</label>
                     <input
                       type="checkbox"
                       checked={editProduct.is_active}
                       onChange={(e) => setEditProduct({ ...editProduct, is_active: e.target.checked })}
-                      className="h-5 w-5 text-[#A8D5BA] focus:ring-[#A8D5BA] border-[#F5E8C7] rounded"
+                      className="h-5 w-5 text-soft-green dark:text-dark-soft-green focus:ring-soft-green dark:focus:ring-dark-soft-green border-lightBorder dark:border-darkBorder rounded"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-soft-brown mb-1">Catégorie</label>
+                    <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">Catégorie</label>
                     <select
                       value={editProduct.categorie}
                       onChange={(e) => setEditProduct({ ...editProduct, categorie: e.target.value })}
-                      className="w-full px-3 py-2 border border-[#F5E8C7] rounded-lg bg-[#F5F5F5] text-soft-brown focus:outline-none focus:ring-2 focus:ring-[#A8D5BA]"
+                      className="w-full px-3 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightBg dark:bg-darkBg text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-soft-green dark:focus:ring-dark-soft-green"
                     >
                       <option value="">Sans catégorie</option>
                       {categories.map((cat) => (
@@ -686,7 +708,7 @@ const AdminProductsPage: React.FC = () => {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-soft-brown mb-1">Promotions</label>
+                    <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">Promotions</label>
                     <div className="space-y-2 max-h-40 overflow-y-auto">
                       {promotions.map((promo) => (
                         <div key={promo.id} className="flex items-center">
@@ -695,30 +717,30 @@ const AdminProductsPage: React.FC = () => {
                             value={promo.id}
                             checked={editProduct.promotions.includes(promo.id)}
                             onChange={(e) => handlePromotionChange(e, "edit")}
-                            className="h-4 w-4 text-[#A8D5BA] focus:ring-[#A8D5BA] border-[#F5E8C7] rounded"
+                            className="h-4 w-4 text-soft-green dark:text-dark-soft-green focus:ring-soft-green dark:focus:ring-dark-soft-green border-lightBorder dark:border-darkBorder rounded"
                           />
-                          <label className="ml-2 text-sm text-soft-brown">{promo.nom}</label>
+                          <label className="ml-2 text-sm text-lightText dark:text-darkText">{promo.nom}</label>
                         </div>
                       ))}
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-soft-brown mb-1">Description</label>
+                    <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">Description</label>
                     <textarea
                       value={editProduct.description}
                       onChange={(e) => setEditProduct({ ...editProduct, description: e.target.value })}
-                      className="w-full px-3 py-2 border border-[#F5E8C7] rounded-lg bg-[#F5F5F5] text-soft-brown focus:outline-none focus:ring-2 focus:ring-[#A8D5BA]"
+                      className="w-full px-3 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightBg dark:bg-darkBg text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-soft-green dark:focus:ring-dark-soft-green"
                       rows={3}
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-soft-brown mb-1">Ajouter des photos</label>
+                    <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">Ajouter des photos</label>
                     <input
                       type="file"
                       accept="image/*"
                       multiple
                       onChange={(e) => handlePhotoChange(e, "edit")}
-                      className="w-full text-sm text-soft-brown file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-[#A8D5BA] file:text-white hover:file:bg-[#8CC7A1]"
+                      className="w-full text-sm text-lightText dark:text-darkText file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-500 file:text-white hover:file:bg-blue-600"
                     />
                     {editProduct.photos.length > 0 && (
                       <div className="mt-2 flex flex-wrap gap-2">
@@ -751,13 +773,13 @@ const AdminProductsPage: React.FC = () => {
               <ModalFooter>
                 <ButtonPrimary
                   onClick={closeEditModal}
-                  className="px-4 py-2 bg-[#F5E8C7] text-soft-brown hover:bg-[#E8DAB2]"
+                  className="px-4 py-2 bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText hover:bg-gray-300 dark:hover:bg-gray-600"
                 >
                   Annuler
                 </ButtonPrimary>
                 <ButtonPrimary
-                  onClick={(e) => handleEditProduct(e)} // Encapsulation avec événement
-                  className="px-4 py-2 bg-[#A8D5BA] text-white hover:bg-[#8CC7A1]"
+                  onClick={handleEditProduct}
+                  className="px-4 py-2 bg-blue-500 text-white hover:bg-blue-600"
                 >
                   Enregistrer
                 </ButtonPrimary>
@@ -767,11 +789,11 @@ const AdminProductsPage: React.FC = () => {
         </ModalContainer>
 
         {/* Modal pour supprimer un produit */}
-        <ModalContainer isOpen={isDeleteModalOpen} onClose={closeDeleteModal} title="Supprimer le produit" size="sm" >
+        <ModalContainer isOpen={isDeleteModalOpen} onClose={closeDeleteModal} title="Supprimer le produit" size="sm">
           {selectedProduct && (
             <>
               <ModalBody>
-                <p className="text-soft-brown">
+                <p className="text-lightText dark:text-darkText">
                   Êtes-vous sûr de vouloir supprimer le produit{" "}
                   <span className="font-medium">{selectedProduct.nom}</span> ?
                 </p>
@@ -779,7 +801,7 @@ const AdminProductsPage: React.FC = () => {
               <ModalFooter>
                 <ButtonPrimary
                   onClick={closeDeleteModal}
-                  className="px-4 py-2 bg-[#F5E8C7] text-soft-brown hover:bg-[#E8DAB2]"
+                  className="px-4 py-2 bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText hover:bg-gray-300 dark:hover:bg-gray-600"
                 >
                   Annuler
                 </ButtonPrimary>
@@ -800,35 +822,35 @@ const AdminProductsPage: React.FC = () => {
             <>
               <ModalBody>
                 <div className="space-y-2">
-                  <p className="text-soft-brown">
+                  <p className="text-lightText dark:text-darkText">
                     <strong>ID :</strong> {selectedProduct.id}
                   </p>
-                  <p className="text-soft-brown">
+                  <p className="text-lightText dark:text-darkText">
                     <strong>Nom :</strong> {selectedProduct.nom}
                   </p>
-                  <p className="text-soft-brown">
+                  <p className="text-lightText dark:text-darkText">
                     <strong>Prix :</strong> {selectedProduct.prix} FCFA
                   </p>
-                  <p className="text-soft-brown">
+                  <p className="text-lightText dark:text-darkText">
                     <strong>Stock :</strong> {selectedProduct.stock}
                   </p>
-                  <p className="text-soft-brown">
+                  <p className="text-lightText dark:text-darkText">
                     <strong>Statut :</strong> {selectedProduct.is_active ? "Actif" : "Inactif"}
                   </p>
-                  <p className="text-soft-brown">
+                  <p className="text-lightText dark:text-darkText">
                     <strong>Catégorie :</strong> {selectedProduct.categorie?.nom || "Sans catégorie"}
                   </p>
-                  <p className="text-soft-brown">
+                  <p className="text-lightText dark:text-darkText">
                     <strong>Promotions :</strong>{" "}
                     {selectedProduct.promotions.length > 0
                       ? selectedProduct.promotions.map((p) => p.nom).join(", ")
                       : "Aucune"}
                   </p>
-                  <p className="text-soft-brown">
+                  <p className="text-lightText dark:text-darkText">
                     <strong>Description :</strong> {selectedProduct.description || "Aucune"}
                   </p>
                   <div>
-                    <strong className="text-soft-brown">Photos :</strong>
+                    <strong className="text-lightText dark:text-darkText">Photos :</strong>
                     {selectedProduct.photos.length > 0 ? (
                       <div className="mt-2 flex flex-wrap gap-2">
                         {selectedProduct.photos.map((photo) => (
@@ -849,7 +871,7 @@ const AdminProductsPage: React.FC = () => {
                         ))}
                       </div>
                     ) : (
-                      <p className="text-soft-brown">Aucune photo</p>
+                      <p className="text-lightText dark:text-darkText">Aucune photo</p>
                     )}
                   </div>
                 </div>
@@ -857,7 +879,7 @@ const AdminProductsPage: React.FC = () => {
               <ModalFooter>
                 <ButtonPrimary
                   onClick={closeDetailsModal}
-                  className="px-4 py-2 bg-[#F5E8C7] text-soft-brown hover:bg-[#E8DAB2]"
+                  className="px-4 py-2 bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText hover:bg-gray-300 dark:hover:bg-gray-600"
                 >
                   Fermer
                 </ButtonPrimary>
