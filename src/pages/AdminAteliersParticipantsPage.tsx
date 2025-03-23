@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import api from "../services/api";
@@ -23,10 +25,6 @@ interface ApiResponse {
   next: string | null;
   previous: string | null;
 }
-
-const Spinner = () => (
-  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500" aria-label="Chargement en cours" />
-);
 
 const AdminAteliersParticipantsPage: React.FC = () => {
   const { atelierId } = useParams<{ atelierId: string }>();
@@ -70,7 +68,7 @@ const AdminAteliersParticipantsPage: React.FC = () => {
     } catch (err: any) {
       console.error("Erreur lors du chargement des participants:", err.response?.data);
       setError("Erreur lors du chargement des participants.");
-      setParticipants([]); // Réinitialiser à un tableau vide en cas d'erreur
+      setParticipants([]);
       setLoading(false);
     }
   };
@@ -83,6 +81,7 @@ const AdminAteliersParticipantsPage: React.FC = () => {
   const handlePrevPage = () => {
     if (currentPage > 1) setCurrentPage(currentPage - 1);
   };
+
   const handleNextPage = () => {
     if (currentPage < totalPages) setCurrentPage(currentPage + 1);
   };
@@ -90,6 +89,32 @@ const AdminAteliersParticipantsPage: React.FC = () => {
   const handleBack = () => {
     navigate("/admin/ateliers");
   };
+
+  const renderParticipantsPlaceholder = () => (
+    <div className="overflow-x-auto">
+      <table className="w-full text-left text-sm">
+        <thead className="bg-lightCard dark:bg-darkCard">
+          <tr className="border-b border-lightBorder dark:border-darkBorder">
+            {["ID", "Utilisateur", "Date d’inscription", "Statut"].map((header) => (
+              <th key={header} className="py-3 px-4">
+                <div className="h-4 w-16 bg-gray-300 dark:bg-gray-600 rounded"></div>
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {Array.from({ length: 5 }).map((_, index) => (
+            <tr key={index} className="border-b border-lightBorder dark:border-darkBorder animate-pulse">
+              <td className="py-3 px-4"><div className="h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded"></div></td>
+              <td className="py-3 px-4"><div className="h-4 w-32 bg-gray-200 dark:bg-gray-700 rounded"></div></td>
+              <td className="py-3 px-4"><div className="h-4 w-28 bg-gray-200 dark:bg-gray-700 rounded"></div></td>
+              <td className="py-3 px-4"><div className="h-4 w-20 bg-gray-200 dark:bg-gray-700 rounded"></div></td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
 
   return (
     <AdminLayout>
@@ -102,8 +127,6 @@ const AdminAteliersParticipantsPage: React.FC = () => {
             <ArrowLeft className="h-5 w-5 mr-2" /> Retour
           </ButtonPrimary>
         </div>
-
-        {error && <div className="text-center py-4 text-red-500">{error}</div>}
 
         <div className="mb-6 flex flex-col sm:flex-row gap-4 items-center justify-between">
           <div className="relative w-full sm:w-64">
@@ -119,25 +142,28 @@ const AdminAteliersParticipantsPage: React.FC = () => {
         </div>
 
         {loading ? (
-          <div className="flex justify-center py-4">
-            <Spinner />
-          </div>
+          renderParticipantsPlaceholder()
+        ) : error ? (
+          <div className="text-center py-8 text-red-500">{error}</div>
         ) : (
           <>
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
                 <thead className="bg-lightCard dark:bg-darkCard">
                   <tr className="border-b border-lightBorder dark:border-darkBorder">
-                    <th className="py-3 px-4">ID</th>
-                    <th className="py-3 px-4">Utilisateur</th>
-                    <th className="py-3 px-4">Date d’inscription</th>
-                    <th className="py-3 px-4">Statut</th>
+                    <th className="py-3 px-4 text-lightText dark:text-darkText">ID</th>
+                    <th className="py-3 px-4 text-lightText dark:text-darkText">Utilisateur</th>
+                    <th className="py-3 px-4 text-lightText dark:text-darkText">Date d’inscription</th>
+                    <th className="py-3 px-4 text-lightText dark:text-darkText">Statut</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {Array.isArray(participants) && participants.length > 0 ? (
+                  {participants.length > 0 ? (
                     participants.map((participant) => (
-                      <tr key={participant.id} className="border-b border-lightBorder dark:border-darkBorder hover:bg-gray-100 dark:hover:bg-gray-700">
+                      <tr
+                        key={participant.id}
+                        className="border-b border-lightBorder dark:border-darkBorder hover:bg-gray-100 dark:hover:bg-gray-700"
+                      >
                         <td className="py-3 px-4 text-gray-700 dark:text-gray-300">{participant.id}</td>
                         <td className="py-3 px-4 text-gray-700 dark:text-gray-300">{participant.utilisateur}</td>
                         <td className="py-3 px-4 text-gray-700 dark:text-gray-300">
@@ -178,14 +204,14 @@ const AdminAteliersParticipantsPage: React.FC = () => {
                 <ButtonPrimary
                   onClick={handlePrevPage}
                   disabled={currentPage === 1}
-                  className="px-3 py-2 bg-lightCard dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 flex items-center"
+                  className="px-3 py-2 bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 flex items-center"
                 >
                   <ChevronLeft className="h-5 w-5 mr-1" /> Précédent
                 </ButtonPrimary>
                 <ButtonPrimary
                   onClick={handleNextPage}
                   disabled={currentPage === totalPages}
-                  className="px-3 py-2 bg-lightCard dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 flex items-center"
+                  className="px-3 py-2 bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 flex items-center"
                 >
                   Suivant <ChevronRight className="h-5 w-5 ml-1" />
                 </ButtonPrimary>
