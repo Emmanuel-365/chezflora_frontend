@@ -16,7 +16,7 @@ export const ModalContainer: React.FC<ModalContainerProps> = ({
   children,
   title,
   size = "md",
-  theme = "light", // Par défaut : thème clair
+  theme = "dark", // Par défaut : thème clair
 }) => {
   const [isVisible, setIsVisible] = useState(false);
 
