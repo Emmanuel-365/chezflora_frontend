@@ -71,7 +71,7 @@ interface Article {
   id: string
   title: string
   excerpt: string
-  Photo: Photo
+  cover: string
   link: string
 }
 

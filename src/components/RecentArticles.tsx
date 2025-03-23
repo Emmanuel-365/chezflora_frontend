@@ -7,12 +7,8 @@ interface Article {
   id: string;
   title: string;
   excerpt: string;
-  Photo: Photo;
+  cover: string;
   link: string;
-}
-
-interface Photo {
-  image: string;
 }
 
 interface RecentArticlesProps {
@@ -35,11 +31,11 @@ export default function RecentArticles({ articles}: RecentArticlesProps) {
             >
               <Link to={article.link}>
                 <div className="block relative h-48 overflow-hidden">
-                  <img
-                    src={article.Photo.image || "/images/article-placeholder.jpg"}
+                  {article.cover && <img
+                    src={article.cover || "/images/article-placeholder.jpg"}
                     alt={article.title}
                     className="w-full h-full object-cover transition-transform duration-300 ease-in-out transform hover:scale-105"
-                  />
+                  />}
                 </div>
               </Link>
               <div className="p-6">
