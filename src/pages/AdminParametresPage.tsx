@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import api from '../services/api';
-import AdminLayout from '../components/AdminLayout';
-import ButtonPrimary from '../components/ButtonPrimary';
-import { Settings, Search, Edit, ChevronLeft, ChevronRight } from 'lucide-react';
+import React, { useState, useEffect, useContext } from "react";
+import api from "../services/api";
+import AdminLayout, { ThemeContext } from "../components/AdminLayout";
+import ButtonPrimary from "../components/ButtonPrimary";
+import { Settings, Search, Edit, ChevronLeft, ChevronRight } from "lucide-react";
 
 interface Parametre {
   id: number;
@@ -20,16 +20,19 @@ interface ApiResponse {
 }
 
 const AdminParametresPage: React.FC = () => {
+  const theme = useContext(ThemeContext); // Récupération du thème via le contexte
   const [parametres, setParametres] = useState<Parametre[]>([]);
   const [totalParametres, setTotalParametres] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [loadingOtp, setLoadingOtp] = useState(true); // Spinner pour OTP
+  const [loadingOthers, setLoadingOthers] = useState(true); // Spinner pour autres
+  const [errorOtp, setErrorOtp] = useState<string | null>(null); // Erreur pour OTP
+  const [errorOthers, setErrorOthers] = useState<string | null>(null); // Erreur pour autres
+  const [searchQuery, setSearchQuery] = useState("");
   const [selectedParametre, setSelectedParametre] = useState<Parametre | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [editParametre, setEditParametre] = useState({ cle: '', valeur: '', description: '' });
+  const [editParametre, setEditParametre] = useState({ cle: "", valeur: "", description: "" });
   const parametresPerPage = 10;
 
   useEffect(() => {
@@ -37,18 +40,23 @@ const AdminParametresPage: React.FC = () => {
   }, [currentPage, searchQuery]);
 
   const fetchParametres = async () => {
-    setLoading(true);
+    setLoadingOtp(true);
+    setLoadingOthers(true);
     try {
-      const response = await api.get<ApiResponse>('/parametres/', {
+      const response = await api.get<ApiResponse>("/parametres/", {
         params: { page: currentPage, per_page: parametresPerPage, search: searchQuery || undefined },
       });
       setParametres(response.data.results);
       setTotalParametres(response.data.count);
       setTotalPages(Math.ceil(response.data.count / parametresPerPage));
-      setLoading(false);
+      setLoadingOtp(false);
+      setLoadingOthers(false);
     } catch (err: any) {
-      setError('Erreur lors du chargement des paramètres.');
-      setLoading(false);
+      const errorMsg = "Erreur lors du chargement des paramètres.";
+      setErrorOtp(errorMsg);
+      setErrorOthers(errorMsg);
+      setLoadingOtp(false);
+      setLoadingOthers(false);
     }
   };
 
@@ -57,12 +65,20 @@ const AdminParametresPage: React.FC = () => {
     setCurrentPage(1);
   };
 
-  const handlePrevPage = () => { if (currentPage > 1) setCurrentPage(currentPage - 1); };
-  const handleNextPage = () => { if (currentPage < totalPages) setCurrentPage(currentPage + 1); };
+  const handlePrevPage = () => {
+    if (currentPage > 1) setCurrentPage(currentPage - 1);
+  };
+  const handleNextPage = () => {
+    if (currentPage < totalPages) setCurrentPage(currentPage + 1);
+  };
 
   const openEditModal = (parametre: Parametre) => {
     setSelectedParametre(parametre);
-    setEditParametre({ cle: parametre.cle, valeur: parametre.valeur, description: parametre.description || '' });
+    setEditParametre({
+      cle: parametre.cle,
+      valeur: parametre.valeur,
+      description: parametre.description || "",
+    });
     setIsEditModalOpen(true);
   };
 
@@ -79,15 +95,13 @@ const AdminParametresPage: React.FC = () => {
       setIsEditModalOpen(false);
       fetchParametres();
     } catch (err: any) {
-      setError('Erreur lors de la mise à jour du paramètre.');
+      setErrorOtp(selectedParametre.cle.startsWith("otp_") ? "Erreur lors de la mise à jour du paramètre OTP." : null);
+      setErrorOthers(!selectedParametre.cle.startsWith("otp_") ? "Erreur lors de la mise à jour du paramètre." : null);
     }
   };
 
-  const otpParametres = parametres.filter(p => p.cle.startsWith('otp_'));
-  const otherParametres = parametres.filter(p => !p.cle.startsWith('otp_'));
-
-  if (loading) return <div className="text-center py-16 text-lightText dark:text-darkText">Chargement...</div>;
-  if (error) return <div className="text-center py-16 text-red-500">{error}</div>;
+  const otpParametres = parametres.filter((p) => p.cle.startsWith("otp_"));
+  const otherParametres = parametres.filter((p) => !p.cle.startsWith("otp_"));
 
   return (
     <AdminLayout>
@@ -112,27 +126,102 @@ const AdminParametresPage: React.FC = () => {
         {/* Section Paramètres OTP */}
         <div className="mb-8">
           <h2 className="text-xl font-medium text-lightText dark:text-darkText mb-4">Paramètres OTP</h2>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-lightCard dark:bg-darkCard">
-                <tr className="border-b border-lightBorder dark:border-darkBorder">
-                  <th className="py-3 px-4">ID</th>
-                  <th className="py-3 px-4">Clé</th>
-                  <th className="py-3 px-4">Valeur</th>
-                  <th className="py-3 px-4">Description</th>
-                  <th className="py-3 px-4">Dernière mise à jour</th>
-                  <th className="py-3 px-4">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {otpParametres.length > 0 ? (
-                  otpParametres.map((parametre) => (
-                    <tr key={parametre.id} className="border-b border-lightBorder dark:border-darkBorder hover:bg-gray-100 dark:hover:bg-gray-700">
+          {loadingOtp ? (
+            <div className="text-center py-8 text-lightText dark:text-darkText">Chargement des paramètres OTP...</div>
+          ) : errorOtp ? (
+            <div className="text-center py-8 text-red-500">{errorOtp}</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm">
+                <thead className="bg-lightCard dark:bg-darkCard">
+                  <tr className="border-b border-lightBorder dark:border-darkBorder">
+                    <th className="py-3 px-4 text-lightText dark:text-darkText">ID</th>
+                    <th className="py-3 px-4 text-lightText dark:text-darkText">Clé</th>
+                    <th className="py-3 px-4 text-lightText dark:text-darkText">Valeur</th>
+                    <th className="py-3 px-4 text-lightText dark:text-darkText">Description</th>
+                    <th className="py-3 px-4 text-lightText dark:text-darkText">Dernière mise à jour</th>
+                    <th className="py-3 px-4 text-lightText dark:text-darkText">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {otpParametres.length > 0 ? (
+                    otpParametres.map((parametre) => (
+                      <tr
+                        key={parametre.id}
+                        className="border-b border-lightBorder dark:border-darkBorder hover:bg-gray-100 dark:hover:bg-gray-700"
+                      >
+                        <td className="py-3 px-4 text-gray-700 dark:text-gray-300">{parametre.id}</td>
+                        <td className="py-3 px-4 text-gray-700 dark:text-gray-300">{parametre.cle}</td>
+                        <td className="py-3 px-4 text-gray-700 dark:text-gray-300">{parametre.valeur}</td>
+                        <td className="py-3 px-4 text-gray-700 dark:text-gray-300">
+                          {parametre.description || "N/A"}
+                        </td>
+                        <td className="py-3 px-4 text-gray-700 dark:text-gray-300">
+                          {new Date(parametre.date_mise_a_jour).toLocaleString()}
+                        </td>
+                        <td className="py-3 px-4">
+                          <ButtonPrimary
+                            onClick={() => openEditModal(parametre)}
+                            className="px-2 py-1 bg-blue-500 text-white hover:bg-blue-600 flex items-center text-sm"
+                          >
+                            <Edit className="h-4 w-4 mr-1" /> Modifier
+                          </ButtonPrimary>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td
+                        colSpan={6}
+                        className="py-3 px-4 text-center text-gray-500 dark:text-gray-400"
+                      >
+                        Aucun paramètre OTP trouvé.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+
+        {/* Section Autres Paramètres */}
+        <div className="mb-8">
+          <h2 className="text-xl font-medium text-lightText dark:text-darkText mb-4">Autres Paramètres</h2>
+          {loadingOthers ? (
+            <div className="text-center py-8 text-lightText dark:text-darkText">
+              Chargement des autres paramètres...
+            </div>
+          ) : errorOthers ? (
+            <div className="text-center py-8 text-red-500">{errorOthers}</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm">
+                <thead className="bg-lightCard dark:bg-darkCard">
+                  <tr className="border-b border-lightBorder dark:border-darkBorder">
+                    <th className="py-3 px-4 text-lightText dark:text-darkText">ID</th>
+                    <th className="py-3 px-4 text-lightText dark:text-darkText">Clé</th>
+                    <th className="py-3 px-4 text-lightText dark:text-darkText">Valeur</th>
+                    <th className="py-3 px-4 text-lightText dark:text-darkText">Description</th>
+                    <th className="py-3 px-4 text-lightText dark:text-darkText">Dernière mise à jour</th>
+                    <th className="py-3 px-4 text-lightText dark:text-darkText">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {otherParametres.map((parametre) => (
+                    <tr
+                      key={parametre.id}
+                      className="border-b border-lightBorder dark:border-darkBorder hover:bg-gray-100 dark:hover:bg-gray-700"
+                    >
                       <td className="py-3 px-4 text-gray-700 dark:text-gray-300">{parametre.id}</td>
                       <td className="py-3 px-4 text-gray-700 dark:text-gray-300">{parametre.cle}</td>
                       <td className="py-3 px-4 text-gray-700 dark:text-gray-300">{parametre.valeur}</td>
-                      <td className="py-3 px-4 text-gray-700 dark:text-gray-300">{parametre.description || 'N/A'}</td>
-                      <td className="py-3 px-4 text-gray-700 dark:text-gray-300">{new Date(parametre.date_mise_a_jour).toLocaleString()}</td>
+                      <td className="py-3 px-4 text-gray-700 dark:text-gray-300">
+                        {parametre.description || "N/A"}
+                      </td>
+                      <td className="py-3 px-4 text-gray-700 dark:text-gray-300">
+                        {new Date(parametre.date_mise_a_jour).toLocaleString()}
+                      </td>
                       <td className="py-3 px-4">
                         <ButtonPrimary
                           onClick={() => openEditModal(parametre)}
@@ -142,73 +231,39 @@ const AdminParametresPage: React.FC = () => {
                         </ButtonPrimary>
                       </td>
                     </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={6} className="py-3 px-4 text-center text-gray-500 dark:text-gray-400">
-                      Aucun paramètre OTP trouvé.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* Section Autres Paramètres */}
-        <div className="mb-8">
-          <h2 className="text-xl font-medium text-lightText dark:text-darkText mb-4">Autres Paramètres</h2>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-lightCard dark:bg-darkCard">
-                <tr className="border-b border-lightBorder dark:border-darkBorder">
-                  <th className="py-3 px-4">ID</th>
-                  <th className="py-3 px-4">Clé</th>
-                  <th className="py-3 px-4">Valeur</th>
-                  <th className="py-3 px-4">Description</th>
-                  <th className="py-3 px-4">Dernière mise à jour</th>
-                  <th className="py-3 px-4">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {otherParametres.map((parametre) => (
-                  <tr key={parametre.id} className="border-b border-lightBorder dark:border-darkBorder hover:bg-gray-100 dark:hover:bg-gray-700">
-                    <td className="py-3 px-4 text-gray-700 dark:text-gray-300">{parametre.id}</td>
-                    <td className="py-3 px-4 text-gray-700 dark:text-gray-300">{parametre.cle}</td>
-                    <td className="py-3 px-4 text-gray-700 dark:text-gray-300">{parametre.valeur}</td>
-                    <td className="py-3 px-4 text-gray-700 dark:text-gray-300">{parametre.description || 'N/A'}</td>
-                    <td className="py-3 px-4 text-gray-700 dark:text-gray-300">{new Date(parametre.date_mise_a_jour).toLocaleString()}</td>
-                    <td className="py-3 px-4">
-                      <ButtonPrimary
-                        onClick={() => openEditModal(parametre)}
-                        className="px-2 py-1 bg-blue-500 text-white hover:bg-blue-600 flex items-center text-sm"
-                      >
-                        <Edit className="h-4 w-4 mr-1" /> Modifier
-                      </ButtonPrimary>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
 
         <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-sm text-gray-700 dark:text-gray-300">
-            Affichage de {(currentPage - 1) * parametresPerPage + 1} à {Math.min(currentPage * parametresPerPage, totalParametres)} sur {totalParametres} paramètres
+            Affichage de {(currentPage - 1) * parametresPerPage + 1} à{" "}
+            {Math.min(currentPage * parametresPerPage, totalParametres)} sur {totalParametres}{" "}
+            paramètres
           </p>
           <div className="flex gap-2">
             <ButtonPrimary
               onClick={handlePrevPage}
               disabled={currentPage === 1}
-              className="px-3 py-2 bg-lightCard dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 flex items-center"
+              className={`px-3 py-2 ${
+                theme === "light"
+                  ? "bg-lightCard text-gray-700 hover:bg-gray-300"
+                  : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+              } disabled:opacity-50 flex items-center`}
             >
               <ChevronLeft className="h-5 w-5 mr-1" /> Précédent
             </ButtonPrimary>
             <ButtonPrimary
               onClick={handleNextPage}
               disabled={currentPage === totalPages}
-              className="px-3 py-2 bg-lightCard dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 flex items-center"
+              className={`px-3 py-2 ${
+                theme === "light"
+                  ? "bg-lightCard text-gray-700 hover:bg-gray-300"
+                  : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+              } disabled:opacity-50 flex items-center`}
             >
               Suivant <ChevronRight className="h-5 w-5 ml-1" />
             </ButtonPrimary>
@@ -217,38 +272,70 @@ const AdminParametresPage: React.FC = () => {
 
         {isEditModalOpen && selectedParametre && (
           <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-            <div className="bg-lightBg dark:bg-darkBg p-6 rounded-lg shadow-lg w-full max-w-md">
+            <div
+              className={`p-6 rounded-lg shadow-lg w-full max-w-md ${
+                theme === "light" ? "bg-lightBg" : "bg-darkBg"
+              }`}
+            >
               <h2 className="text-xl font-medium text-lightText dark:text-darkText mb-4 flex items-center">
                 <Edit className="h-5 w-5 mr-2" /> Modifier le paramètre
               </h2>
               <form onSubmit={handleEditParametre} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">Clé</label>
+                  <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">
+                    Clé
+                  </label>
                   <input
                     type="text"
                     value={editParametre.cle}
                     onChange={(e) => setEditParametre({ ...editParametre, cle: e.target.value })}
-                    className="w-full px-3 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className={`w-full px-3 py-2 border ${
+                      theme === "light" ? "border-lightBorder" : "border-darkBorder"
+                    } rounded-lg ${
+                      theme === "light" ? "bg-lightCard" : "bg-darkCard"
+                    } text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-blue-500`}
                     disabled
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">Valeur</label>
+                  <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">
+                    Valeur
+                  </label>
                   <input
-                    type={editParametre.cle === 'otp_length' || editParametre.cle === 'otp_validity_minutes' ? 'number' : 'text'}
+                    type={
+                      editParametre.cle === "otp_length" || editParametre.cle === "otp_validity_minutes"
+                        ? "number"
+                        : "text"
+                    }
                     value={editParametre.valeur}
                     onChange={(e) => setEditParametre({ ...editParametre, valeur: e.target.value })}
-                    className="w-full px-3 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className={`w-full px-3 py-2 border ${
+                      theme === "light" ? "border-lightBorder" : "border-darkBorder"
+                    } rounded-lg ${
+                      theme === "light" ? "bg-lightCard" : "bg-darkCard"
+                    } text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-blue-500`}
                     required
-                    min={editParametre.cle === 'otp_length' ? 4 : editParametre.cle === 'otp_validity_minutes' ? 1 : undefined}
+                    min={
+                      editParametre.cle === "otp_length"
+                        ? 4
+                        : editParametre.cle === "otp_validity_minutes"
+                        ? 1
+                        : undefined
+                    }
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">Description</label>
+                  <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">
+                    Description
+                  </label>
                   <textarea
                     value={editParametre.description}
                     onChange={(e) => setEditParametre({ ...editParametre, description: e.target.value })}
-                    className="w-full px-3 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className={`w-full px-3 py-2 border ${
+                      theme === "light" ? "border-lightBorder" : "border-darkBorder"
+                    } rounded-lg ${
+                      theme === "light" ? "bg-lightCard" : "bg-darkCard"
+                    } text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-blue-500`}
                     rows={3}
                   />
                 </div>
@@ -256,7 +343,11 @@ const AdminParametresPage: React.FC = () => {
                   <ButtonPrimary
                     type="button"
                     onClick={closeEditModal}
-                    className="px-4 py-2 bg-lightCard dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600"
+                    className={`px-4 py-2 ${
+                      theme === "light"
+                        ? "bg-lightCard text-gray-700 hover:bg-gray-300"
+                        : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                    }`}
                   >
                     Annuler
                   </ButtonPrimary>
