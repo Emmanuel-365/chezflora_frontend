@@ -39,7 +39,7 @@ const AteliersPage = () => {
         setLoading(true)
         const ateliersResponse = await getAteliers()
         const ateliersData = ateliersResponse.data.results || ateliersResponse.data
-
+        console.log("voici les ateliers" + ateliersResponse)
         // Add some mock data for demonstration
         const ateliersWithMockData = ateliersData.map((atelier: Atelier) => ({
           ...atelier,
@@ -47,6 +47,7 @@ const AteliersPage = () => {
           tags: ["débutant", "avancé", "enfants", "adultes", "saisonnier"][Math.floor(Math.random() * 5)],
           duree: ["1h", "1h30", "2h", "2h30", "3h"][Math.floor(Math.random() * 5)],
         }))
+        console.log(ateliersWithMockData);
 
         setAteliers(ateliersWithMockData)
         setFilteredAteliers(ateliersWithMockData)
