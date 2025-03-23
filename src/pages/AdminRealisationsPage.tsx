@@ -186,7 +186,7 @@ const AdminRealisationsPage: React.FC = () => {
     if (!selectedRealisation) return;
     try {
       const formData = new FormData();
-      formData.append("service", editRealisation.service_id);
+      formData.append("service_id", editRealisation.service_id);
       formData.append("titre", editRealisation.titre);
       formData.append("description", editRealisation.description);
       formData.append("date", editRealisation.date);
