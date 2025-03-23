@@ -227,7 +227,6 @@ const AdminCommandsPendingPage: React.FC = () => {
           onClose={closeDetailsModal}
           title={`Détails de la Commande #${selectedCommand?.id || ""}`}
           size="lg"
-          theme={theme}
         >
           {selectedCommand && (
             <>
@@ -326,7 +325,6 @@ const AdminCommandsPendingPage: React.FC = () => {
           onClose={closeCancelModal}
           title="Annuler la Commande"
           size="sm"
-          theme={theme}
         >
           {selectedCommand && (
             <>
