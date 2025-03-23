@@ -115,6 +115,7 @@ export const getService = (id: string) => api.get(`/services/${id}/`);
 export const getWorkshops = (params?:{}) => api.get('/ateliers/', {params});
 export const getArticles = (params?:{}) => api.get('/articles/', {params});
 export const getRealisations = () => api.get('/realisations/');
+export const getRealisation = (id: string) => api.get(`/realisations/${id}`);
 export const getPromotions = (params?:{}) => api.get('/promotions/', {params});
 export const getCart = () => api.get('/paniers/mon_panier/');
 export const addToCart = (panierId: string, data: { produit_id: string; quantite: number }) =>
