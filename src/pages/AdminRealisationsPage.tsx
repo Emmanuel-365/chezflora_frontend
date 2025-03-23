@@ -359,30 +359,26 @@ const AdminRealisationsPage: React.FC = () => {
 
         {isAddModalOpen && (
           <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-            <div
-              className={`p-6 rounded-lg shadow-lg w-full max-w-md ${
-                theme === "light" ? "bg-lightBg" : "bg-darkBg"
-              }`}
-            >
+            <div className="p-6 rounded-lg shadow-lg w-full max-w-md bg-lightBg dark:bg-darkBg">
               <h2 className="text-xl font-medium text-lightText dark:text-darkText mb-4 flex items-center">
                 <PlusCircle className="h-5 w-5 mr-2" /> Ajouter une réalisation
               </h2>
               <form onSubmit={handleAddRealisation} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">Service</label>
+                  <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">
+                    Service
+                  </label>
                   {loadingServices ? (
-                    <div className="text-center py-2 text-gray-500 dark:text-gray-400">Chargement des services...</div>
+                    <div className="text-center py-2 text-gray-500 dark:text-gray-400">
+                      Chargement des services...
+                    </div>
                   ) : errorServices ? (
                     <div className="text-center py-2 text-red-500">{errorServices}</div>
                   ) : (
                     <select
                       value={newRealisation.service}
                       onChange={(e) => setNewRealisation({ ...newRealisation, service: e.target.value })}
-                      className={`w-full px-3 py-2 border ${
-                        theme === "light" ? "border-lightBorder" : "border-darkBorder"
-                      } rounded-lg ${
-                        theme === "light" ? "bg-lightCard" : "bg-darkCard"
-                      } text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                      className="w-full px-3 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-blue-500"
                       required
                     >
                       {services.map((service) => (
@@ -394,61 +390,55 @@ const AdminRealisationsPage: React.FC = () => {
                   )}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">Titre</label>
+                  <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">
+                    Titre
+                  </label>
                   <input
                     type="text"
                     value={newRealisation.titre}
                     onChange={(e) => setNewRealisation({ ...newRealisation, titre: e.target.value })}
-                    className={`w-full px-3 py-2 border ${
-                      theme === "light" ? "border-lightBorder" : "border-darkBorder"
-                    } rounded-lg ${
-                      theme === "light" ? "bg-lightCard" : "bg-darkCard"
-                    } text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                    className="w-full px-3 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-blue-500"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">Description</label>
+                  <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">
+                    Description
+                  </label>
                   <textarea
                     value={newRealisation.description}
                     onChange={(e) => setNewRealisation({ ...newRealisation, description: e.target.value })}
-                    className={`w-full px-3 py-2 border ${
-                      theme === "light" ? "border-lightBorder" : "border-darkBorder"
-                    } rounded-lg ${
-                      theme === "light" ? "bg-lightCard" : "bg-darkCard"
-                    } text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                    className="w-full px-3 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-blue-500"
                     rows={3}
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">Photos</label>
+                  <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">
+                    Photos
+                  </label>
                   <input
                     type="file"
                     multiple
                     onChange={(e) => setNewRealisation({ ...newRealisation, photos: Array.from(e.target.files || []) })}
-                    className={`w-full px-3 py-2 border ${
-                      theme === "light" ? "border-lightBorder" : "border-darkBorder"
-                    } rounded-lg ${
-                      theme === "light" ? "bg-lightCard" : "bg-darkCard"
-                    } text-lightText dark:text-darkText`}
+                    className="w-full px-3 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">Date</label>
+                  <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">
+                    Date
+                  </label>
                   <input
                     type="date"
                     value={newRealisation.date}
                     onChange={(e) => setNewRealisation({ ...newRealisation, date: e.target.value })}
-                    className={`w-full px-3 py-2 border ${
-                      theme === "light" ? "border-lightBorder" : "border-darkBorder"
-                    } rounded-lg ${
-                      theme === "light" ? "bg-lightCard" : "bg-darkCard"
-                    } text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                    className="w-full px-3 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-blue-500"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">Actif</label>
+                  <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">
+                    Actif
+                  </label>
                   <input
                     type="checkbox"
                     checked={newRealisation.is_active}
@@ -460,11 +450,7 @@ const AdminRealisationsPage: React.FC = () => {
                   <ButtonPrimary
                     type="button"
                     onClick={closeAddModal}
-                    className={`px-4 py-2 ${
-                      theme === "light"
-                        ? "bg-lightCard text-gray-700 hover:bg-gray-300"
-                        : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-                    }`}
+                    className="px-4 py-2 bg-lightCard dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600"
                   >
                     Annuler
                   </ButtonPrimary>
