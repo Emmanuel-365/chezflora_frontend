@@ -61,6 +61,7 @@ const AbonnementsPage: React.FC = () => {
         if (isAuthenticated) {
           const abonnementsResponse = await getAbonnements();
           setAbonnements(abonnementsResponse.data.results);
+          console.log("premiers abonnement: ", abonnementsResponse.data.results)
         } else {
           setActiveTab('creer');
         }
@@ -160,6 +161,7 @@ const AbonnementsPage: React.FC = () => {
       const response = await createAbonnement(data);
       const updatedAbonnements = await getAbonnements();
       setAbonnements(updatedAbonnements.data.results);
+      console.log("deuxiemes abonnements: ", updatedAbonnements.data.results)
       setSelectedProducts([]);
       setDateFin('');
       setShowSuccessMessage(`Abonnement créé avec succès ! Prix : ${response.data.prix} FCFA`);
