@@ -184,8 +184,10 @@ export const updateUser = (
   data: { email?: string; username?: string; role?: string; is_active?: boolean; is_banned?: boolean }
 ) => api.put(`/utilisateurs/${id}/`, data);
 export const deleteUser = (id: string) => api.delete(`/utilisateurs/${id}/`);
-export const getUserStats = (params?: { days?: number }) =>
-  api.get('/utilisateurs/stats/', { params });
+export const getUserStats = async (params: { days: number; endpoint?: string }) => {
+  const endpoint = params.endpoint || "/utilisateurs/stats/"; // Endpoint par défaut
+  return api.get(endpoint, { params: { days: params.days } });
+};
 export const deleteWishlist = (id: string) => api.delete(`/wishlist/${id}/`);
 export const getCartCount = async () => {
   const cart = await api.get('/paniers');

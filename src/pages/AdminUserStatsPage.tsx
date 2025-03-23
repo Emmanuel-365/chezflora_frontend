@@ -50,7 +50,7 @@ const AdminUserStatsPage: React.FC = () => {
     setLoading(true);
     try {
       const [dashboardResponse, statsResponse] = await Promise.all([
-        getUserStats({ days: daysFilter}),
+        getUserStats({ days: daysFilter, endpoint: "/utilisateurs/dashboard/" }),
         getUserStats({ days: daysFilter }),
       ]);
       setDashboardData(dashboardResponse.data || null);
