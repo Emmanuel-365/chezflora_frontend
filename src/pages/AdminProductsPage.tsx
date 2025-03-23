@@ -167,8 +167,8 @@ const AdminProductsPage: React.FC = () => {
     setIsAddModalOpen(false);
   };
 
-  const handleAddProduct = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleAddProduct = async (e: React.FormEvent | MouseEvent | undefined) => {
+    e && e.preventDefault();
     try {
       const productData = {
         nom: newProduct.nom,
@@ -220,8 +220,8 @@ const AdminProductsPage: React.FC = () => {
     setSelectedProduct(null);
   };
 
-  const handleEditProduct = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleEditProduct = async (e: React.FormEvent | MouseEvent | undefined) => {
+    e && e.preventDefault();
     if (!selectedProduct) return;
 
     try {
@@ -638,7 +638,7 @@ const AdminProductsPage: React.FC = () => {
               Annuler
             </ButtonPrimary>
             <ButtonPrimary
-              onClick={handleAddProduct}
+              onClick={(e) => handleAddProduct(e)}
               className="px-4 py-2 bg-blue-500 text-white hover:bg-blue-600"
             >
               Ajouter
@@ -778,7 +778,7 @@ const AdminProductsPage: React.FC = () => {
                   Annuler
                 </ButtonPrimary>
                 <ButtonPrimary
-                  onClick={handleEditProduct}
+                  onClick={(e) => handleEditProduct(e)}
                   className="px-4 py-2 bg-blue-500 text-white hover:bg-blue-600"
                 >
                   Enregistrer
