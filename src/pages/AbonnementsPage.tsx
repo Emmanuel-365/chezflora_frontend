@@ -17,6 +17,7 @@ interface Abonnement {
   date_fin: string | null;
   prochaine_livraison: string | null;
   is_active: boolean;
+  produits: Product[]
 }
 
 interface Product {
@@ -172,7 +173,7 @@ const AbonnementsPage: React.FC = () => {
                         </p>
                       </div>
                       <div className="flex flex-wrap gap-2 mb-2">
-                        {abonnement.produit_ids.map((p) => (
+                        {abonnement.produits.map((p) => (
                           <div key={p.id} className="flex items-center space-x-2">
                             <img src={p.photos[0] || '/images/placeholder-image.jpg'} alt={p.nom} className="w-8 h-8 object-cover rounded-md" />
                             <span className="text-soft-brown/90">{p.nom}</span>
