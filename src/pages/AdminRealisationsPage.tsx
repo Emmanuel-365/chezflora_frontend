@@ -1,6 +1,8 @@
-import React, { useState, useEffect, useContext } from "react";
+"use client";
+
+import React, { useState, useEffect } from "react";
 import api from "../services/api";
-import AdminLayout, { ThemeContext } from "../components/AdminLayout";
+import AdminLayout from "../components/AdminLayout";
 import ButtonPrimary from "../components/ButtonPrimary";
 import { Wrench, Search, Edit, Trash2, PlusCircle, ChevronLeft, ChevronRight } from "lucide-react";
 import { ModalContainer, ModalBody, ModalFooter } from "../components/ModalContainer";
@@ -29,7 +31,6 @@ interface ApiResponse {
 }
 
 const AdminRealisationsPage: React.FC = () => {
-  const theme = useContext(ThemeContext); // Récupération du thème
   const [realisations, setRealisations] = useState<Realisation[]>([]);
   const [totalRealisations, setTotalRealisations] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
@@ -122,9 +123,7 @@ const AdminRealisationsPage: React.FC = () => {
     setIsAddModalOpen(true);
   };
 
-  const closeAddModal = () => {
-    setIsAddModalOpen(false);
-  };
+  const closeAddModal = () => setIsAddModalOpen(false);
 
   const handleAddRealisation = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -137,7 +136,7 @@ const AdminRealisationsPage: React.FC = () => {
       formData.append("date", newRealisation.date);
       formData.append("is_active", newRealisation.is_active.toString());
       await api.post("/realisations/", formData, { headers: { "Content-Type": "multipart/form-data" } });
-      setIsAddModalOpen(false);
+      closeAddModal();
       fetchRealisations();
     } catch (err: any) {
       console.error("Erreur lors de l’ajout de la réalisation:", err.response?.data);
@@ -148,7 +147,7 @@ const AdminRealisationsPage: React.FC = () => {
   const openEditModal = (realisation: Realisation) => {
     setSelectedRealisation(realisation);
     setEditRealisation({
-      service: realisation.service.id, // Utilisation de l'ID au lieu du nom
+      service: realisation.service.id,
       titre: realisation.titre,
       description: realisation.description,
       photos: [],
@@ -177,7 +176,7 @@ const AdminRealisationsPage: React.FC = () => {
       await api.put(`/realisations/${selectedRealisation.id}/`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-      setIsEditModalOpen(false);
+      closeEditModal();
       fetchRealisations();
     } catch (err: any) {
       console.error("Erreur lors de la mise à jour de la réalisation:", err.response?.data);
@@ -199,7 +198,7 @@ const AdminRealisationsPage: React.FC = () => {
     if (!selectedRealisation) return;
     try {
       await api.delete(`/realisations/${selectedRealisation.id}/`);
-      setIsDeleteModalOpen(false);
+      closeDeleteModal();
       fetchRealisations();
     } catch (err: any) {
       console.error("Erreur lors de la suppression de la réalisation:", err.response?.data);
@@ -212,13 +211,11 @@ const AdminRealisationsPage: React.FC = () => {
       <table className="w-full text-left text-sm">
         <thead className="bg-lightCard dark:bg-darkCard">
           <tr className="border-b border-lightBorder dark:border-darkBorder">
-            <th className="py-3 px-4"><div className="h-4 w-16 bg-gray-300 dark:bg-gray-600 rounded"></div></th>
-            <th className="py-3 px-4"><div className="h-4 w-24 bg-gray-300 dark:bg-gray-600 rounded"></div></th>
-            <th className="py-3 px-4"><div className="h-4 w-32 bg-gray-300 dark:bg-gray-600 rounded"></div></th>
-            <th className="py-3 px-4"><div className="h-4 w-16 bg-gray-300 dark:bg-gray-600 rounded"></div></th>
-            <th className="py-3 px-4"><div className="h-4 w-20 bg-gray-300 dark:bg-gray-600 rounded"></div></th>
-            <th className="py-3 px-4"><div className="h-4 w-16 bg-gray-300 dark:bg-gray-600 rounded"></div></th>
-            <th className="py-3 px-4"><div className="h-4 w-24 bg-gray-300 dark:bg-gray-600 rounded"></div></th>
+            {["ID", "Service", "Titre", "Photos", "Date", "Statut", "Actions"].map((header) => (
+              <th key={header} className="py-3 px-4">
+                <div className="h-4 w-16 bg-gray-300 dark:bg-gray-600 rounded"></div>
+              </th>
+            ))}
           </tr>
         </thead>
         <tbody>
@@ -336,45 +333,29 @@ const AdminRealisationsPage: React.FC = () => {
             <ButtonPrimary
               onClick={handlePrevPage}
               disabled={currentPage === 1}
-              className={`px-3 py-2 ${
-                theme === "light"
-                  ? "bg-lightCard text-gray-700 hover:bg-gray-300"
-                  : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-              } disabled:opacity-50 flex items-center`}
+              className="px-3 py-2 bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 flex items-center"
             >
               <ChevronLeft className="h-5 w-5 mr-1" /> Précédent
             </ButtonPrimary>
             <ButtonPrimary
               onClick={handleNextPage}
               disabled={currentPage === totalPages}
-              className={`px-3 py-2 ${
-                theme === "light"
-                  ? "bg-lightCard text-gray-700 hover:bg-gray-300"
-                  : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-              } disabled:opacity-50 flex items-center`}
+              className="px-3 py-2 bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 flex items-center"
             >
               Suivant <ChevronRight className="h-5 w-5 ml-1" />
             </ButtonPrimary>
           </div>
         </div>
 
+        {/* Modal d'ajout */}
         {isAddModalOpen && (
-          <ModalContainer
-            isOpen={isAddModalOpen}
-            onClose={closeAddModal}
-            title="Ajouter une réalisation"
-            size="md"
-          >
+          <ModalContainer isOpen={isAddModalOpen} onClose={closeAddModal} title="Ajouter une réalisation" size="md">
             <ModalBody>
               <form onSubmit={handleAddRealisation} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">
-                    Service
-                  </label>
+                  <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">Service</label>
                   {loadingServices ? (
-                    <div className="text-center py-2 text-gray-500 dark:text-gray-400">
-                      Chargement des services...
-                    </div>
+                    <div className="text-center py-2 text-gray-500 dark:text-gray-400">Chargement des services...</div>
                   ) : errorServices ? (
                     <div className="text-center py-2 text-red-500">{errorServices}</div>
                   ) : (
@@ -393,9 +374,7 @@ const AdminRealisationsPage: React.FC = () => {
                   )}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">
-                    Titre
-                  </label>
+                  <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">Titre</label>
                   <input
                     type="text"
                     value={newRealisation.titre}
@@ -405,9 +384,7 @@ const AdminRealisationsPage: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">
-                    Description
-                  </label>
+                  <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">Description</label>
                   <textarea
                     value={newRealisation.description}
                     onChange={(e) => setNewRealisation({ ...newRealisation, description: e.target.value })}
@@ -416,9 +393,7 @@ const AdminRealisationsPage: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">
-                    Photos
-                  </label>
+                  <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">Photos</label>
                   <input
                     type="file"
                     multiple
@@ -427,9 +402,7 @@ const AdminRealisationsPage: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">
-                    Date
-                  </label>
+                  <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">Date</label>
                   <input
                     type="date"
                     value={newRealisation.date}
@@ -439,9 +412,7 @@ const AdminRealisationsPage: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">
-                    Actif
-                  </label>
+                  <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">Actif</label>
                   <input
                     type="checkbox"
                     checked={newRealisation.is_active}
@@ -466,16 +437,10 @@ const AdminRealisationsPage: React.FC = () => {
           </ModalContainer>
         )}
 
+        {/* Modal d'édition */}
         {isEditModalOpen && selectedRealisation && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-            <div
-              className={`p-6 rounded-lg shadow-lg w-full max-w-md ${
-                theme === "light" ? "bg-lightBg" : "bg-darkBg"
-              }`}
-            >
-              <h2 className="text-xl font-medium text-lightText dark:text-darkText mb-4 flex items-center">
-                <Edit className="h-5 w-5 mr-2" /> Modifier la réalisation
-              </h2>
+          <ModalContainer isOpen={isEditModalOpen} onClose={closeEditModal} title="Modifier la réalisation" size="md">
+            <ModalBody>
               <form onSubmit={handleEditRealisation} className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">Service</label>
@@ -487,11 +452,7 @@ const AdminRealisationsPage: React.FC = () => {
                     <select
                       value={editRealisation.service}
                       onChange={(e) => setEditRealisation({ ...editRealisation, service: e.target.value })}
-                      className={`w-full px-3 py-2 border ${
-                        theme === "light" ? "border-lightBorder" : "border-darkBorder"
-                      } rounded-lg ${
-                        theme === "light" ? "bg-lightCard" : "bg-darkCard"
-                      } text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                      className="w-full px-3 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-soft-green dark:focus:ring-dark-soft-green"
                       required
                     >
                       {services.map((service) => (
@@ -508,11 +469,7 @@ const AdminRealisationsPage: React.FC = () => {
                     type="text"
                     value={editRealisation.titre}
                     onChange={(e) => setEditRealisation({ ...editRealisation, titre: e.target.value })}
-                    className={`w-full px-3 py-2 border ${
-                      theme === "light" ? "border-lightBorder" : "border-darkBorder"
-                    } rounded-lg ${
-                      theme === "light" ? "bg-lightCard" : "bg-darkCard"
-                    } text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                    className="w-full px-3 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-soft-green dark:focus:ring-dark-soft-green"
                     required
                   />
                 </div>
@@ -521,11 +478,7 @@ const AdminRealisationsPage: React.FC = () => {
                   <textarea
                     value={editRealisation.description}
                     onChange={(e) => setEditRealisation({ ...editRealisation, description: e.target.value })}
-                    className={`w-full px-3 py-2 border ${
-                      theme === "light" ? "border-lightBorder" : "border-darkBorder"
-                    } rounded-lg ${
-                      theme === "light" ? "bg-lightCard" : "bg-darkCard"
-                    } text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                    className="w-full px-3 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-soft-green dark:focus:ring-dark-soft-green"
                     rows={3}
                   />
                 </div>
@@ -535,11 +488,7 @@ const AdminRealisationsPage: React.FC = () => {
                     type="file"
                     multiple
                     onChange={(e) => setEditRealisation({ ...editRealisation, photos: Array.from(e.target.files || []) })}
-                    className={`w-full px-3 py-2 border ${
-                      theme === "light" ? "border-lightBorder" : "border-darkBorder"
-                    } rounded-lg ${
-                      theme === "light" ? "bg-lightCard" : "bg-darkCard"
-                    } text-lightText dark:text-darkText`}
+                    className="w-full px-3 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText"
                   />
                   {selectedRealisation.photos.length > 0 && editRealisation.photos.length === 0 && (
                     <div className="mt-2 flex gap-2 flex-wrap">
@@ -560,11 +509,7 @@ const AdminRealisationsPage: React.FC = () => {
                     type="date"
                     value={editRealisation.date}
                     onChange={(e) => setEditRealisation({ ...editRealisation, date: e.target.value })}
-                    className={`w-full px-3 py-2 border ${
-                      theme === "light" ? "border-lightBorder" : "border-darkBorder"
-                    } rounded-lg ${
-                      theme === "light" ? "bg-lightCard" : "bg-darkCard"
-                    } text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                    className="w-full px-3 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-soft-green dark:focus:ring-dark-soft-green"
                     required
                   />
                 </div>
@@ -577,50 +522,36 @@ const AdminRealisationsPage: React.FC = () => {
                     className="h-5 w-5 text-blue-500 focus:ring-blue-500 border-lightBorder dark:border-darkBorder rounded"
                   />
                 </div>
-                <div className="flex gap-2 justify-end">
+                <ModalFooter>
                   <ButtonPrimary
                     type="button"
                     onClick={closeEditModal}
-                    className={`px-4 py-2 ${
-                      theme === "light"
-                        ? "bg-lightCard text-gray-700 hover:bg-gray-300"
-                        : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-                    }`}
+                    className="px-4 py-2 bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText hover:bg-gray-300 dark:hover:bg-gray-600"
                   >
                     Annuler
                   </ButtonPrimary>
                   <ButtonPrimary type="submit" className="px-4 py-2 bg-blue-500 text-white hover:bg-blue-600">
                     Enregistrer
                   </ButtonPrimary>
-                </div>
+                </ModalFooter>
               </form>
-            </div>
-          </div>
+            </ModalBody>
+          </ModalContainer>
         )}
 
+        {/* Modal de suppression */}
         {isDeleteModalOpen && selectedRealisation && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-            <div
-              className={`p-6 rounded-lg shadow-lg w-full max-w-md ${
-                theme === "light" ? "bg-lightBg" : "bg-darkBg"
-              }`}
-            >
-              <h2 className="text-xl font-medium text-lightText dark:text-darkText mb-4 flex items-center">
-                <Trash2 className="h-5 w-5 mr-2" /> Supprimer la réalisation
-              </h2>
+          <ModalContainer isOpen={isDeleteModalOpen} onClose={closeDeleteModal} title="Supprimer la réalisation" size="md">
+            <ModalBody>
               <p className="text-gray-700 dark:text-gray-300 mb-4">
                 Êtes-vous sûr de vouloir supprimer la réalisation{" "}
                 <span className="font-medium">{selectedRealisation.titre}</span> ?
               </p>
-              <div className="flex gap-2 justify-end">
+              <ModalFooter>
                 <ButtonPrimary
                   type="button"
                   onClick={closeDeleteModal}
-                  className={`px-4 py-2 ${
-                    theme === "light"
-                      ? "bg-lightCard text-gray-700 hover:bg-gray-300"
-                      : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-                  }`}
+                  className="px-4 py-2 bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText hover:bg-gray-300 dark:hover:bg-gray-600"
                 >
                   Annuler
                 </ButtonPrimary>
@@ -630,9 +561,9 @@ const AdminRealisationsPage: React.FC = () => {
                 >
                   Supprimer
                 </ButtonPrimary>
-              </div>
-            </div>
-          </div>
+              </ModalFooter>
+            </ModalBody>
+          </ModalContainer>
         )}
       </div>
     </AdminLayout>
