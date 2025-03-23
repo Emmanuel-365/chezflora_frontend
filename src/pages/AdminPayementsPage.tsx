@@ -1,6 +1,8 @@
-import React, { useState, useEffect, useContext } from "react";
+"use client";
+
+import React, { useState, useEffect } from "react";
 import api from "../services/api";
-import AdminLayout, { ThemeContext } from "../components/AdminLayout";
+import AdminLayout from "../components/AdminLayout";
 import ButtonPrimary from "../components/ButtonPrimary";
 import { DollarSign, Search, Edit, Trash2, ChevronLeft, ChevronRight, BarChart2 } from "lucide-react";
 import { Bar, Line } from "react-chartjs-2";
@@ -48,7 +50,6 @@ interface ApiResponse {
 }
 
 const AdminPaiementsPage: React.FC = () => {
-  const theme = useContext(ThemeContext); // Récupération du thème
   const [paiements, setPaiements] = useState<Paiement[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [totalPaiements, setTotalPaiements] = useState(0);
@@ -72,12 +73,14 @@ const AdminPaiementsPage: React.FC = () => {
       const response = await api.get<ApiResponse>("/paiements/", {
         params: { page: currentPage, per_page: paiementsPerPage, search: searchQuery || undefined },
       });
-      setPaiements(response.data.results);
-      setTotalPaiements(response.data.count);
-      setTotalPages(Math.ceil(response.data.count / paiementsPerPage));
+      setPaiements(response.data.results || []);
+      setTotalPaiements(response.data.count || 0);
+      setTotalPages(Math.ceil((response.data.count || 0) / paiementsPerPage));
       setLoadingPaiements(false);
     } catch (err: any) {
+      console.error("Erreur lors du chargement des paiements:", err.response?.data);
       setErrorPaiements("Erreur lors du chargement des paiements.");
+      setPaiements([]);
       setLoadingPaiements(false);
     }
   };
@@ -89,7 +92,9 @@ const AdminPaiementsPage: React.FC = () => {
       setStats(response.data);
       setLoadingStats(false);
     } catch (err: any) {
+      console.error("Erreur lors du chargement des statistiques:", err.response?.data);
       setErrorStats("Erreur lors du chargement des statistiques.");
+      setStats(null);
       setLoadingStats(false);
     }
   };
@@ -102,8 +107,29 @@ const AdminPaiementsPage: React.FC = () => {
   const handlePrevPage = () => {
     if (currentPage > 1) setCurrentPage(currentPage - 1);
   };
+
   const handleNextPage = () => {
     if (currentPage < totalPages) setCurrentPage(currentPage + 1);
+  };
+
+  const handleSimulerPaiement = async (paiementId: string) => {
+    try {
+      await api.post(`/paiements/${paiementId}/simuler/`);
+      fetchPaiements();
+    } catch (err: any) {
+      console.error("Erreur lors de la simulation du paiement:", err.response?.data);
+      setErrorPaiements("Erreur lors de la simulation du paiement.");
+    }
+  };
+
+  const handleRembourserPaiement = async (paiementId: string) => {
+    try {
+      await api.post(`/paiements/${paiementId}/rembourser/`);
+      fetchPaiements();
+    } catch (err: any) {
+      console.error("Erreur lors du remboursement du paiement:", err.response?.data);
+      setErrorPaiements("Erreur lors du remboursement du paiement.");
+    }
   };
 
   const renderChart = (title: string, labels: string[], data: number[], type: "bar" | "line" = "bar") => {
@@ -145,13 +171,11 @@ const AdminPaiementsPage: React.FC = () => {
       <table className="w-full text-left text-sm">
         <thead className="bg-lightCard dark:bg-darkCard">
           <tr className="border-b border-lightBorder dark:border-darkBorder">
-            <th className="py-3 px-4">ID</th>
-            <th className="py-3 px-4">Type</th>
-            <th className="py-3 px-4">Méthode</th>
-            <th className="py-3 px-4">Montant</th>
-            <th className="py-3 px-4">Statut</th>
-            <th className="py-3 px-4">Date</th>
-            <th className="py-3 px-4">Actions</th>
+            {["ID", "Type", "Méthode", "Montant", "Statut", "Date", "Actions"].map((header) => (
+              <th key={header} className="py-3 px-4">
+                <div className="h-4 w-16 bg-gray-300 dark:bg-gray-600 rounded"></div>
+              </th>
+            ))}
           </tr>
         </thead>
         <tbody>
@@ -236,7 +260,7 @@ const AdminPaiementsPage: React.FC = () => {
           </div>
         ) : null}
 
-        {/* Liste des paiements */}
+        {/* Recherche */}
         <div className="mb-6 flex flex-col sm:flex-row gap-4 items-center justify-between">
           <div className="relative w-full sm:w-64">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -245,11 +269,12 @@ const AdminPaiementsPage: React.FC = () => {
               value={searchQuery}
               onChange={handleSearch}
               placeholder="Rechercher par type ou méthode..."
-              className="w-full pl-10 pr-4 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightBg dark:bg-darkBg text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full pl-10 pr-4 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightBg dark:bg-darkBg text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-soft-green dark:focus:ring-dark-soft-green"
             />
           </div>
         </div>
 
+        {/* Liste des paiements */}
         {loadingPaiements ? (
           renderPaiementsPlaceholder()
         ) : errorPaiements ? (
@@ -269,62 +294,65 @@ const AdminPaiementsPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {paiements.map((paiement) => (
-                  <tr
-                    key={paiement.id}
-                    className="border-b border-lightBorder dark:border-darkBorder hover:bg-gray-100 dark:hover:bg-gray-700"
-                  >
-                    <td className="py-3 px-4 text-gray-700 dark:text-gray-300">{paiement.id}</td>
-                    <td className="py-3 px-4 text-gray-700 dark:text-gray-300">{paiement.type_transaction}</td>
-                    <td className="py-3 px-4 text-gray-700 dark:text-gray-300">{paiement.methode_paiement || "N/A"}</td>
-                    <td className="py-3 px-4 text-gray-700 dark:text-gray-300">{paiement.montant} FCFA</td>
-                    <td className="py-3 px-4">
-                      <span
-                        className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                          paiement.statut === "effectue"
-                            ? theme === "light"
-                              ? "bg-green-100 text-green-800"
-                              : "bg-green-900 text-green-200"
-                            : paiement.statut === "rembourse"
-                            ? theme === "light"
-                              ? "bg-red-100 text-red-800"
-                              : "bg-red-900 text-red-200"
-                            : theme === "light"
-                            ? "bg-yellow-100 text-yellow-800"
-                            : "bg-yellow-900 text-yellow-200"
-                        }`}
-                      >
-                        {paiement.statut}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4 text-gray-700 dark:text-gray-300">
-                      {new Date(paiement.date).toLocaleDateString()}
-                    </td>
-                    <td className="py-3 px-4 flex gap-2">
-                      {paiement.statut === "simule" && (
-                        <ButtonPrimary
-                          onClick={() => api.post(`/paiements/${paiement.id}/simuler/`).then(fetchPaiements)}
-                          className="px-2 py-1 bg-blue-500 text-white hover:bg-blue-600 flex items-center text-sm"
+                {paiements.length > 0 ? (
+                  paiements.map((paiement) => (
+                    <tr
+                      key={paiement.id}
+                      className="border-b border-lightBorder dark:border-darkBorder hover:bg-gray-100 dark:hover:bg-gray-700"
+                    >
+                      <td className="py-3 px-4 text-gray-700 dark:text-gray-300">{paiement.id}</td>
+                      <td className="py-3 px-4 text-gray-700 dark:text-gray-300">{paiement.type_transaction}</td>
+                      <td className="py-3 px-4 text-gray-700 dark:text-gray-300">{paiement.methode_paiement || "N/A"}</td>
+                      <td className="py-3 px-4 text-gray-700 dark:text-gray-300">{paiement.montant} FCFA</td>
+                      <td className="py-3 px-4">
+                        <span
+                          className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                            paiement.statut === "effectue"
+                              ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                              : paiement.statut === "rembourse"
+                              ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+                              : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
+                          }`}
                         >
-                          <Edit className="h-4 w-4 mr-1" /> Simuler
-                        </ButtonPrimary>
-                      )}
-                      {["simule", "effectue"].includes(paiement.statut) && (
-                        <ButtonPrimary
-                          onClick={() => api.post(`/paiements/${paiement.id}/rembourser/`).then(fetchPaiements)}
-                          className="px-2 py-1 bg-red-500 text-white hover:bg-red-600 flex items-center text-sm"
-                        >
-                          <Trash2 className="h-4 w-4 mr-1" /> Rembourser
-                        </ButtonPrimary>
-                      )}
+                          {paiement.statut === "effectue" ? "Effectué" : paiement.statut === "rembourse" ? "Remboursé" : "Simulé"}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 text-gray-700 dark:text-gray-300">
+                        {new Date(paiement.date).toLocaleDateString()}
+                      </td>
+                      <td className="py-3 px-4 flex gap-2">
+                        {paiement.statut === "simule" && (
+                          <ButtonPrimary
+                            onClick={() => handleSimulerPaiement(paiement.id)}
+                            className="px-2 py-1 bg-blue-500 text-white hover:bg-blue-600 flex items-center text-sm"
+                          >
+                            <Edit className="h-4 w-4 mr-1" /> Simuler
+                          </ButtonPrimary>
+                        )}
+                        {["simule", "effectue"].includes(paiement.statut) && (
+                          <ButtonPrimary
+                            onClick={() => handleRembourserPaiement(paiement.id)}
+                            className="px-2 py-1 bg-red-500 text-white hover:bg-red-600 flex items-center text-sm"
+                          >
+                            <Trash2 className="h-4 w-4 mr-1" /> Rembourser
+                          </ButtonPrimary>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={7} className="py-3 px-4 text-center text-gray-700 dark:text-gray-300">
+                      Aucun paiement trouvé.
                     </td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </div>
         )}
 
+        {/* Pagination */}
         <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-sm text-gray-700 dark:text-gray-300">
             Affichage de {(currentPage - 1) * paiementsPerPage + 1} à{" "}
@@ -334,22 +362,14 @@ const AdminPaiementsPage: React.FC = () => {
             <ButtonPrimary
               onClick={handlePrevPage}
               disabled={currentPage === 1}
-              className={`px-3 py-2 ${
-                theme === "light"
-                  ? "bg-lightCard text-gray-700 hover:bg-gray-300"
-                  : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-              } disabled:opacity-50 flex items-center`}
+              className="px-3 py-2 bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 flex items-center"
             >
               <ChevronLeft className="h-5 w-5 mr-1" /> Précédent
             </ButtonPrimary>
             <ButtonPrimary
               onClick={handleNextPage}
               disabled={currentPage === totalPages}
-              className={`px-3 py-2 ${
-                theme === "light"
-                  ? "bg-lightCard text-gray-700 hover:bg-gray-300"
-                  : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-              } disabled:opacity-50 flex items-center`}
+              className="px-3 py-2 bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 flex items-center"
             >
               Suivant <ChevronRight className="h-5 w-5 ml-1" />
             </ButtonPrimary>
