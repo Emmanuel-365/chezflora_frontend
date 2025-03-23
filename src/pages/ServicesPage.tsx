@@ -300,11 +300,11 @@ const ServicesPage = () => {
                       className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-all duration-300 flex flex-col h-full group"
                     >
                       <div className="relative h-48 overflow-hidden">
-                        <img
+                        { service.photos && <img
                           src={service.photos[0].image || "/placeholder.svg?height=400&width=600"}
                           alt={service.nom}
                           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                        />
+                        />}
                         {!service.is_active && (
                           <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
                             <span className="bg-red-500 text-white px-3 py-1 rounded-full text-sm font-medium">
