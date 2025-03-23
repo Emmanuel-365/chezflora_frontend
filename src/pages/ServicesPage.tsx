@@ -14,13 +14,17 @@ interface Service {
   id: string
   nom: string
   description: string
-  photos: string[]
+  photos: Photo[]
   is_active: boolean
   date_creation: string
   prix?: number
   duree?: string
   capacite?: number
   avantages?: string[]
+}
+
+interface Photo {
+  image: string
 }
 
 const ServicesPage = () => {
@@ -297,7 +301,7 @@ const ServicesPage = () => {
                     >
                       <div className="relative h-48 overflow-hidden">
                         <img
-                          src={service.photos[0] || "/placeholder.svg?height=400&width=600"}
+                          src={service.photos[0].image || "/placeholder.svg?height=400&width=600"}
                           alt={service.nom}
                           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                         />
