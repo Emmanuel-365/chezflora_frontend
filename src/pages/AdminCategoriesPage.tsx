@@ -1,8 +1,11 @@
+"use client";
+
 import React, { useState, useEffect } from "react";
 import api from "../services/api";
 import AdminLayout from "../components/AdminLayout";
 import ButtonPrimary from "../components/ButtonPrimary";
 import { Folder, Search, Edit, Trash2, PlusCircle, ChevronLeft, ChevronRight } from "lucide-react";
+import { ModalContainer, ModalBody, ModalFooter } from "../components/ModalContainer";
 
 interface Category {
   id: string;
@@ -18,10 +21,6 @@ interface ApiResponse {
   previous: string | null;
 }
 
-const Spinner = () => (
-  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500" aria-label="Chargement en cours" />
-);
-
 const AdminCategoriesPage: React.FC = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [totalCategories, setTotalCategories] = useState(0);
@@ -35,14 +34,8 @@ const AdminCategoriesPage: React.FC = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [newCategory, setNewCategory] = useState({
-    nom: "",
-    is_active: true,
-  });
-  const [editCategory, setEditCategory] = useState({
-    nom: "",
-    is_active: true,
-  });
+  const [newCategory, setNewCategory] = useState({ nom: "", is_active: true });
+  const [editCategory, setEditCategory] = useState({ nom: "", is_active: true });
   const categoriesPerPage = 10;
 
   useEffect(() => {
@@ -68,7 +61,7 @@ const AdminCategoriesPage: React.FC = () => {
     } catch (err: any) {
       console.error("Erreur lors du chargement des catégories:", err.response?.data);
       setError("Erreur lors du chargement des catégories.");
-      setCategories([]); // Réinitialiser à un tableau vide en cas d'erreur
+      setCategories([]);
       setLoading(false);
     }
   };
@@ -96,15 +89,13 @@ const AdminCategoriesPage: React.FC = () => {
     setIsAddModalOpen(true);
   };
 
-  const closeAddModal = () => {
-    setIsAddModalOpen(false);
-  };
+  const closeAddModal = () => setIsAddModalOpen(false);
 
   const handleAddCategory = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       await api.post("/categories/", newCategory);
-      setIsAddModalOpen(false);
+      closeAddModal();
       fetchCategories();
     } catch (err: any) {
       console.error("Erreur lors de l’ajout de la catégorie:", err.response?.data);
@@ -114,10 +105,7 @@ const AdminCategoriesPage: React.FC = () => {
 
   const openEditModal = (category: Category) => {
     setSelectedCategory(category);
-    setEditCategory({
-      nom: category.nom,
-      is_active: category.is_active,
-    });
+    setEditCategory({ nom: category.nom, is_active: category.is_active });
     setIsEditModalOpen(true);
   };
 
@@ -131,7 +119,7 @@ const AdminCategoriesPage: React.FC = () => {
     if (!selectedCategory) return;
     try {
       await api.put(`/categories/${selectedCategory.id}/`, editCategory);
-      setIsEditModalOpen(false);
+      closeEditModal();
       fetchCategories();
     } catch (err: any) {
       console.error("Erreur lors de la mise à jour de la catégorie:", err.response?.data);
@@ -153,7 +141,7 @@ const AdminCategoriesPage: React.FC = () => {
     if (!selectedCategory) return;
     try {
       await api.delete(`/categories/${selectedCategory.id}/`);
-      setIsDeleteModalOpen(false);
+      closeDeleteModal();
       fetchCategories();
     } catch (err: any) {
       console.error("Erreur lors de la suppression de la catégorie:", err.response?.data);
@@ -161,16 +149,40 @@ const AdminCategoriesPage: React.FC = () => {
     }
   };
 
+  const renderCategoriesPlaceholder = () => (
+    <div className="overflow-x-auto">
+      <table className="w-full text-left text-sm">
+        <thead className="bg-lightCard dark:bg-darkCard">
+          <tr className="border-b border-lightBorder dark:border-darkBorder">
+            {["ID", "Nom", "Statut", "Date de création", "Actions"].map((header) => (
+              <th key={header} className="py-3 px-4">
+                <div className="h-4 w-16 bg-gray-300 dark:bg-gray-600 rounded"></div>
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {Array.from({ length: 5 }).map((_, index) => (
+            <tr key={index} className="border-b border-lightBorder dark:border-darkBorder animate-pulse">
+              <td className="py-3 px-4"><div className="h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded"></div></td>
+              <td className="py-3 px-4"><div className="h-4 w-32 bg-gray-200 dark:bg-gray-700 rounded"></div></td>
+              <td className="py-3 px-4"><div className="h-4 w-20 bg-gray-200 dark:bg-gray-700 rounded"></div></td>
+              <td className="py-3 px-4"><div className="h-4 w-28 bg-gray-200 dark:bg-gray-700 rounded"></div></td>
+              <td className="py-3 px-4"><div className="h-6 w-24 bg-gray-300 dark:bg-gray-600 rounded"></div></td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+
   return (
     <AdminLayout>
       <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-        <h1 className="text-2xl sm:text-3xl font-serif font-medium text-lightText dark:text-darkText mb-4 sm:mb-6 flex items-center">
+        <h1 className="text-2xl sm:text-3xl font-serif font-medium text-lightText dark:text-darkText mb-6 flex items-center">
           <Folder className="h-6 w-6 mr-2" /> Gestion des Catégories
         </h1>
 
-        {error && <div className="text-center py-4 text-red-500">{error}</div>}
-
-        {/* Filtres et Recherche */}
         <div className="mb-6 flex flex-col sm:flex-row gap-4 items-center justify-between">
           <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
             <div className="relative w-full sm:w-64">
@@ -180,13 +192,13 @@ const AdminCategoriesPage: React.FC = () => {
                 value={searchQuery}
                 onChange={handleSearch}
                 placeholder="Rechercher par nom..."
-                className="w-full pl-10 pr-4 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightBg dark:bg-darkBg text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full pl-10 pr-4 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightBg dark:bg-darkBg text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-soft-green dark:focus:ring-dark-soft-green"
               />
             </div>
             <select
               value={filterStatus}
               onChange={handleFilterStatus}
-              className="px-4 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightBg dark:bg-darkBg text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="px-4 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightBg dark:bg-darkBg text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-soft-green dark:focus:ring-dark-soft-green"
             >
               <option value="all">Tous les statuts</option>
               <option value="true">Actif</option>
@@ -202,12 +214,11 @@ const AdminCategoriesPage: React.FC = () => {
         </div>
 
         {loading ? (
-          <div className="flex justify-center py-4">
-            <Spinner />
-          </div>
+          renderCategoriesPlaceholder()
+        ) : error ? (
+          <div className="text-center py-8 text-red-500">{error}</div>
         ) : (
           <>
-            {/* Liste des catégories */}
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
                 <thead className="bg-lightCard dark:bg-darkCard">
@@ -220,7 +231,7 @@ const AdminCategoriesPage: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {Array.isArray(categories) && categories.length > 0 ? (
+                  {categories.length > 0 ? (
                     categories.map((category) => (
                       <tr
                         key={category.id}
@@ -269,7 +280,6 @@ const AdminCategoriesPage: React.FC = () => {
               </table>
             </div>
 
-            {/* Pagination */}
             <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
               <p className="text-sm text-gray-700 dark:text-gray-300">
                 Affichage de {(currentPage - 1) * categoriesPerPage + 1} à{" "}
@@ -279,14 +289,14 @@ const AdminCategoriesPage: React.FC = () => {
                 <ButtonPrimary
                   onClick={handlePrevPage}
                   disabled={currentPage === 1}
-                  className="px-3 py-2 bg-lightCard dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 flex items-center"
+                  className="px-3 py-2 bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 flex items-center"
                 >
                   <ChevronLeft className="h-5 w-5 mr-1" /> Précédent
                 </ButtonPrimary>
                 <ButtonPrimary
                   onClick={handleNextPage}
                   disabled={currentPage === totalPages}
-                  className="px-3 py-2 bg-lightCard dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 flex items-center"
+                  className="px-3 py-2 bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 flex items-center"
                 >
                   Suivant <ChevronRight className="h-5 w-5 ml-1" />
                 </ButtonPrimary>
@@ -297,11 +307,8 @@ const AdminCategoriesPage: React.FC = () => {
 
         {/* Modal pour ajouter une catégorie */}
         {isAddModalOpen && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-            <div className="bg-lightBg dark:bg-darkBg p-6 rounded-lg shadow-lg w-full max-w-md">
-              <h2 className="text-xl font-medium text-lightText dark:text-darkText mb-4 flex items-center">
-                <PlusCircle className="h-5 w-5 mr-2" /> Ajouter une catégorie
-              </h2>
+          <ModalContainer isOpen={isAddModalOpen} onClose={closeAddModal} title="Ajouter une catégorie" size="md">
+            <ModalBody>
               <form onSubmit={handleAddCategory} className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">Nom</label>
@@ -309,7 +316,7 @@ const AdminCategoriesPage: React.FC = () => {
                     type="text"
                     value={newCategory.nom}
                     onChange={(e) => setNewCategory({ ...newCategory, nom: e.target.value })}
-                    className="w-full px-3 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-soft-green dark:focus:ring-dark-soft-green"
                     required
                   />
                 </div>
@@ -322,30 +329,27 @@ const AdminCategoriesPage: React.FC = () => {
                     className="h-5 w-5 text-blue-500 focus:ring-blue-500 border-lightBorder dark:border-darkBorder rounded"
                   />
                 </div>
-                <div className="flex gap-2 justify-end">
+                <ModalFooter>
                   <ButtonPrimary
                     type="button"
                     onClick={closeAddModal}
-                    className="px-4 py-2 bg-lightCard dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600"
+                    className="px-4 py-2 bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText hover:bg-gray-300 dark:hover:bg-gray-600"
                   >
                     Annuler
                   </ButtonPrimary>
                   <ButtonPrimary type="submit" className="px-4 py-2 bg-blue-500 text-white hover:bg-blue-600">
                     Ajouter
                   </ButtonPrimary>
-                </div>
+                </ModalFooter>
               </form>
-            </div>
-          </div>
+            </ModalBody>
+          </ModalContainer>
         )}
 
         {/* Modal pour modifier une catégorie */}
         {isEditModalOpen && selectedCategory && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-            <div className="bg-lightBg dark:bg-darkBg p-6 rounded-lg shadow-lg w-full max-w-md">
-              <h2 className="text-xl font-medium text-lightText dark:text-darkText mb-4 flex items-center">
-                <Edit className="h-5 w-5 mr-2" /> Modifier la catégorie
-              </h2>
+          <ModalContainer isOpen={isEditModalOpen} onClose={closeEditModal} title="Modifier la catégorie" size="md">
+            <ModalBody>
               <form onSubmit={handleEditCategory} className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">Nom</label>
@@ -353,7 +357,7 @@ const AdminCategoriesPage: React.FC = () => {
                     type="text"
                     value={editCategory.nom}
                     onChange={(e) => setEditCategory({ ...editCategory, nom: e.target.value })}
-                    className="w-full px-3 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-soft-green dark:focus:ring-dark-soft-green"
                     required
                   />
                 </div>
@@ -366,48 +370,44 @@ const AdminCategoriesPage: React.FC = () => {
                     className="h-5 w-5 text-blue-500 focus:ring-blue-500 border-lightBorder dark:border-darkBorder rounded"
                   />
                 </div>
-                <div className="flex gap-2 justify-end">
+                <ModalFooter>
                   <ButtonPrimary
                     type="button"
                     onClick={closeEditModal}
-                    className="px-4 py-2 bg-lightCard dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600"
+                    className="px-4 py-2 bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText hover:bg-gray-300 dark:hover:bg-gray-600"
                   >
                     Annuler
                   </ButtonPrimary>
                   <ButtonPrimary type="submit" className="px-4 py-2 bg-blue-500 text-white hover:bg-blue-600">
                     Enregistrer
                   </ButtonPrimary>
-                </div>
+                </ModalFooter>
               </form>
-            </div>
-          </div>
+            </ModalBody>
+          </ModalContainer>
         )}
 
         {/* Modal pour supprimer une catégorie */}
         {isDeleteModalOpen && selectedCategory && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-            <div className="bg-lightBg dark:bg-darkBg p-6 rounded-lg shadow-lg w-full max-w-md">
-              <h2 className="text-xl font-medium text-lightText dark:text-darkText mb-4 flex items-center">
-                <Trash2 className="h-5 w-5 mr-2" /> Supprimer la catégorie
-              </h2>
+          <ModalContainer isOpen={isDeleteModalOpen} onClose={closeDeleteModal} title="Supprimer la catégorie" size="md">
+            <ModalBody>
               <p className="text-gray-700 dark:text-gray-300 mb-4">
                 Êtes-vous sûr de vouloir supprimer la catégorie{" "}
                 <span className="font-medium">{selectedCategory.nom}</span> ?
               </p>
-              <div className="flex gap-2 justify-end">
+              <ModalFooter>
                 <ButtonPrimary
-                  type="button"
                   onClick={closeDeleteModal}
-                  className="px-4 py-2 bg-lightCard dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600"
+                  className="px-4 py-2 bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText hover:bg-gray-300 dark:hover:bg-gray-600"
                 >
                   Annuler
                 </ButtonPrimary>
                 <ButtonPrimary onClick={handleDeleteCategory} className="px-4 py-2 bg-red-500 text-white hover:bg-red-600">
                   Supprimer
                 </ButtonPrimary>
-              </div>
-            </div>
-          </div>
+              </ModalFooter>
+            </ModalBody>
+          </ModalContainer>
         )}
       </div>
     </AdminLayout>

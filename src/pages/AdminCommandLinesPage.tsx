@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState, useEffect } from "react";
 import api from "../services/api";
 import AdminLayout from "../components/AdminLayout";
@@ -18,10 +20,6 @@ interface ApiResponse {
   next: string | null;
   previous: string | null;
 }
-
-const Spinner = () => (
-  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500" aria-label="Chargement en cours" />
-);
 
 const AdminCommandLinesPage: React.FC = () => {
   const [lines, setLines] = useState<LigneCommande[]>([]);
@@ -55,7 +53,7 @@ const AdminCommandLinesPage: React.FC = () => {
     } catch (err: any) {
       console.error("Erreur lors du chargement des lignes de commande:", err.response?.data);
       setError("Erreur lors du chargement des lignes de commande.");
-      setLines([]); // Réinitialiser à un tableau vide en cas d'erreur
+      setLines([]);
       setLoading(false);
     }
   };
@@ -73,14 +71,40 @@ const AdminCommandLinesPage: React.FC = () => {
     if (currentPage < totalPages) setCurrentPage(currentPage + 1);
   };
 
+  const renderLinesPlaceholder = () => (
+    <div className="overflow-x-auto">
+      <table className="w-full text-left text-sm">
+        <thead className="bg-lightCard dark:bg-darkCard">
+          <tr className="border-b border-lightBorder dark:border-darkBorder">
+            {["ID", "Commande", "Produit", "Quantité", "Prix Unitaire", "Total Ligne"].map((header) => (
+              <th key={header} className="py-3 px-4">
+                <div className="h-4 w-16 bg-gray-300 dark:bg-gray-600 rounded"></div>
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {Array.from({ length: 5 }).map((_, index) => (
+            <tr key={index} className="border-b border-lightBorder dark:border-darkBorder animate-pulse">
+              <td className="py-3 px-4"><div className="h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded"></div></td>
+              <td className="py-3 px-4"><div className="h-4 w-20 bg-gray-200 dark:bg-gray-700 rounded"></div></td>
+              <td className="py-3 px-4"><div className="h-4 w-32 bg-gray-200 dark:bg-gray-700 rounded"></div></td>
+              <td className="py-3 px-4"><div className="h-4 w-12 bg-gray-200 dark:bg-gray-700 rounded"></div></td>
+              <td className="py-3 px-4"><div className="h-4 w-20 bg-gray-200 dark:bg-gray-700 rounded"></div></td>
+              <td className="py-3 px-4"><div className="h-4 w-20 bg-gray-200 dark:bg-gray-700 rounded"></div></td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+
   return (
     <AdminLayout>
       <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-        <h1 className="text-2xl sm:text-3xl font-serif font-medium text-lightText dark:text-darkText mb-4 sm:mb-6 flex items-center">
+        <h1 className="text-2xl sm:text-3xl font-serif font-medium text-lightText dark:text-darkText mb-6 flex items-center">
           <ShoppingCart className="h-6 w-6 mr-2" /> Gestion des Lignes de Commande
         </h1>
-
-        {error && <div className="text-center py-4 text-red-500">{error}</div>}
 
         <div className="mb-6 flex flex-col sm:flex-row gap-4 items-center justify-between">
           <div className="relative w-full sm:w-64">
@@ -90,15 +114,15 @@ const AdminCommandLinesPage: React.FC = () => {
               value={searchQuery}
               onChange={handleSearch}
               placeholder="Rechercher par nom de produit..."
-              className="w-full pl-10 pr-4 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightBg dark:bg-darkBg text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full pl-10 pr-4 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightBg dark:bg-darkBg text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-soft-green dark:focus:ring-dark-soft-green"
             />
           </div>
         </div>
 
         {loading ? (
-          <div className="flex justify-center py-4">
-            <Spinner />
-          </div>
+          renderLinesPlaceholder()
+        ) : error ? (
+          <div className="text-center py-8 text-red-500">{error}</div>
         ) : (
           <>
             <div className="overflow-x-auto">
@@ -114,7 +138,7 @@ const AdminCommandLinesPage: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {Array.isArray(lines) && lines.length > 0 ? (
+                  {lines.length > 0 ? (
                     lines.map((line) => {
                       const totalLigne = parseFloat(line.prix_unitaire) * line.quantite;
                       return (
@@ -146,21 +170,21 @@ const AdminCommandLinesPage: React.FC = () => {
 
             <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
               <p className="text-sm text-gray-700 dark:text-gray-300">
-                Affichage de {(currentPage - 1) * linesPerPage + 1} à {Math.min(currentPage * linesPerPage, totalLines)}{" "}
-                sur {totalLines} lignes de commande
+                Affichage de {(currentPage - 1) * linesPerPage + 1} à{" "}
+                {Math.min(currentPage * linesPerPage, totalLines)} sur {totalLines} lignes de commande
               </p>
               <div className="flex gap-2">
                 <ButtonPrimary
                   onClick={handlePrevPage}
                   disabled={currentPage === 1}
-                  className="px-3 py-2 bg-lightCard dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 flex items-center"
+                  className="px-3 py-2 bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 flex items-center"
                 >
                   <ChevronLeft className="h-5 w-5 mr-1" /> Précédent
                 </ButtonPrimary>
                 <ButtonPrimary
                   onClick={handleNextPage}
                   disabled={currentPage === totalPages}
-                  className="px-3 py-2 bg-lightCard dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 flex items-center"
+                  className="px-3 py-2 bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 flex items-center"
                 >
                   Suivant <ChevronRight className="h-5 w-5 ml-1" />
                 </ButtonPrimary>
