@@ -42,7 +42,7 @@ import AdminAteliersStatsPage from './pages/AdminAteliersStatsPage';
 import AdminAteliersParticipantsPage from './pages/AdminAteliersParticipantsPage';
 import AdminServicesPage from './pages/AdminServicesPage';
 import AdminDevisPage from './pages/AdminDevisPage';
-import AdminAbonnementsPage from './pages/AbonnementsPage';
+import AdminAbonnementsPage from './pages/AdminAbonnementsPage';
 import AdminArticlesPage from './pages/AdminArticlesPage';
 import AdminCommentairesPage from './pages/AdminCommentairesPage';
 import AdminRealisationsPage from './pages/AdminRealisationsPage';
