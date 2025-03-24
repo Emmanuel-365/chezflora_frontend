@@ -110,6 +110,7 @@ const AdminAbonnementsPage: React.FC = () => {
     try {
       const response = await api.get('/produits/');
       setProduits(response.data.results);
+      console.log(response.data)
     } catch (err) {
       setError('Erreur lors du chargement des produits.');
     }
