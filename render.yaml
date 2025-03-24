@@ -1,6 +1,6 @@
 services:
   - type: static
-    name: ton-app
+    name: chezflora
     env: static
     buildCommand: npm install && npm run build
     staticPublishPath: dist  # ou le dossier où ton build est généré (ex. "dist")
