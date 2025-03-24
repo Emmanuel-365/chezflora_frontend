@@ -3,7 +3,7 @@ services:
     name: ton-app
     env: static
     buildCommand: npm install && npm run build
-    staticPublishPath: build  # ou le dossier où ton build est généré (ex. "dist")
+    staticPublishPath: dist  # ou le dossier où ton build est généré (ex. "dist")
     routes:
       - type: rewrite
         source: /*
