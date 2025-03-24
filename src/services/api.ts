@@ -129,7 +129,7 @@ export const getOrder = (id: string) => api.get(`/commandes/${id}/`);
 export const removeFromCart = (panierId: string, data: { produit_id: string }) =>
   api.post(`/paniers/${panierId}/supprimer_produit/`, data);
 export const updateUserProfile = (id: string, data: { username?: string; email?: string }) =>
-  api.patch(`/utilisateurs/${id}`, data);
+  api.patch(`/utilisateurs/${id}/`, data);
 export const changePassword = (data: {
   old_password: string;
   new_password: string;
