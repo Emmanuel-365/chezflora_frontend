@@ -32,7 +32,6 @@ const AccountPage: React.FC = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [notifications, setNotifications] = useState(true); // Paramètre fictif
   const [marketing, setMarketing] = useState(false); // Paramètre fictif
-  const [id, setId] = useState('')
 
   const navigate = useNavigate();
 
@@ -49,7 +48,6 @@ const AccountPage: React.FC = () => {
         setUser(response.data);
         setUsername(response.data.username);
         setEmail(response.data.email);
-        setId(response.data.id);
         setAvatarUrl(''); // Remplacez par un champ avatar si disponible via API
         setLoading(false);
       } catch (err: any) {
