@@ -14,11 +14,16 @@ interface Produit {
   prix: string;
 }
 
+interface AbonnementProduit {
+  produit: Produit;
+  quantite: number;
+}
+
 interface Abonnement {
   id: string;
   client: { id: string; username: string };
   type: string;
-  produits: Produit[];
+  abonnement_produits: AbonnementProduit[];
   date_debut: string;
   date_fin: string | null;
   prix: string;
@@ -110,7 +115,6 @@ const AdminAbonnementsPage: React.FC = () => {
     try {
       const response = await api.get('/produits/');
       setProduits(response.data.results);
-      console.log(response)
     } catch (err) {
       setError('Erreur lors du chargement des produits.');
     }
@@ -319,7 +323,9 @@ const AdminAbonnementsPage: React.FC = () => {
                   <td className="py-3 px-4 text-gray-700 dark:text-gray-300">{abonnement.id}</td>
                   <td className="py-3 px-4 text-gray-700 dark:text-gray-300">{abonnement.client.username}</td>
                   <td className="py-3 px-4 text-gray-700 dark:text-gray-300">{abonnement.type}</td>
-                  <td className="py-3 px-4 text-gray-700 dark:text-gray-300">{abonnement.produits.map(p => p.nom).join(', ')}</td>
+                  <td className="py-3 px-4 text-gray-700 dark:text-gray-300">
+                    {abonnement.abonnement_produits.map(ap => `${ap.produit.nom} (x${ap.quantite})`).join(', ')}
+                  </td>
                   <td className="py-3 px-4 text-gray-700 dark:text-gray-300">{new Date(abonnement.date_debut).toLocaleDateString()}</td>
                   <td className="py-3 px-4 text-gray-700 dark:text-gray-300">{abonnement.date_fin ? new Date(abonnement.date_fin).toLocaleDateString() : 'N/A'}</td>
                   <td className="py-3 px-4 text-gray-700 dark:text-gray-300">{abonnement.prix}</td>
