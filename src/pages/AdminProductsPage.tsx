@@ -23,6 +23,7 @@ interface Product {
   description: string;
   promotions: { id: string; nom: string }[];
   photos: Photo[];
+  categorie_id: number;
 }
 
 interface ApiResponse {
@@ -63,7 +64,7 @@ const AdminProductsPage: React.FC = () => {
     prix: "",
     stock: "",
     is_active: true,
-    categorie: "",
+    categorie_id: "",
     description: "",
     promotions: [] as string[],
     photos: [] as File[],
@@ -73,7 +74,7 @@ const AdminProductsPage: React.FC = () => {
     prix: "",
     stock: "",
     is_active: true,
-    categorie: "",
+    categorie_id: "",
     description: "",
     promotions: [] as string[],
     photos: [] as File[],
@@ -155,7 +156,7 @@ const AdminProductsPage: React.FC = () => {
       prix: "",
       stock: "",
       is_active: true,
-      categorie: "",
+      categorie_id: "",
       description: "",
       promotions: [],
       photos: [],
@@ -175,7 +176,7 @@ const AdminProductsPage: React.FC = () => {
         prix: parseFloat(newProduct.prix).toString(),
         stock: parseInt(newProduct.stock, 10),
         is_active: newProduct.is_active,
-        categorie: newProduct.categorie || null,
+        categorie_id: newProduct.categorie_id || null,
         description: newProduct.description,
         promotions: newProduct.promotions,
       };
@@ -207,7 +208,7 @@ const AdminProductsPage: React.FC = () => {
       prix: product.prix,
       stock: product.stock.toString(),
       is_active: product.is_active,
-      categorie: product.categorie?.id || "",
+      categorie_id: product.categorie?.id || "",
       description: product.description,
       promotions: product.promotions.map((p) => p.id),
       photos: [],
@@ -230,7 +231,7 @@ const AdminProductsPage: React.FC = () => {
         prix: parseFloat(editProduct.prix).toString(),
         stock: parseInt(editProduct.stock, 10),
         is_active: editProduct.is_active,
-        categorie: editProduct.categorie || null,
+        categorie_id: editProduct.categorie_id || null,
         description: editProduct.description,
         promotions: editProduct.promotions,
       };
@@ -555,8 +556,8 @@ const AdminProductsPage: React.FC = () => {
               <div>
                 <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">Catégorie</label>
                 <select
-                  value={newProduct.categorie}
-                  onChange={(e) => setNewProduct({ ...newProduct, categorie: e.target.value })}
+                  value={newProduct.categorie_id}
+                  onChange={(e) => setNewProduct({ ...newProduct, categorie_id: e.target.value })}
                   className="w-full px-3 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightBg dark:bg-darkBg text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-soft-green dark:focus:ring-dark-soft-green"
                 >
                   <option value="">Sans catégorie</option>
@@ -695,8 +696,8 @@ const AdminProductsPage: React.FC = () => {
                   <div>
                     <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">Catégorie</label>
                     <select
-                      value={editProduct.categorie}
-                      onChange={(e) => setEditProduct({ ...editProduct, categorie: e.target.value })}
+                      value={editProduct.categorie_id}
+                      onChange={(e) => setEditProduct({ ...editProduct, categorie_id: e.target.value })}
                       className="w-full px-3 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightBg dark:bg-darkBg text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-soft-green dark:focus:ring-dark-soft-green"
                     >
                       <option value="">Sans catégorie</option>
