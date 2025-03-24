@@ -69,7 +69,7 @@ const AccountPage: React.FC = () => {
   const handleUpdateProfile = async () => {
     setUpdateLoading(true);
     try {
-      const response = await updateUserProfile(id, { username, email });
+      const response = await updateUserProfile({ username, email });
       setUser(response.data);
       alert('Profil mis à jour avec succès !');
     } catch (err: any) {
