@@ -12,8 +12,9 @@ interface TextFieldCustomProps {
   disabled?: boolean;
   className?: string;
   suffix?: React.ReactNode;
-  icon?: React.ReactNode;  // Ajout de la prop icon
-  onBlur?: (e: FocusEvent<HTMLInputElement>) => void;
+  icon?: React.ReactNode;
+  onFocus?: (e: FocusEvent<HTMLInputElement>) => void; // Ajouté
+  onBlur?: (e: FocusEvent<HTMLInputElement>) => void;   // Ajouté
 }
 
 const TextFieldCustom: React.FC<TextFieldCustomProps> = ({
@@ -29,6 +30,7 @@ const TextFieldCustom: React.FC<TextFieldCustomProps> = ({
   className = '',
   suffix,
   icon,
+  onFocus,
   onBlur,
 }) => {
   const [isFocused, setIsFocused] = useState(false);
@@ -37,8 +39,9 @@ const TextFieldCustom: React.FC<TextFieldCustomProps> = ({
     onChange(e.target.value);
   };
 
-  const handleFocus = () => {
+  const handleFocus = (e: FocusEvent<HTMLInputElement>) => {
     setIsFocused(true);
+    onFocus?.(e);
   };
 
   const handleBlur = (e: FocusEvent<HTMLInputElement>) => {
