@@ -171,7 +171,7 @@ const AdminPromotionsPage: React.FC = () => {
         reduction: parseFloat(newPromotion.reduction),
         date_debut: new Date(newPromotion.date_debut).toISOString(),
         date_fin: new Date(newPromotion.date_fin).toISOString(),
-        produit_ids: newPromotion.produits.length > 0 ? newPromotion.produits : null,
+        produit_ids: newPromotion.produits.length > 0 ? newPromotion.produits : [],
         categorie_id: newPromotion.categorie || null,
       };
       await api.post("/promotions/", promotionData);
@@ -213,7 +213,7 @@ const AdminPromotionsPage: React.FC = () => {
         reduction: parseFloat(editPromotion.reduction),
         date_debut: new Date(editPromotion.date_debut).toISOString(),
         date_fin: new Date(editPromotion.date_fin).toISOString(),
-        produit_ids: editPromotion.produit_ids.length > 0 ? editPromotion.produit_ids : null,
+        produit_ids: editPromotion.produit_ids.length > 0 ? editPromotion.produit_ids : [],
         categorie_id: editPromotion.categorie_id || null,
       };
       await api.put(`/promotions/${selectedPromotion.id}/`, promotionData);
