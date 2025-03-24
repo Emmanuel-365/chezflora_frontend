@@ -6,7 +6,7 @@ import AdminLayout from "../components/AdminLayout";
 import ButtonPrimary from "../components/ButtonPrimary";
 import { Bar } from "react-chartjs-2";
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from "chart.js";
-import { CreditCard, Search, Edit, ChevronLeft, ChevronRight, PlusCircle, Truck, DollarSign, X } from "lucide-react";
+import { CreditCard, Search, Edit, ChevronLeft, ChevronRight, PlusCircle, Truck, DollarSign, Eye, Trash2, X } from "lucide-react";
 import { ModalContainer, ModalBody, ModalFooter } from "../components/ModalContainer";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
@@ -69,6 +69,8 @@ const AdminAbonnementsPage: React.FC = () => {
   const [selectedAbonnement, setSelectedAbonnement] = useState<Abonnement | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [editAbonnement, setEditAbonnement] = useState({
     type: "",
     date_debut: "",
@@ -78,6 +80,7 @@ const AdminAbonnementsPage: React.FC = () => {
     is_active: true,
     prochaine_livraison: "",
     prochaine_facturation: "",
+    produit_quantites: [{ produit_id: "", quantite: 1 }],
   });
   const [newAbonnement, setNewAbonnement] = useState({
     client_id: "",
@@ -195,12 +198,36 @@ const AdminAbonnementsPage: React.FC = () => {
       is_active: abonnement.is_active,
       prochaine_livraison: abonnement.prochaine_livraison ? abonnement.prochaine_livraison.split("T")[0] : "",
       prochaine_facturation: abonnement.prochaine_facturation ? abonnement.prochaine_facturation.split("T")[0] : "",
+      produit_quantites: abonnement.abonnement_produits.map((ap) => ({
+        produit_id: ap.produit.id,
+        quantite: ap.quantite,
+      })),
     });
     setIsEditModalOpen(true);
   };
 
   const closeEditModal = () => {
     setIsEditModalOpen(false);
+    setSelectedAbonnement(null);
+  };
+
+  const openDeleteModal = (abonnement: Abonnement) => {
+    setSelectedAbonnement(abonnement);
+    setIsDeleteModalOpen(true);
+  };
+
+  const closeDeleteModal = () => {
+    setIsDeleteModalOpen(false);
+    setSelectedAbonnement(null);
+  };
+
+  const openDetailsModal = (abonnement: Abonnement) => {
+    setSelectedAbonnement(abonnement);
+    setIsDetailsModalOpen(true);
+  };
+
+  const closeDetailsModal = () => {
+    setIsDetailsModalOpen(false);
     setSelectedAbonnement(null);
   };
 
@@ -214,6 +241,7 @@ const AdminAbonnementsPage: React.FC = () => {
         date_fin: editAbonnement.date_fin || null,
         prochaine_livraison: editAbonnement.prochaine_livraison || null,
         prochaine_facturation: editAbonnement.prochaine_facturation || null,
+        produit_quantites: editAbonnement.produit_quantites.map((p) => ({ produit_id: p.produit_id, quantite: p.quantite })),
       };
       await api.put(`/abonnements/${selectedAbonnement.id}/`, data);
       closeEditModal();
@@ -248,6 +276,19 @@ const AdminAbonnementsPage: React.FC = () => {
     }
   };
 
+  const handleDeleteAbonnement = async () => {
+    if (!selectedAbonnement) return;
+    try {
+      await api.delete(`/abonnements/${selectedAbonnement.id}/`);
+      closeDeleteModal();
+      fetchAbonnements();
+      fetchStats();
+    } catch (err: any) {
+      console.error("Erreur lors de la suppression de l’abonnement:", err.response?.data);
+      setErrorAbonnements("Erreur lors de la suppression de l’abonnement.");
+    }
+  };
+
   const handleAddAbonnement = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -266,25 +307,46 @@ const AdminAbonnementsPage: React.FC = () => {
     }
   };
 
-  const addProduitField = () => {
-    setNewAbonnement({
-      ...newAbonnement,
-      produit_quantites: [...newAbonnement.produit_quantites, { produit_id: produits[0]?.id || "", quantite: 1 }],
-    });
+  const addProduitField = (type: "new" | "edit") => {
+    if (type === "new") {
+      setNewAbonnement({
+        ...newAbonnement,
+        produit_quantites: [...newAbonnement.produit_quantites, { produit_id: produits[0]?.id || "", quantite: 1 }],
+      });
+    } else {
+      setEditAbonnement({
+        ...editAbonnement,
+        produit_quantites: [...editAbonnement.produit_quantites, { produit_id: produits[0]?.id || "", quantite: 1 }],
+      });
+    }
   };
 
-  const removeProduitField = (index: number) => {
-    setNewAbonnement({
-      ...newAbonnement,
-      produit_quantites: newAbonnement.produit_quantites.filter((_, i) => i !== index),
-    });
+  const removeProduitField = (index: number, type: "new" | "edit") => {
+    if (type === "new") {
+      setNewAbonnement({
+        ...newAbonnement,
+        produit_quantites: newAbonnement.produit_quantites.filter((_, i) => i !== index),
+      });
+    } else {
+      setEditAbonnement({
+        ...editAbonnement,
+        produit_quantites: editAbonnement.produit_quantites.filter((_, i) => i !== index),
+      });
+    }
   };
 
-  const updateProduitQuantite = (index: number, field: "produit_id" | "quantite", value: string | number) => {
-    const updatedProduits = newAbonnement.produit_quantites.map((pq, i) =>
-      i === index ? { ...pq, [field]: value } : pq
-    );
-    setNewAbonnement({ ...newAbonnement, produit_quantites: updatedProduits });
+  const updateProduitQuantite = (index: number, field: "produit_id" | "quantite", value: string | number, type: "new" | "edit") => {
+    if (type === "new") {
+      const updatedProduits = newAbonnement.produit_quantites.map((pq, i) =>
+        i === index ? { ...pq, [field]: value } : pq
+      );
+      setNewAbonnement({ ...newAbonnement, produit_quantites: updatedProduits });
+    } else {
+      const updatedProduits = editAbonnement.produit_quantites.map((pq, i) =>
+        i === index ? { ...pq, [field]: value } : pq
+      );
+      setEditAbonnement({ ...editAbonnement, produit_quantites: updatedProduits });
+    }
   };
 
   const abonnementsChartData = {
@@ -303,11 +365,13 @@ const AdminAbonnementsPage: React.FC = () => {
       <table className="w-full text-left text-sm">
         <thead className="bg-lightCard dark:bg-darkCard">
           <tr className="border-b border-lightBorder dark:border-darkBorder">
-            {["ID", "Client", "Type", "Produits", "Début", "Fin", "Prix (FCFA)", "Statut Paiement", "Prochaine Livraison", "Prochaine Facturation", "Actif", "Actions"].map((header) => (
-              <th key={header} className="py-3 px-4">
-                <div className="h-4 w-16 bg-gray-300 dark:bg-gray-600 rounded"></div>
-              </th>
-            ))}
+            {["ID", "Client", "Type", "Produits", "Début", "Fin", "Prix (FCFA)", "Statut Paiement", "Prochaine Livraison", "Prochaine Facturation", "Actif", "Actions"].map(
+              (header) => (
+                <th key={header} className="py-3 px-4">
+                  <div className="h-4 w-16 bg-gray-300 dark:bg-gray-600 rounded"></div>
+                </th>
+              )
+            )}
           </tr>
         </thead>
         <tbody>
@@ -465,6 +529,12 @@ const AdminAbonnementsPage: React.FC = () => {
                     </td>
                     <td className="py-3 px-4 flex gap-2">
                       <ButtonPrimary
+                        onClick={() => openDetailsModal(abonnement)}
+                        className="px-2 py-1 bg-gray-500 text-white hover:bg-gray-600 flex items-center text-sm"
+                      >
+                        <Eye className="h-4 w-4 mr-1" /> Détails
+                      </ButtonPrimary>
+                      <ButtonPrimary
                         onClick={() => openEditModal(abonnement)}
                         className="px-2 py-1 bg-blue-500 text-white hover:bg-blue-600 flex items-center text-sm"
                       >
@@ -481,6 +551,12 @@ const AdminAbonnementsPage: React.FC = () => {
                         className="px-2 py-1 bg-yellow-500 text-white hover:bg-yellow-600 flex items-center text-sm"
                       >
                         <DollarSign className="h-4 w-4 mr-1" /> Facturer
+                      </ButtonPrimary>
+                      <ButtonPrimary
+                        onClick={() => openDeleteModal(abonnement)}
+                        className="px-2 py-1 bg-red-500 text-white hover:bg-red-600 flex items-center text-sm"
+                      >
+                        <Trash2 className="h-4 w-4 mr-1" /> Supprimer
                       </ButtonPrimary>
                     </td>
                   </tr>
@@ -582,7 +658,7 @@ const AdminAbonnementsPage: React.FC = () => {
                       <div key={index} className="flex gap-2 mb-2">
                         <select
                           value={pq.produit_id}
-                          onChange={(e) => updateProduitQuantite(index, "produit_id", e.target.value)}
+                          onChange={(e) => updateProduitQuantite(index, "produit_id", e.target.value, "new")}
                           className="w-2/3 px-3 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-soft-green dark:focus:ring-dark-soft-green"
                           required
                         >
@@ -597,13 +673,13 @@ const AdminAbonnementsPage: React.FC = () => {
                           type="number"
                           min="1"
                           value={pq.quantite}
-                          onChange={(e) => updateProduitQuantite(index, "quantite", parseInt(e.target.value))}
+                          onChange={(e) => updateProduitQuantite(index, "quantite", parseInt(e.target.value), "new")}
                           className="w-1/3 px-3 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-soft-green dark:focus:ring-dark-soft-green"
                           required
                         />
                         {index > 0 && (
                           <ButtonPrimary
-                            onClick={() => removeProduitField(index)}
+                            onClick={() => removeProduitField(index, "new")}
                             className="px-2 py-1 bg-red-500 text-white hover:bg-red-600"
                           >
                             <X className="h-4 w-4" />
@@ -614,7 +690,7 @@ const AdminAbonnementsPage: React.FC = () => {
                   )}
                   <ButtonPrimary
                     type="button"
-                    onClick={addProduitField}
+                    onClick={() => addProduitField("new")}
                     className="mt-2 px-2 py-1 bg-green-500 text-white hover:bg-green-600 flex items-center text-sm"
                   >
                     <PlusCircle className="h-4 w-4 mr-1" /> Ajouter un produit
@@ -715,6 +791,55 @@ const AdminAbonnementsPage: React.FC = () => {
                   />
                 </div>
                 <div>
+                  <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">Produits</label>
+                  {loadingProduits ? (
+                    <div className="text-center py-2 text-gray-500 dark:text-gray-400">Chargement des produits...</div>
+                  ) : errorProduits ? (
+                    <div className="text-center py-2 text-red-500">{errorProduits}</div>
+                  ) : (
+                    editAbonnement.produit_quantites.map((pq, index) => (
+                      <div key={index} className="flex gap-2 mb-2">
+                        <select
+                          value={pq.produit_id}
+                          onChange={(e) => updateProduitQuantite(index, "produit_id", e.target.value, "edit")}
+                          className="w-2/3 px-3 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-soft-green dark:focus:ring-dark-soft-green"
+                          required
+                        >
+                          <option value="">Sélectionner un produit</option>
+                          {produits.map((produit) => (
+                            <option key={produit.id} value={produit.id}>
+                              {produit.nom} ({produit.prix} FCFA)
+                            </option>
+                          ))}
+                        </select>
+                        <input
+                          type="number"
+                          min="1"
+                          value={pq.quantite}
+                          onChange={(e) => updateProduitQuantite(index, "quantite", parseInt(e.target.value), "edit")}
+                          className="w-1/3 px-3 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-soft-green dark:focus:ring-dark-soft-green"
+                          required
+                        />
+                        {index > 0 && (
+                          <ButtonPrimary
+                            onClick={() => removeProduitField(index, "edit")}
+                            className="px-2 py-1 bg-red-500 text-white hover:bg-red-600"
+                          >
+                            <X className="h-4 w-4" />
+                          </ButtonPrimary>
+                        )}
+                      </div>
+                    ))
+                  )}
+                  <ButtonPrimary
+                    type="button"
+                    onClick={() => addProduitField("edit")}
+                    className="mt-2 px-2 py-1 bg-green-500 text-white hover:bg-green-600 flex items-center text-sm"
+                  >
+                    <PlusCircle className="h-4 w-4 mr-1" /> Ajouter un produit
+                  </ButtonPrimary>
+                </div>
+                <div>
                   <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">Actif</label>
                   <input
                     type="checkbox"
@@ -737,6 +862,84 @@ const AdminAbonnementsPage: React.FC = () => {
                 </ModalFooter>
               </form>
             </ModalBody>
+          </ModalContainer>
+        )}
+
+        {/* Modal de suppression */}
+        {isDeleteModalOpen && selectedAbonnement && (
+          <ModalContainer isOpen={isDeleteModalOpen} onClose={closeDeleteModal} title="Supprimer l’abonnement" size="md">
+            <ModalBody>
+              <p className="text-gray-700 dark:text-gray-300 mb-4">
+                Êtes-vous sûr de vouloir supprimer l’abonnement de{" "}
+                <span className="font-medium">{selectedAbonnement.client.username}</span> ?
+              </p>
+              <ModalFooter>
+                <ButtonPrimary
+                  type="button"
+                  onClick={closeDeleteModal}
+                  className="px-4 py-2 bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText hover:bg-gray-300 dark:hover:bg-gray-600"
+                >
+                  Annuler
+                </ButtonPrimary>
+                <ButtonPrimary onClick={handleDeleteAbonnement} className="px-4 py-2 bg-red-500 text-white hover:bg-red-600">
+                  Supprimer
+                </ButtonPrimary>
+              </ModalFooter>
+            </ModalBody>
+          </ModalContainer>
+        )}
+
+        {/* Modal de détails */}
+        {isDetailsModalOpen && selectedAbonnement && (
+          <ModalContainer isOpen={isDetailsModalOpen} onClose={closeDetailsModal} title="Détails de l’abonnement" size="lg">
+            <ModalBody>
+              <div className="space-y-2">
+                <p className="text-lightText dark:text-darkText">
+                  <strong>ID :</strong> {selectedAbonnement.id}
+                </p>
+                <p className="text-lightText dark:text-darkText">
+                  <strong>Client :</strong> {selectedAbonnement.client.username}
+                </p>
+                <p className="text-lightText dark:text-darkText">
+                  <strong>Type :</strong> {selectedAbonnement.type}
+                </p>
+                <p className="text-lightText dark:text-darkText">
+                  <strong>Produits :</strong>{" "}
+                  {selectedAbonnement.abonnement_produits.map((ap) => `${ap.produit.nom} (x${ap.quantite})`).join(", ") || "Aucun produit"}
+                </p>
+                <p className="text-lightText dark:text-darkText">
+                  <strong>Date de début :</strong> {new Date(selectedAbonnement.date_debut).toLocaleDateString()}
+                </p>
+                <p className="text-lightText dark:text-darkText">
+                  <strong>Date de fin :</strong> {selectedAbonnement.date_fin ? new Date(selectedAbonnement.date_fin).toLocaleDateString() : "N/A"}
+                </p>
+                <p className="text-lightText dark:text-darkText">
+                  <strong>Prix (FCFA) :</strong> {selectedAbonnement.prix}
+                </p>
+                <p className="text-lightText dark:text-darkText">
+                  <strong>Statut de paiement :</strong> {selectedAbonnement.paiement_statut}
+                </p>
+                <p className="text-lightText dark:text-darkText">
+                  <strong>Prochaine livraison :</strong>{" "}
+                  {selectedAbonnement.prochaine_livraison ? new Date(selectedAbonnement.prochaine_livraison).toLocaleDateString() : "N/A"}
+                </p>
+                <p className="text-lightText dark:text-darkText">
+                  <strong>Prochaine facturation :</strong>{" "}
+                  {selectedAbonnement.prochaine_facturation ? new Date(selectedAbonnement.prochaine_facturation).toLocaleDateString() : "N/A"}
+                </p>
+                <p className="text-lightText dark:text-darkText">
+                  <strong>Actif :</strong> {selectedAbonnement.is_active ? "Oui" : "Non"}
+                </p>
+              </div>
+            </ModalBody>
+            <ModalFooter>
+              <ButtonPrimary
+                onClick={closeDetailsModal}
+                className="px-4 py-2 bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText hover:bg-gray-300 dark:hover:bg-gray-600"
+              >
+                Fermer
+              </ButtonPrimary>
+            </ModalFooter>
           </ModalContainer>
         )}
       </div>
