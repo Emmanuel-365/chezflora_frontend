@@ -1,13 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
-import NavBar from '../components/NavBar';
-import Footer from '../components/Footer';
-import PageContainer from '../components/PageContainer';
-import ButtonPrimary from '../components/ButtonPrimary';
-import { ModalContainer } from '../components/ModalContainer';
-import { getService, createDevis } from '../services/api';
-import { ChevronLeft } from 'lucide-react';
-import { motion } from 'framer-motion';
+"use client";
+
+import React, { useState, useEffect } from "react";
+import { useParams, useNavigate, Link } from "react-router-dom";
+import NavBar from "../components/NavBar";
+import Footer from "../components/Footer";
+import PageContainer from "../components/PageContainer";
+import ButtonPrimary from "../components/ButtonPrimary";
+import { ModalContainer } from "../components/ModalContainer";
+import { getService, createDevis } from "../services/api";
+import { ChevronLeft } from "lucide-react";
+import { motion } from "framer-motion";
 
 interface Service {
   id: string;
@@ -24,16 +26,14 @@ interface Photo {
 
 const ServiceDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  
   const [service, setService] = useState<Service | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [devisDescription, setDevisDescription] = useState('');
-  const [prixPropose, setPrixPropose] = useState('');
+  const [devisDescription, setDevisDescription] = useState("");
+  const [prixDemande, setPrixDemande] = useState(""); // Renommé en prixDemande
   const [devisLoading, setDevisLoading] = useState(false);
   const navigate = useNavigate();
-
 
   useEffect(() => {
     const fetchService = async () => {
@@ -42,8 +42,8 @@ const ServiceDetailPage: React.FC = () => {
         setService(response.data);
         setLoading(false);
       } catch (err: any) {
-        console.error('Erreur lors du chargement du service:', err.response?.status, err.response?.data);
-        setError('Erreur lors du chargement du service.');
+        console.error("Erreur lors du chargement du service:", err.response?.status, err.response?.data);
+        setError("Erreur lors du chargement du service.");
         setLoading(false);
       }
     };
@@ -52,32 +52,37 @@ const ServiceDetailPage: React.FC = () => {
   }, [id]);
 
   const handleRequestDevis = async () => {
-    const token = localStorage.getItem('access_token');
+    const token = localStorage.getItem("access_token");
     if (!token) {
-      navigate('/auth');
+      navigate("/auth");
       return;
     }
 
     if (!devisDescription.trim()) {
-      alert('Veuillez entrer une description pour votre demande de devis.');
+      alert("Veuillez entrer une description pour votre demande de devis.");
       return;
     }
 
     setDevisLoading(true);
     try {
-      console.log('Envoi de la requête devis:', { service: id, description: devisDescription });
+      console.log("Envoi de la requête devis:", { service: id, description: devisDescription, prix_demande: prixDemande });
       await createDevis({
         service: id!,
         description: devisDescription,
-        prix_propose: prixPropose ? parseFloat(prixPropose) : null, // Envoi null si vide
+        prix_demande: prixDemande ? parseFloat(prixDemande) : null, // Utilisation de prix_demande
       });
-      alert('Devis demandé avec succès ! Vous serez contacté prochainement.');
-      setDevisDescription('');
-      setPrixPropose('');
+      alert("Devis créé avec succès ! Rendez-vous sur 'Mes devis' pour le soumettre.");
+      setDevisDescription("");
+      setPrixDemande("");
       setIsModalOpen(false);
+      // Optionnel : rediriger vers la page des devis
+      // navigate("/devis");
     } catch (err: any) {
-      console.error('Erreur lors de la demande de devis:', err.response?.status, err.response?.data);
-      alert('Erreur lors de la demande de devis : ' + (err.response?.data?.detail || JSON.stringify(err.response?.data) || 'Vérifiez votre connexion.'));
+      console.error("Erreur lors de la demande de devis:", err.response?.status, err.response?.data);
+      alert(
+        "Erreur lors de la création du devis : " +
+          (err.response?.data?.detail || JSON.stringify(err.response?.data) || "Vérifiez votre connexion.")
+      );
     } finally {
       setDevisLoading(false);
     }
@@ -88,7 +93,7 @@ const ServiceDetailPage: React.FC = () => {
   }
 
   if (error || !service) {
-    return <div className="text-center py-16 text-powder-pink">{error || 'Service non trouvé'}</div>;
+    return <div className="text-center py-16 text-powder-pink">{error || "Service non trouvé"}</div>;
   }
 
   return (
@@ -103,11 +108,13 @@ const ServiceDetailPage: React.FC = () => {
             animate={{ opacity: 1 }}
             transition={{ duration: 0.8 }}
           >
-            {service.photos[0] && <img
-              src={service.photos[0].image || '/images/service-placeholder.jpg'}
-              alt={service.nom}
-              className="w-full h-full object-cover opacity-50"
-            />}
+            {service.photos[0] && (
+              <img
+                src={service.photos[0].image || "/images/service-placeholder.jpg"}
+                alt={service.nom}
+                className="w-full h-full object-cover opacity-50"
+              />
+            )}
             <div className="absolute inset-0 bg-gradient-to-r from-soft-green/80 to-transparent" />
             <div className="absolute inset-0 flex items-center justify-center">
               <h1 className="text-5xl font-serif font-medium text-white text-center">{service.nom}</h1>
@@ -144,9 +151,9 @@ const ServiceDetailPage: React.FC = () => {
             />
             <input
               type="number"
-              value={prixPropose}
-              onChange={(e) => setPrixPropose(e.target.value)}
-              placeholder="Prix proposé (optionnel, en FCFA)"
+              value={prixDemande}
+              onChange={(e) => setPrixDemande(e.target.value)}
+              placeholder="Prix demandé (optionnel, en FCFA)"
               className="w-full p-2 border border-soft-brown/30 rounded-md focus:outline-none focus:ring-2 focus:ring-soft-green bg-white text-soft-brown"
               step="0.01"
               min="0"
@@ -156,8 +163,11 @@ const ServiceDetailPage: React.FC = () => {
               disabled={devisLoading}
               className="w-full mt-4 bg-soft-green hover:bg-soft-green/90"
             >
-              {devisLoading ? 'Envoi...' : 'Envoyer la demande'}
+              {devisLoading ? "Envoi..." : "Créer le devis"}
             </ButtonPrimary>
+            <p className="text-soft-brown/70 text-sm mt-2">
+              Votre demande sera enregistrée comme brouillon. Vous pourrez la soumettre depuis "Mes devis".
+            </p>
           </ModalContainer>
         </div>
       </PageContainer>
