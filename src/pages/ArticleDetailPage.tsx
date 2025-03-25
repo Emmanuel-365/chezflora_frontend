@@ -1,15 +1,29 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useParams, useNavigate, Link } from "react-router-dom"
 import NavBar from "../components/NavBar"
 import Footer from "../components/Footer"
 import PageContainer from "../components/PageContainer"
 import ButtonPrimary from "../components/ButtonPrimary"
 import { getArticle, createCommentaire, getUserProfile } from "../services/api"
-import { motion } from "framer-motion"
-import { Calendar, Send } from "lucide-react"
+import { motion, AnimatePresence } from "framer-motion"
+import {
+  Calendar,
+  Clock,
+  MessageCircle,
+  Send,
+  Share2,
+  ChevronLeft,
+  User,
+  ThumbsUp,
+  Reply,
+  MoreHorizontal,
+  Bookmark,
+  AlertCircle,
+  Loader2,
+} from "lucide-react"
 
 interface Commentaire {
   id: string
@@ -29,8 +43,74 @@ interface Article {
   commentaires?: Commentaire[]
 }
 
+// Fonction pour générer une couleur basée sur une chaîne
+const stringToColor = (str: string) => {
+  let hash = 0
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash)
+  }
+  let color = "#"
+  for (let i = 0; i < 3; i++) {
+    const value = (hash >> (i * 8)) & 0xff
+    color += ("00" + value.toString(16)).substr(-2)
+  }
+  return color
+}
+
+// Fonction pour obtenir les initiales d'un nom
+const getInitials = (name: string) => {
+  return name
+    .split(" ")
+    .map((part) => part.charAt(0))
+    .join("")
+    .toUpperCase()
+    .substring(0, 2)
+}
+
+// Fonction pour formater la date relative
+const formatRelativeTime = (dateString: string) => {
+  const date = new Date(dateString)
+  const now = new Date()
+  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000)
+
+  if (diffInSeconds < 60) {
+    return "à l'instant"
+  }
+
+  const diffInMinutes = Math.floor(diffInSeconds / 60)
+  if (diffInMinutes < 60) {
+    return `il y a ${diffInMinutes} minute${diffInMinutes > 1 ? "s" : ""}`
+  }
+
+  const diffInHours = Math.floor(diffInMinutes / 60)
+  if (diffInHours < 24) {
+    return `il y a ${diffInHours} heure${diffInHours > 1 ? "s" : ""}`
+  }
+
+  const diffInDays = Math.floor(diffInHours / 24)
+  if (diffInDays < 30) {
+    return `il y a ${diffInDays} jour${diffInDays > 1 ? "s" : ""}`
+  }
+
+  return date.toLocaleDateString("fr-FR", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+  })
+}
+
+// Fonction pour estimer le temps de lecture
+const estimateReadingTime = (content: string) => {
+  const wordsPerMinute = 200
+  const textOnly = content.replace(/<[^>]*>/g, "")
+  const wordCount = textOnly.split(/\s+/).length
+  const readingTime = Math.ceil(wordCount / wordsPerMinute)
+  return readingTime
+}
+
 const ArticleDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>()
+  const commentSectionRef = useRef<HTMLDivElement>(null)
 
   const [article, setArticle] = useState<Article | null>(null)
   const [commentText, setCommentText] = useState("")
@@ -38,13 +118,17 @@ const ArticleDetailPage: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [submitting, setSubmitting] = useState(false)
+  const [openReplyId, setOpenReplyId] = useState<string | null>(null)
+  const [likedComments, setLikedComments] = useState<Set<string>>(new Set())
+  const [bookmarked, setBookmarked] = useState(false)
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false)
   const navigate = useNavigate()
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const articleResponse = await getArticle(id!)
-        console.log("Article chargé:", articleResponse.data)
         setArticle(articleResponse.data)
 
         const token = localStorage.getItem("access_token")
@@ -55,7 +139,7 @@ const ArticleDetailPage: React.FC = () => {
         setLoading(false)
       } catch (err: any) {
         console.error("Erreur lors du chargement:", err.response?.status, err.response?.data)
-        setError("Erreur lors du chargement de l’article.")
+        setError("Erreur lors du chargement de l'article.")
         setLoading(false)
       }
     }
@@ -73,15 +157,24 @@ const ArticleDetailPage: React.FC = () => {
       return
     }
 
+    setSubmitting(true)
     try {
       await createCommentaire({ article: id!, texte: commentText })
       const updatedArticle = await getArticle(id!)
-      console.log("Article mis à jour après commentaire:", updatedArticle.data)
       setArticle(updatedArticle.data)
       setCommentText("")
+      setShowSuccessMessage(true)
+      setTimeout(() => setShowSuccessMessage(false), 3000)
+
+      // Scroll to the comment section
+      if (commentSectionRef.current) {
+        commentSectionRef.current.scrollIntoView({ behavior: "smooth" })
+      }
     } catch (err: any) {
-      console.error("Erreur lors de l’ajout du commentaire:", err.response?.data)
-      alert("Erreur lors de l’ajout du commentaire.")
+      console.error("Erreur lors de l'ajout du commentaire:", err.response?.data)
+      alert("Erreur lors de l'ajout du commentaire.")
+    } finally {
+      setSubmitting(false)
     }
   }
 
@@ -96,112 +189,351 @@ const ArticleDetailPage: React.FC = () => {
       return
     }
 
+    setSubmitting(true)
     try {
       await createCommentaire({ article: id!, texte: reply, parent: parentId })
       const updatedArticle = await getArticle(id!)
-      console.log("Article mis à jour après réponse:", updatedArticle.data)
       setArticle(updatedArticle.data)
       setReplyText((prev) => ({ ...prev, [parentId]: "" }))
+      setOpenReplyId(null)
+      setShowSuccessMessage(true)
+      setTimeout(() => setShowSuccessMessage(false), 3000)
     } catch (err: any) {
-      console.error("Erreur lors de l’ajout de la réponse:", err.response?.data)
-      alert("Erreur lors de l’ajout de la réponse.")
+      console.error("Erreur lors de l'ajout de la réponse:", err.response?.data)
+      alert("Erreur lors de l'ajout de la réponse.")
+    } finally {
+      setSubmitting(false)
     }
   }
 
+  const toggleLike = (commentId: string) => {
+    setLikedComments((prev) => {
+      const newSet = new Set(prev)
+      if (newSet.has(commentId)) {
+        newSet.delete(commentId)
+      } else {
+        newSet.add(commentId)
+      }
+      return newSet
+    })
+  }
+
+  const toggleBookmark = () => {
+    setBookmarked(!bookmarked)
+  }
+
+  const handleShare = () => {
+    if (navigator.share) {
+      navigator.share({
+        title: article?.titre || "Article",
+        text: "Découvrez cet article intéressant !",
+        url: window.location.href,
+      })
+    } else {
+      navigator.clipboard.writeText(window.location.href)
+      alert("Lien copié dans le presse-papiers !")
+    }
+  }
+
+  const renderCommentAvatar = (name: string) => {
+    const bgColor = stringToColor(name)
+    return (
+      <div
+        className="w-10 h-10 rounded-full flex items-center justify-center text-white font-medium"
+        style={{ backgroundColor: bgColor }}
+      >
+        {getInitials(name)}
+      </div>
+    )
+  }
+
   const renderComments = (commentaires: Commentaire[], level = 0) => (
-    <div className={`space-y-4 ${level > 0 ? "ml-8" : ""}`}>
+    <div className={`space-y-6 ${level > 0 ? "pl-6 md:pl-12 border-l-2 border-emerald-100" : ""}`}>
       {commentaires.map((comment) => (
-        <div key={comment.id} className="bg-white p-4 rounded-lg shadow-md">
-          <p className="text-soft-brown/90">{comment.texte}</p>
-          <p className="text-soft-brown/70 text-sm mt-2">
-            Par {comment.client} - {new Date(comment.date).toLocaleString("fr-FR")}
-          </p>
-          {isAuthenticated && (
-            <div className="mt-2">
-              <textarea
-                value={replyText[comment.id] || ""}
-                onChange={(e) => setReplyText((prev) => ({ ...prev, [comment.id]: e.target.value }))}
-                placeholder="Répondre..."
-                className="w-full p-2 border border-soft-brown/30 rounded-md focus:outline-none focus:ring-2 focus:ring-soft-green"
-              />
-              <ButtonPrimary
-                onClick={() => handleReplySubmit(comment.id)}
-                className="mt-2 bg-soft-green hover:bg-soft-green/90"
-              >
-                <Send className="h-4 w-4 mr-2" /> Répondre
-              </ButtonPrimary>
+        <div key={comment.id} className="relative">
+          <div className="flex items-start gap-4">
+            {renderCommentAvatar(comment.client)}
+            <div className="flex-1 bg-white rounded-lg shadow-sm p-4 hover:shadow-md transition-shadow">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h4 className="font-medium text-gray-800">{comment.client}</h4>
+                  <p className="text-gray-500 text-xs">{formatRelativeTime(comment.date)}</p>
+                </div>
+                <button className="text-gray-400 hover:text-gray-600">
+                  <MoreHorizontal size={16} />
+                </button>
+              </div>
+              <p className="mt-2 text-gray-700">{comment.texte}</p>
+              <div className="mt-3 flex items-center gap-4">
+                <button
+                  onClick={() => isAuthenticated && toggleLike(comment.id)}
+                  className={`flex items-center gap-1 text-xs ${likedComments.has(comment.id) ? "text-emerald-600" : "text-gray-500"} hover:text-emerald-600 transition-colors`}
+                >
+                  <ThumbsUp size={14} />
+                  <span>{likedComments.has(comment.id) ? "Aimé" : "J'aime"}</span>
+                </button>
+                <button
+                  onClick={() => isAuthenticated && setOpenReplyId(openReplyId === comment.id ? null : comment.id)}
+                  className="flex items-center gap-1 text-xs text-gray-500 hover:text-emerald-600 transition-colors"
+                >
+                  <Reply size={14} />
+                  <span>Répondre</span>
+                </button>
+              </div>
             </div>
-          )}
-          {comment.reponses.length > 0 && renderComments(comment.reponses, level + 1)}
+          </div>
+
+          <AnimatePresence>
+            {openReplyId === comment.id && isAuthenticated && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                className="ml-14 mt-3"
+              >
+                <div className="bg-gray-50 rounded-lg p-3">
+                  <textarea
+                    value={replyText[comment.id] || ""}
+                    onChange={(e) => setReplyText((prev) => ({ ...prev, [comment.id]: e.target.value }))}
+                    placeholder="Écrire une réponse..."
+                    className="w-full p-3 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white text-gray-700 text-sm"
+                    rows={3}
+                  />
+                  <div className="flex justify-end gap-2 mt-2">
+                    <button
+                      onClick={() => setOpenReplyId(null)}
+                      className="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-800 rounded-md"
+                    >
+                      Annuler
+                    </button>
+                    <button
+                      onClick={() => handleReplySubmit(comment.id)}
+                      disabled={submitting}
+                      className="px-3 py-1.5 bg-emerald-600 text-white text-sm rounded-md hover:bg-emerald-700 transition-colors flex items-center gap-1"
+                    >
+                      {submitting ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+                      <span>Répondre</span>
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {comment.reponses.length > 0 && <div className="mt-4">{renderComments(comment.reponses, level + 1)}</div>}
         </div>
       ))}
     </div>
   )
 
   if (loading) {
-    return <div className="text-center py-16">Chargement...</div>
+    return (
+      <>
+        <NavBar />
+        <PageContainer>
+          <div className="max-w-4xl mx-auto py-20 px-4 sm:px-6 lg:px-8 flex flex-col items-center justify-center">
+            <Loader2 size={40} className="text-emerald-600 animate-spin mb-4" />
+            <p className="text-gray-600">Chargement de l'article...</p>
+          </div>
+        </PageContainer>
+        <Footer />
+      </>
+    )
   }
 
   if (error || !article) {
-    return <div className="text-center py-16 text-powder-pink">{error || "Article non trouvé"}</div>
+    return (
+      <>
+        <NavBar />
+        <PageContainer>
+          <div className="max-w-4xl mx-auto py-20 px-4 sm:px-6 lg:px-8 text-center">
+            <div className="bg-red-50 p-6 rounded-lg inline-flex flex-col items-center">
+              <AlertCircle size={40} className="text-red-500 mb-4" />
+              <h2 className="text-xl font-medium text-gray-800 mb-2">Oups !</h2>
+              <p className="text-gray-600 mb-4">{error || "Article non trouvé"}</p>
+              <Link to="/articles">
+                <ButtonPrimary className="bg-emerald-600 hover:bg-emerald-700">Retour aux articles</ButtonPrimary>
+              </Link>
+            </div>
+          </div>
+        </PageContainer>
+        <Footer />
+      </>
+    )
   }
+
+  const readingTime = estimateReadingTime(article.contenu)
 
   return (
     <>
       <NavBar />
-      <PageContainer>
-        <div className="max-w-4xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-            <h1 className="text-3xl font-serif font-medium text-soft-brown mb-4">{article.titre}</h1>
-            <p className="text-soft-brown/70 text-sm mb-4 flex items-center">
-              <Calendar className="h-4 w-4 mr-1" />
-              {new Date(article.date_publication).toLocaleDateString("fr-FR", {
-                day: "2-digit",
-                month: "long",
-                year: "numeric",
-              })}
-              <span className="ml-2">par {article.auteur || "Anonyme"}</span>
-            </p>
-            {article.cover && (
-              <img
-                src={article.cover || "/placeholder.svg"}
-                alt={article.titre}
-                className="w-full h-64 object-cover rounded-lg mb-6"
-              />
-            )}
-            {/* Affichage corrigé du contenu avec rendu HTML */}
-            <div
-              className="text-soft-brown/90 leading-relaxed mb-8 prose prose-sm sm:prose lg:prose-lg"
-              dangerouslySetInnerHTML={{ __html: article.contenu }}
-            />
 
-            <h2 className="text-2xl font-medium text-soft-brown mb-4">Commentaires</h2>
-            {isAuthenticated ? (
-              <div className="mb-6">
-                <textarea
-                  value={commentText}
-                  onChange={(e) => setCommentText(e.target.value)}
-                  placeholder="Ajouter un commentaire..."
-                  className="w-full p-2 border border-soft-brown/30 rounded-md focus:outline-none focus:ring-2 focus:ring-soft-green h-24"
-                />
-                <ButtonPrimary onClick={handleCommentSubmit} className="mt-2 bg-soft-green hover:bg-soft-green/90">
-                  <Send className="h-4 w-4 mr-2" /> Publier
-                </ButtonPrimary>
-              </div>
-            ) : (
-              <p className="text-soft-brown/70 mb-6">
-                <Link to="/auth" className="text-soft-green underline">
-                  Connectez-vous
-                </Link>{" "}
-                pour commenter.
-              </p>
-            )}
-            {article.commentaires && article.commentaires.length > 0 ? (
-              renderComments(article.commentaires)
-            ) : (
-              <p className="text-soft-brown/70">Aucun commentaire pour le moment.</p>
-            )}
+      {/* Notification de succès */}
+      <AnimatePresence>
+        {showSuccessMessage && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 bg-emerald-100 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-lg shadow-md flex items-center"
+          >
+            <ThumbsUp className="w-5 h-5 mr-2 text-emerald-600" />
+            <span>Votre message a été publié avec succès !</span>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Hero section */}
+      <div className="bg-emerald-600 text-white">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
+          <div className="max-w-3xl">
+            <Link
+              to="/articles"
+              className="inline-flex items-center text-emerald-100 hover:text-white mb-6 transition-colors"
+            >
+              <ChevronLeft size={16} className="mr-1" />
+              <span>Retour aux articles</span>
+            </Link>
+            <h1 className="text-3xl md:text-4xl font-serif font-medium mb-4">{article.titre}</h1>
+            <div className="flex flex-wrap items-center gap-4 text-emerald-100">
+              <div className="flex items-center">
+                <Calendar size={16} className="mr-1.5" />
+                <span>
+                  {new Date(article.date_publication).toLocaleDateString("fr-FR", {
+                    day: "2-digit",
+                    month: "long",
+                    year: "numeric",
+                  })}
+                </span>
+              </div>
+              <div className="flex items-center">
+                <User size={16} className="mr-1.5" />
+                <span>{article.auteur || "Anonyme"}</span>
+              </div>
+              <div className="flex items-center">
+                <Clock size={16} className="mr-1.5" />
+                <span>{readingTime} min de lecture</span>
+              </div>
+              <div className="flex items-center">
+                <MessageCircle size={16} className="mr-1.5" />
+                <span>
+                  {article.commentaires?.length || 0} commentaire{(article.commentaires?.length || 0) > 1 ? "s" : ""}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <PageContainer>
+        <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col md:flex-row gap-8">
+            {/* Article content */}
+            <div className="md:flex-1">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+                className="bg-white rounded-xl shadow-sm overflow-hidden"
+              >
+                {article.cover && (
+                  <div className="aspect-w-16 aspect-h-9">
+                    <img
+                      src={article.cover || "/placeholder.svg"}
+                      alt={article.titre}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
+
+                <div className="p-6 md:p-8">
+                  {/* Article content */}
+                  <div
+                    className="prose prose-emerald prose-lg max-w-none"
+                    dangerouslySetInnerHTML={{ __html: article.contenu }}
+                  />
+
+                  {/* Article actions */}
+                  <div className="mt-8 pt-6 border-t border-gray-100 flex justify-between items-center">
+                    <div className="flex gap-4">
+                      <button
+                        onClick={handleShare}
+                        className="flex items-center gap-1.5 text-gray-600 hover:text-emerald-600 transition-colors"
+                      >
+                        <Share2 size={18} />
+                        <span>Partager</span>
+                      </button>
+                      <button
+                        onClick={toggleBookmark}
+                        className={`flex items-center gap-1.5 ${bookmarked ? "text-emerald-600" : "text-gray-600 hover:text-emerald-600"} transition-colors`}
+                      >
+                        <Bookmark size={18} className={bookmarked ? "fill-emerald-600" : ""} />
+                        <span>{bookmarked ? "Enregistré" : "Enregistrer"}</span>
+                      </button>
+                    </div>
+                    <Link to="/articles" className="text-emerald-600 hover:text-emerald-700 transition-colors">
+                      Plus d'articles
+                    </Link>
+                  </div>
+                </div>
+              </motion.div>
+
+              {/* Comments section */}
+              <div ref={commentSectionRef} className="mt-12">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl font-serif font-medium text-gray-800">
+                    Commentaires ({article.commentaires?.length || 0})
+                  </h2>
+                </div>
+
+                {/* Add comment form */}
+                {isAuthenticated ? (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="bg-white rounded-xl shadow-sm p-6 mb-8"
+                  >
+                    <h3 className="text-lg font-medium text-gray-800 mb-4">Ajouter un commentaire</h3>
+                    <textarea
+                      value={commentText}
+                      onChange={(e) => setCommentText(e.target.value)}
+                      placeholder="Partagez votre avis sur cet article..."
+                      className="w-full p-4 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-gray-50 text-gray-700"
+                      rows={4}
+                    />
+                    <div className="mt-4 flex justify-end">
+                      <ButtonPrimary
+                        onClick={handleCommentSubmit}
+                        disabled={submitting}
+                        className="bg-emerald-600 hover:bg-emerald-700 transition-colors flex items-center gap-2"
+                      >
+                        {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
+                        Publier
+                      </ButtonPrimary>
+                    </div>
+                  </motion.div>
+                ) : (
+                  <div className="bg-gray-50 border border-gray-200 rounded-xl p-6 mb-8 text-center">
+                    <p className="text-gray-600 mb-4">Connectez-vous pour participer à la discussion</p>
+                    <Link to="/auth">
+                      <ButtonPrimary className="bg-emerald-600 hover:bg-emerald-700">Se connecter</ButtonPrimary>
+                    </Link>
+                  </div>
+                )}
+
+                {/* Comments list */}
+                {article.commentaires && article.commentaires.length > 0 ? (
+                  renderComments(article.commentaires)
+                ) : (
+                  <div className="bg-gray-50 rounded-xl p-8 text-center">
+                    <MessageCircle size={40} className="text-gray-300 mx-auto mb-4" />
+                    <p className="text-gray-500 mb-2">Aucun commentaire pour le moment</p>
+                    <p className="text-gray-400 text-sm">Soyez le premier à partager votre avis !</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
       </PageContainer>
       <Footer />
@@ -209,5 +541,4 @@ const ArticleDetailPage: React.FC = () => {
   )
 }
 
-export default ArticleDetailPage
-
+export default ArticleDetailPage;
