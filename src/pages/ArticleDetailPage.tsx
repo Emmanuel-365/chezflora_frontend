@@ -271,7 +271,7 @@ const ArticleDetailPage: React.FC = () => {
   }
 
   const renderComments = (commentaires: Commentaire[], level = 0) => (
-    <div className={`space-y-6 ${level > 0 ? "pl-6 md:pl-12 border-l-2 border-emerald-100 max-pl-24" : ""}`}>
+    <div className={`space-y-6 ${level > 0 ? "pl-6 md:pl-12 border-l-2 border-emerald-100 max-w-4xl" : ""}`}>
       {commentaires.map((comment) => {
         const isExpanded = expandedComments.has(comment.id)
         const hasReplies = comment.reponses.length > 0
