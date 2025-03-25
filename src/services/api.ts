@@ -97,7 +97,9 @@ api.interceptors.response.use(
 
 // Fonctions exportées avec typage
 import { TokenResponse, User } from '../types/types';
-
+export const postRequest = async (url: string, data: any) => {
+  return await api.post(url, data);
+};
 export const login = (data: { username: string; password: string }) =>
   api.post<TokenResponse>('/token/', data);
 export const register = (data: { username: string; email: string; password: string }) =>

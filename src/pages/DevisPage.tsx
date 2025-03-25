@@ -1,9 +1,8 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { useState, useEffect } from "react"
-import { useNavigate, Link } from "react-router-dom"
-import { motion, AnimatePresence } from "framer-motion"
+import React, { useState, useEffect } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   FileText,
   Clock,
@@ -14,99 +13,179 @@ import {
   Loader2,
   AlertCircle,
   ArrowLeft,
-} from "lucide-react"
-import NavBar from "../components/NavBar"
-import Footer from "../components/Footer"
-import PageContainer from "../components/PageContainer"
-import ButtonPrimary from "../components/ButtonPrimary"
-import { getDevis } from "../services/api"
+  Check,
+  X,
+} from "lucide-react";
+import NavBar from "../components/NavBar";
+import Footer from "../components/Footer";
+import PageContainer from "../components/PageContainer";
+import ButtonPrimary from "../components/ButtonPrimary";
+import { getDevis, postRequest } from "../services/api"; // Assurez-vous que postRequest existe pour les actions POST
 
 interface Devis {
-  id: string
-  service: { id: string; nom: string }
-  description: string
-  prix_propose: string | null
-  statut: "en_attente" | "accepte" | "refuse"
-  date_demande: string
+  id: string;
+  service: { id: string; nom: string };
+  description: string;
+  date_creation: string;
+  date_soumission: string | null;
+  date_expiration: string | null;
+  statut: "brouillon" | "soumis" | "en_cours" | "accepte" | "refuse" | "expire";
+  prix_demande: string | null;
+  prix_propose: string | null;
+  commentaire_admin: string | null;
 }
 
 const DevisPage: React.FC = () => {
-  const [devisList, setDevisList] = useState<Devis[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [activeFilter, setActiveFilter] = useState<"tous" | "en_attente" | "accepte" | "refuse">("tous")
-  const navigate = useNavigate()
+  const [devisList, setDevisList] = useState<Devis[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [activeFilter, setActiveFilter] = useState<
+    "tous" | "brouillon" | "soumis" | "en_cours" | "accepte" | "refuse" | "expire"
+  >("tous");
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchDevis = async () => {
-      const token = localStorage.getItem("access_token")
+      const token = localStorage.getItem("access_token");
       if (!token) {
-        navigate("/auth")
-        return
+        navigate("/auth");
+        return;
       }
 
       try {
-        setLoading(true)
-        const response = await getDevis()
-        console.log("Réponse getDevis:", response.data)
-        setDevisList(response.data)
-        setError(null)
+        setLoading(true);
+        const response = await getDevis();
+        setDevisList(response.data || []);
+        setError(null);
       } catch (err: any) {
-        console.error("Erreur lors du chargement des devis:", err.response?.status, err.response?.data)
-        setError("Erreur lors du chargement des devis.")
+        console.error("Erreur lors du chargement des devis:", err.response?.status, err.response?.data);
+        setError("Erreur lors du chargement des devis.");
         if (err.response?.status === 401) {
-          localStorage.removeItem("access_token")
-          navigate("/auth")
+          localStorage.removeItem("access_token");
+          navigate("/auth");
         }
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
+    };
 
-    fetchDevis()
-  }, [navigate])
+    fetchDevis();
+  }, [navigate]);
 
-  const filteredDevis = activeFilter === "tous" ? devisList : devisList.filter((devis) => devis.statut === activeFilter)
+  const filteredDevis =
+    activeFilter === "tous" ? devisList : devisList.filter((devis) => devis.statut === activeFilter);
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case "accepte":
-        return "bg-emerald-100 text-emerald-800"
+        return "bg-emerald-100 text-emerald-800";
       case "refuse":
-        return "bg-red-100 text-red-800"
+        return "bg-red-100 text-red-800";
+      case "expire":
+        return "bg-gray-100 text-gray-800";
+      case "brouillon":
+        return "bg-gray-200 text-gray-700";
+      case "soumis":
+        return "bg-yellow-100 text-yellow-800";
+      case "en_cours":
+        return "bg-blue-100 text-blue-800";
       default:
-        return "bg-amber-100 text-amber-800"
+        return "bg-amber-100 text-amber-800";
     }
-  }
+  };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
       case "accepte":
-        return <CheckCircle className="w-4 h-4" />
+        return <CheckCircle className="w-4 h-4" />;
       case "refuse":
-        return <XCircle className="w-4 h-4" />
+        return <XCircle className="w-4 h-4" />;
+      case "expire":
+        return <Clock className="w-4 h-4" />;
       default:
-        return <Clock className="w-4 h-4" />
+        return <Clock className="w-4 h-4" />;
     }
-  }
+  };
 
   const getStatusText = (status: string) => {
     switch (status) {
+      case "brouillon":
+        return "Brouillon";
+      case "soumis":
+        return "Soumis";
+      case "en_cours":
+        return "En cours";
       case "accepte":
-        return "Accepté"
+        return "Accepté";
       case "refuse":
-        return "Refusé"
+        return "Refusé";
+      case "expire":
+        return "Expiré";
       default:
-        return "En attente"
+        return status;
     }
-  }
+  };
+
+  const handleSoumettre = async (devisId: string) => {
+    try {
+      await postRequest(`/devis/${devisId}/soumettre/`, {});
+      setSuccess("Devis soumis avec succès !");
+      setTimeout(() => {
+        setSuccess(null);
+        fetchDevis();
+      }, 1500);
+    } catch (err: any) {
+      setError("Erreur lors de la soumission du devis.");
+    }
+  };
+
+  const handleAccepter = async (devisId: string) => {
+    try {
+      await postRequest(`/devis/${devisId}/accepter/`, {});
+      setSuccess("Devis accepté avec succès !");
+      setTimeout(() => {
+        setSuccess(null);
+        fetchDevis();
+      }, 1500);
+    } catch (err: any) {
+      setError("Erreur lors de l’acceptation du devis.");
+    }
+  };
+
+  const handleRefuser = async (devisId: string) => {
+    try {
+      await postRequest(`/devis/${devisId}/refuser/`, {});
+      setSuccess("Devis refusé avec succès !");
+      setTimeout(() => {
+        setSuccess(null);
+        fetchDevis();
+      }, 1500);
+    } catch (err: any) {
+      setError("Erreur lors du refus du devis.");
+    }
+  };
+
+  const fetchDevis = async () => {
+    const token = localStorage.getItem("access_token");
+    if (!token) {
+      navigate("/auth");
+      return;
+    }
+    try {
+      const response = await getDevis();
+      setDevisList(response.data || []);
+    } catch (err: any) {
+      setError("Erreur lors du rechargement des devis.");
+    }
+  };
 
   const renderLoadingState = () => (
     <div className="flex flex-col items-center justify-center py-20">
       <Loader2 className="h-12 w-12 text-emerald-500 animate-spin mb-4" />
       <p className="text-gray-600">Chargement de vos devis...</p>
     </div>
-  )
+  );
 
   const renderErrorState = () => (
     <div className="flex items-center justify-center py-20">
@@ -132,7 +211,7 @@ const DevisPage: React.FC = () => {
         </div>
       </div>
     </div>
-  )
+  );
 
   const renderEmptyState = () => (
     <div className="bg-white rounded-xl shadow-md p-8 text-center max-w-2xl mx-auto">
@@ -141,7 +220,7 @@ const DevisPage: React.FC = () => {
       </div>
       <h2 className="text-2xl font-medium text-gray-800 mb-3">Aucun devis pour le moment</h2>
       <p className="text-gray-600 mb-6">
-        Vous n'avez pas encore de devis. Découvrez nos services et demandez un devis personnalisé.
+        Vous n’avez pas encore de devis. Découvrez nos services et demandez un devis personnalisé.
       </p>
       <Link to="/services">
         <ButtonPrimary className="bg-emerald-600 hover:bg-emerald-500 transition-colors">
@@ -149,7 +228,7 @@ const DevisPage: React.FC = () => {
         </ButtonPrimary>
       </Link>
     </div>
-  )
+  );
 
   return (
     <>
@@ -161,7 +240,7 @@ const DevisPage: React.FC = () => {
             <div className="flex flex-col md:flex-row justify-between items-center">
               <div>
                 <h1 className="text-3xl md:text-4xl font-serif font-medium mb-2">Mes devis</h1>
-                <p className="text-emerald-100">Suivez l'état de vos demandes de devis et consultez les propositions</p>
+                <p className="text-emerald-100">Suivez l’état de vos demandes de devis et consultez les propositions</p>
               </div>
               <Link
                 to="/services"
@@ -186,48 +265,37 @@ const DevisPage: React.FC = () => {
               {/* Filtres */}
               <div className="bg-white rounded-xl shadow-md p-4 mb-6">
                 <div className="flex flex-wrap gap-2">
-                  <button
-                    onClick={() => setActiveFilter("tous")}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      activeFilter === "tous"
-                        ? "bg-emerald-600 text-white"
-                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                    }`}
-                  >
-                    Tous les devis
-                  </button>
-                  <button
-                    onClick={() => setActiveFilter("en_attente")}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      activeFilter === "en_attente"
-                        ? "bg-amber-600 text-white"
-                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                    }`}
-                  >
-                    En attente
-                  </button>
-                  <button
-                    onClick={() => setActiveFilter("accepte")}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      activeFilter === "accepte"
-                        ? "bg-emerald-600 text-white"
-                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                    }`}
-                  >
-                    Acceptés
-                  </button>
-                  <button
-                    onClick={() => setActiveFilter("refuse")}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      activeFilter === "refuse"
-                        ? "bg-red-600 text-white"
-                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                    }`}
-                  >
-                    Refusés
-                  </button>
+                  {[
+                    { value: "tous", label: "Tous les devis", color: "bg-emerald-600" },
+                    { value: "brouillon", label: "Brouillons", color: "bg-gray-500" },
+                    { value: "soumis", label: "Soumis", color: "bg-yellow-600" },
+                    { value: "en_cours", label: "En cours", color: "bg-blue-600" },
+                    { value: "accepte", label: "Acceptés", color: "bg-emerald-600" },
+                    { value: "refuse", label: "Refusés", color: "bg-red-600" },
+                    { value: "expire", label: "Expirés", color: "bg-gray-600" },
+                  ].map((filter) => (
+                    <button
+                      key={filter.value}
+                      onClick={() => setActiveFilter(filter.value as any)}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        activeFilter === filter.value
+                          ? `${filter.color} text-white`
+                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                      }`}
+                    >
+                      {filter.label}
+                    </button>
+                  ))}
                 </div>
               </div>
+
+              {/* Messages de succès */}
+              {success && (
+                <div className="mb-4 p-4 bg-green-100 text-green-800 rounded-lg flex items-center">
+                  <Check className="w-5 h-5 mr-2" />
+                  {success}
+                </div>
+              )}
 
               {/* Liste des devis */}
               <div className="space-y-6">
@@ -264,7 +332,22 @@ const DevisPage: React.FC = () => {
                             <p className="text-gray-600">{devis.description}</p>
                           </div>
 
+                          {devis.commentaire_admin && (
+                            <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                              <h3 className="text-sm font-medium text-gray-700 mb-2">Commentaire de l’administrateur</h3>
+                              <p className="text-gray-600">{devis.commentaire_admin}</p>
+                            </div>
+                          )}
+
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div className="bg-gray-50 rounded-lg p-4">
+                              <h3 className="text-sm font-medium text-gray-700 mb-1">Prix demandé</h3>
+                              <p className="text-xl font-bold text-emerald-600">
+                                {devis.prix_demande
+                                  ? `${Number(devis.prix_demande).toLocaleString("fr-FR")} FCFA`
+                                  : "Non spécifié"}
+                              </p>
+                            </div>
                             <div className="bg-gray-50 rounded-lg p-4">
                               <h3 className="text-sm font-medium text-gray-700 mb-1">Prix proposé</h3>
                               <p className="text-xl font-bold text-emerald-600">
@@ -274,11 +357,11 @@ const DevisPage: React.FC = () => {
                               </p>
                             </div>
                             <div className="bg-gray-50 rounded-lg p-4">
-                              <h3 className="text-sm font-medium text-gray-700 mb-1">Date de demande</h3>
+                              <h3 className="text-sm font-medium text-gray-700 mb-1">Date de création</h3>
                               <div className="flex items-center">
                                 <Calendar className="w-4 h-4 text-gray-500 mr-2" />
                                 <p className="text-gray-800">
-                                  {new Date(devis.date_demande).toLocaleDateString("fr-FR", {
+                                  {new Date(devis.date_creation).toLocaleDateString("fr-FR", {
                                     day: "2-digit",
                                     month: "long",
                                     year: "numeric",
@@ -286,10 +369,53 @@ const DevisPage: React.FC = () => {
                                 </p>
                               </div>
                             </div>
+                            <div className="bg-gray-50 rounded-lg p-4">
+                              <h3 className="text-sm font-medium text-gray-700 mb-1">
+                                {devis.statut === "brouillon" ? "Date de soumission" : "Date d’expiration"}
+                              </h3>
+                              <div className="flex items-center">
+                                <Calendar className="w-4 h-4 text-gray-500 mr-2" />
+                                <p className="text-gray-800">
+                                  {devis.statut === "brouillon"
+                                    ? "Non soumis"
+                                    : devis.date_expiration
+                                    ? new Date(devis.date_expiration).toLocaleDateString("fr-FR", {
+                                        day: "2-digit",
+                                        month: "long",
+                                        year: "numeric",
+                                      })
+                                    : "N/A"}
+                                </p>
+                              </div>
+                            </div>
                           </div>
 
-                          {devis.statut === "accepte" && (
-                            <div className="mt-4">
+                          <div className="mt-4 flex gap-4">
+                            {devis.statut === "brouillon" && (
+                              <ButtonPrimary
+                                onClick={() => handleSoumettre(devis.id)}
+                                className="bg-emerald-600 hover:bg-emerald-500 transition-colors"
+                              >
+                                Soumettre
+                              </ButtonPrimary>
+                            )}
+                            {devis.statut === "en_cours" && (
+                              <>
+                                <ButtonPrimary
+                                  onClick={() => handleAccepter(devis.id)}
+                                  className="bg-emerald-600 hover:bg-emerald-500 transition-colors flex items-center"
+                                >
+                                  <Check className="w-4 h-4 mr-1" /> Accepter
+                                </ButtonPrimary>
+                                <ButtonPrimary
+                                  onClick={() => handleRefuser(devis.id)}
+                                  className="bg-red-600 hover:bg-red-500 transition-colors flex items-center"
+                                >
+                                  <X className="w-4 h-4 mr-1" /> Refuser
+                                </ButtonPrimary>
+                              </>
+                            )}
+                            {devis.statut === "accepte" && (
                               <Link
                                 to={`/services/${devis.service.id}`}
                                 className="inline-flex items-center text-emerald-600 hover:text-emerald-700 transition-colors"
@@ -297,8 +423,8 @@ const DevisPage: React.FC = () => {
                                 Voir le service
                                 <ChevronRight className="w-4 h-4 ml-1" />
                               </Link>
-                            </div>
-                          )}
+                            )}
+                          </div>
                         </div>
                       </motion.div>
                     ))
@@ -319,8 +445,7 @@ const DevisPage: React.FC = () => {
       </PageContainer>
       <Footer />
     </>
-  )
-}
+  );
+};
 
-export default DevisPage
-
+export default DevisPage;
