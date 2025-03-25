@@ -481,7 +481,7 @@ const OrdersPage: React.FC = () => {
                                       <div className="flex items-center">
                                         <CreditCard className="w-4 h-4 text-gray-400 mr-1" />
                                         <span className="text-gray-800">
-                                          {getPaymentMethodName(order.paiement.type_transaction)}
+                                          {getPaymentMethodName(order.paiement?.type_transaction)}
                                         </span>
                                       </div>
                                     </div>
