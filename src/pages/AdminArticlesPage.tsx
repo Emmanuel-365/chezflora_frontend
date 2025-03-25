@@ -6,8 +6,8 @@ import AdminLayout from "../components/AdminLayout";
 import ButtonPrimary from "../components/ButtonPrimary";
 import { FileText, Search, Edit, Trash2, PlusCircle, ChevronLeft, ChevronRight } from "lucide-react";
 import { ModalContainer, ModalBody, ModalFooter } from "../components/ModalContainer";
-import ReactQuill from "react-quill";
-import "react-quill/dist/quill.snow.css";
+import ReactQuill from "react-quill-new"; // Utilisation de react-quill-new
+import "react-quill-new/dist/quill.snow.css"; // Chemin mis à jour pour les styles
 
 interface Article {
   id: string;
@@ -42,7 +42,6 @@ const AdminArticlesPage: React.FC = () => {
   const [editArticle, setEditArticle] = useState({ titre: "", contenu: "", cover: null as File | null, is_active: true });
   const articlesPerPage = 10;
 
-  // Typage correct des références pour React Quill
   const quillRefAdd = useRef<ReactQuill>(null);
   const quillRefEdit = useRef<ReactQuill>(null);
 
@@ -156,7 +155,6 @@ const AdminArticlesPage: React.FC = () => {
     }
   };
 
-  // Configuration de la barre d'outils React Quill
   const toolbarOptions = [
     [{ header: [1, 2, 3, false] }],
     ["bold", "italic", "underline"],
@@ -165,7 +163,6 @@ const AdminArticlesPage: React.FC = () => {
     ["clean"],
   ];
 
-  // Gestion de l'upload d'images avec vérification de la sélection
   const imageHandler = (quillRef: React.MutableRefObject<ReactQuill | null>) => {
     const input = document.createElement("input");
     input.setAttribute("type", "file");
@@ -181,11 +178,11 @@ const AdminArticlesPage: React.FC = () => {
             headers: { "Content-Type": "multipart/form-data" },
           });
           const quill = quillRef.current.getEditor();
-          const range = quill.getSelection(true); // Forcer la récupération de la sélection
+          const range = quill.getSelection(true);
           if (range) {
             quill.insertEmbed(range.index, "image", response.data.url);
           } else {
-            quill.insertEmbed(quill.getLength(), "image", response.data.url); // Insérer à la fin si pas de sélection
+            quill.insertEmbed(quill.getLength(), "image", response.data.url);
           }
         } catch (err) {
           console.error("Erreur lors de l'upload de l'image:", err);
