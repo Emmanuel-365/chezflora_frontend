@@ -316,7 +316,7 @@ const DevisPage: React.FC = () => {
                               <h2 className="text-xl font-medium text-gray-800 mb-1">{devis.service.nom}</h2>
                               <div className="flex items-center text-sm text-gray-500">
                                 <FileText className="w-4 h-4 mr-1" />
-                                <span>Devis #{devis.id.substring(0, 8)}</span>
+                                <span>Devis #{devis.id}</span>
                               </div>
                             </div>
                             <div
