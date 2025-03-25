@@ -65,9 +65,9 @@ const ServiceDetailPage: React.FC = () => {
 
     setDevisLoading(true);
     try {
-      console.log("Envoi de la requête devis:", { service: id, description: devisDescription, prix_demande: prixDemande });
+      console.log("Envoi de la requête devis:", { service_id: id, description: devisDescription, prix_demande: prixDemande });
       await createDevis({
-        service: id!,
+        service_id: id!,
         description: devisDescription,
         prix_demande: prixDemande ? parseFloat(prixDemande) : null, // Utilisation de prix_demande
       });

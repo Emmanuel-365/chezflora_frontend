@@ -146,7 +146,7 @@ export const createAddress = (data: {
   code_postal: string;
   pays: string;
 }) => api.post('/adresses/', data);
-export const createDevis = (data: { service: string; description: string; prix_demande: number | null }) =>
+export const createDevis = (data: { service_id: string; description: string; prix_demande: number | null }) =>
   api.post('/devis/', data);
 export const getDevis = () => api.get('/devis');
 export const getAbonnements = () => api.get('/abonnements/');
