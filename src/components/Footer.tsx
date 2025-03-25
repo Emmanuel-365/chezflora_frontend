@@ -225,7 +225,7 @@ const Footer = () => {
                       href="tel:+33123456789"
                       className="text-sm text-gray-600 hover:text-emerald-600 transition-colors"
                     >
-                      +33 1 23 45 67 89
+                      +237 612 345 678
                     </a>
                   </div>
                 </div>
@@ -250,7 +250,7 @@ const Footer = () => {
                     <p className="text-sm text-gray-600">
                       123 Avenue des Fleurs
                       <br />
-                      99322 Yaoundé, France
+                      99322 Yaoundé, Cameroun
                     </p>
                   </div>
                 </div>

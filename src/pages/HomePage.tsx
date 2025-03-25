@@ -980,7 +980,7 @@ export default function HomePage() {
                   <h3 className="text-lg font-medium text-soft-brown mb-2">Appelez-nous</h3>
                   <p className="text-soft-brown/70 mb-4">Nous sommes disponibles du lundi au samedi de 9h à 19h</p>
                   <a href="tel:+33123456789" className="text-soft-green font-medium text-lg hover:underline">
-                    +33 1 23 45 67 89
+                    +237 612 345 678
                   </a>
                 </motion.div>
 
@@ -1017,7 +1017,7 @@ export default function HomePage() {
                   <p className="text-soft-green font-medium">
                     123 Avenue des Fleurs
                     <br />
-                    99322 Yaoundé, France
+                    99322 Yaoundé, Cameroun
                   </p>
                 </motion.div>
               </div>

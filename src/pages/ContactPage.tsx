@@ -181,7 +181,7 @@ const ContactPage = () => {
                           href="tel:+33123456789"
                           className="text-soft-brown/70 hover:text-soft-green transition-colors duration-300"
                         >
-                          +33 1 23 45 67 89
+                          +237 612 345 678
                         </a>
                       </div>
                     </motion.div>
@@ -197,7 +197,7 @@ const ContactPage = () => {
                         <p className="text-soft-brown/70">
                           123 Avenue des Fleurs
                           <br />
-                          99322 Yaoundé, France
+                          99322 Yaoundé, Cameroun
                         </p>
                       </div>
                     </motion.div>
