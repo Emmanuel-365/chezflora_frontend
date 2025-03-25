@@ -32,6 +32,9 @@ export default {
         serif: ['Lora', 'serif'],
         sans: ['Roboto', 'sans-serif'],
       },
+      padding: {
+       'max-24': '6rem',
+      },
     },
   },
   plugins: [],
