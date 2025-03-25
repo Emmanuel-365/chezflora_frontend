@@ -123,6 +123,7 @@ const ArticleDetailPage: React.FC = () => {
   const [likedComments, setLikedComments] = useState<Set<string>>(new Set())
   const [bookmarked, setBookmarked] = useState(false)
   const [showSuccessMessage, setShowSuccessMessage] = useState(false)
+  const [expandedComments, setExpandedComments] = useState<Set<string>>(new Set())
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -135,6 +136,7 @@ const ArticleDetailPage: React.FC = () => {
         if (token) {
           await getUserProfile()
           setIsAuthenticated(true)
+          console.log(expandedComments);
         }
         setLoading(false)
       } catch (err: any) {
@@ -176,6 +178,19 @@ const ArticleDetailPage: React.FC = () => {
     } finally {
       setSubmitting(false)
     }
+  }
+
+  // Fonction pour toggle l'état d'expansion d'un commentaire
+  const toggleCommentExpand = (commentId: string) => {
+    setExpandedComments((prev) => {
+      const newSet = new Set(prev)
+      if (newSet.has(commentId)) {
+        newSet.delete(commentId)
+      } else {
+        newSet.add(commentId)
+      }
+      return newSet
+    })
   }
 
   const handleReplySubmit = async (parentId: string) => {
@@ -249,80 +264,109 @@ const ArticleDetailPage: React.FC = () => {
 
   const renderComments = (commentaires: Commentaire[], level = 0) => (
     <div className={`space-y-6 ${level > 0 ? "pl-6 md:pl-12 border-l-2 border-emerald-100" : ""}`}>
-      {commentaires.map((comment) => (
-        <div key={comment.id} className="relative">
-          <div className="flex items-start gap-4">
-            {renderCommentAvatar(comment.client)}
-            <div className="flex-1 bg-white rounded-lg shadow-sm p-4 hover:shadow-md transition-shadow">
-              <div className="flex justify-between items-start">
-                <div>
-                  <h4 className="font-medium text-gray-800">{comment.client}</h4>
-                  <p className="text-gray-500 text-xs">{formatRelativeTime(comment.date)}</p>
+      {commentaires.map((comment) => {
+        const isExpanded = expandedComments.has(comment.id)
+        const hasReplies = comment.reponses.length > 0
+  
+        return (
+          <div key={comment.id} className="relative">
+            <div className="flex items-start gap-4">
+              {renderCommentAvatar(comment.client)}
+              <div className="flex-1 bg-white rounded-lg shadow-sm p-4 hover:shadow-md transition-shadow">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h4 className="font-medium text-gray-800">{comment.client}</h4>
+                    <p className="text-gray-500 text-xs">{formatRelativeTime(comment.date)}</p>
+                  </div>
+                  <button className="text-gray-400 hover:text-gray-600">
+                    <MoreHorizontal size={16} />
+                  </button>
                 </div>
-                <button className="text-gray-400 hover:text-gray-600">
-                  <MoreHorizontal size={16} />
-                </button>
-              </div>
-              <p className="mt-2 text-gray-700">{comment.texte}</p>
-              <div className="mt-3 flex items-center gap-4">
-                <button
-                  onClick={() => isAuthenticated && toggleLike(comment.id)}
-                  className={`flex items-center gap-1 text-xs ${likedComments.has(comment.id) ? "text-emerald-600" : "text-gray-500"} hover:text-emerald-600 transition-colors`}
-                >
-                  <ThumbsUp size={14} />
-                  <span>{likedComments.has(comment.id) ? "Aimé" : "J'aime"}</span>
-                </button>
-                <button
-                  onClick={() => isAuthenticated && setOpenReplyId(openReplyId === comment.id ? null : comment.id)}
-                  className="flex items-center gap-1 text-xs text-gray-500 hover:text-emerald-600 transition-colors"
-                >
-                  <Reply size={14} />
-                  <span>Répondre</span>
-                </button>
+                <p className="mt-2 text-gray-700">{comment.texte}</p>
+                <div className="mt-3 flex items-center gap-4">
+                  <button
+                    onClick={() => isAuthenticated && toggleLike(comment.id)}
+                    className={`flex items-center gap-1 text-xs ${likedComments.has(comment.id) ? "text-emerald-600" : "text-gray-500"} hover:text-emerald-600 transition-colors`}
+                  >
+                    <ThumbsUp size={14} />
+                    <span>{likedComments.has(comment.id) ? "Aimé" : "J'aime"}</span>
+                  </button>
+                  <button
+                    onClick={() => isAuthenticated && setOpenReplyId(openReplyId === comment.id ? null : comment.id)}
+                    className="flex items-center gap-1 text-xs text-gray-500 hover:text-emerald-600 transition-colors"
+                  >
+                    <Reply size={14} />
+                    <span>Répondre</span>
+                  </button>
+                  {hasReplies && (
+                    <button
+                      onClick={() => toggleCommentExpand(comment.id)}
+                      className="flex items-center gap-1 text-xs text-gray-500 hover:text-emerald-600 transition-colors"
+                    >
+                      <span>
+                        {isExpanded ? "Masquer" : "Afficher"} {comment.reponses.length} réponse
+                        {comment.reponses.length > 1 ? "s" : ""}
+                      </span>
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-
-          <AnimatePresence>
-            {openReplyId === comment.id && isAuthenticated && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                exit={{ opacity: 0, height: 0 }}
-                className="ml-14 mt-3"
-              >
-                <div className="bg-gray-50 rounded-lg p-3">
-                  <textarea
-                    value={replyText[comment.id] || ""}
-                    onChange={(e) => setReplyText((prev) => ({ ...prev, [comment.id]: e.target.value }))}
-                    placeholder="Écrire une réponse..."
-                    className="w-full p-3 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white text-gray-700 text-sm"
-                    rows={3}
-                  />
-                  <div className="flex justify-end gap-2 mt-2">
-                    <button
-                      onClick={() => setOpenReplyId(null)}
-                      className="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-800 rounded-md"
-                    >
-                      Annuler
-                    </button>
-                    <button
-                      onClick={() => handleReplySubmit(comment.id)}
-                      disabled={submitting}
-                      className="px-3 py-1.5 bg-emerald-600 text-white text-sm rounded-md hover:bg-emerald-700 transition-colors flex items-center gap-1"
-                    >
-                      {submitting ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
-                      <span>Répondre</span>
-                    </button>
+  
+            <AnimatePresence>
+              {openReplyId === comment.id && isAuthenticated && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="ml-14 mt-3"
+                >
+                  <div className="bg-gray-50 rounded-lg p-3">
+                    <textarea
+                      value={replyText[comment.id] || ""}
+                      onChange={(e) => setReplyText((prev) => ({ ...prev, [comment.id]: e.target.value }))}
+                      placeholder="Écrire une réponse..."
+                      className="w-full p-3 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white text-gray-700 text-sm"
+                      rows={3}
+                    />
+                    <div className="flex justify-end gap-2 mt-2">
+                      <button
+                        onClick={() => setOpenReplyId(null)}
+                        className="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-800 rounded-md"
+                      >
+                        Annuler
+                      </button>
+                      <button
+                        onClick={() => handleReplySubmit(comment.id)}
+                        disabled={submitting}
+                        className="px-3 py-1.5 bg-emerald-600 text-white text-sm rounded-md hover:bg-emerald-700 transition-colors flex items-center gap-1"
+                      >
+                        {submitting ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+                        <span>Répondre</span>
+                      </button>
+                    </div>
                   </div>
-                </div>
-              </motion.div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+  
+            {hasReplies && (
+              <AnimatePresence>
+                {isExpanded && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="mt-4"
+                  >
+                    {renderComments(comment.reponses, level + 1)}
+                  </motion.div>
+                )}
+              </AnimatePresence>
             )}
-          </AnimatePresence>
-
-          {comment.reponses.length > 0 && <div className="mt-4">{renderComments(comment.reponses, level + 1)}</div>}
-        </div>
-      ))}
+          </div>
+        )
+      })}
     </div>
   )
 
