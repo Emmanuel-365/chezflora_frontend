@@ -267,6 +267,13 @@ const NavBar = () => {
                           Mes commandes
                         </Link>
                         <Link
+                          to="/devis"
+                          className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-emerald-50 hover:text-emerald-600"
+                        >
+                          <Package className="h-4 w-4 mr-3 text-gray-400" />
+                          Mes devis
+                        </Link>
+                        <Link
                           to="/abonnements"
                           className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-emerald-50 hover:text-emerald-600"
                         >
