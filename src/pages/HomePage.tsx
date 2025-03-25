@@ -645,76 +645,75 @@ export default function HomePage() {
             </div>
 
             <div className="max-w-5xl mx-auto relative z-10">
-              <div className="bg-white rounded-2xl shadow-xl p-8 md:p-12">
-                <motion.div
-                  className="text-center mb-8"
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5 }}
-                  viewport={{ once: true }}
-                >
-                  <h2 className="text-2xl md:text-3xl font-serif text-soft-brown mb-4">
-                    Abonnement floral personnalisé
-                  </h2>
-                  <p className="text-soft-brown/70 max-w-3xl mx-auto">
-                    Recevez régulièrement des créations florales fraîches directement chez vous ou offrez cet abonnement
-                    à un être cher. Choisissez la fréquence, le style et le budget qui vous conviennent.
-                  </p>
-                </motion.div>
-
-                <motion.div
-                  className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8"
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.2 }}
-                  viewport={{ once: true }}
-                >
-                  <div className="bg-light-beige p-6 rounded-xl text-center">
-                    <h3 className="font-medium text-soft-brown mb-2">Mensuel</h3>
-                    <p className="text-2xl font-bold text-soft-green mb-1">
-                      29500FCFA<span className="text-sm font-normal text-soft-brown/60">/mois</span>
-                    </p>
-                    <p className="text-soft-brown/70 text-sm mb-4">Un bouquet par mois</p>
-                    <ActionButton text="Choisir" href="/abonnement/mensuel" className="w-full" />
-                  </div>
-
-                  <div className="bg-soft-green/10 p-6 rounded-xl text-center border-2 border-soft-green relative">
-                    <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-soft-green text-white text-xs py-1 px-3 rounded-full">
-                      Le plus populaire
-                    </div>
-                    <h3 className="font-medium text-soft-brown mb-2">Bimensuel</h3>
-                    <p className="text-2xl font-bold text-soft-green mb-1">
-                      49500FCFA<span className="text-sm font-normal text-soft-brown/60">/mois</span>
-                    </p>
-                    <p className="text-soft-brown/70 text-sm mb-4">Deux bouquets par mois</p>
-                    <ActionButton text="Choisir" href="/abonnement/bimensuel" className="w-full" />
-                  </div>
-
-                  <div className="bg-light-beige p-6 rounded-xl text-center">
-                    <h3 className="font-medium text-soft-brown mb-2">Hebdomadaire</h3>
-                    <p className="text-2xl font-bold text-soft-green mb-1">
-                      76000FCFA<span className="text-sm font-normal text-soft-brown/60">/mois</span>
-                    </p>
-                    <p className="text-soft-brown/70 text-sm mb-4">Un bouquet chaque semaine</p>
-                    <ActionButton text="Choisir" href="/abonnement/hebdomadaire" className="w-full" />
-                  </div>
-                </motion.div>
-
-                <motion.div
-                  className="text-center"
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.4 }}
-                  viewport={{ once: true }}
-                >
-                  <p className="text-soft-brown/70 mb-4">
-                    Tous nos abonnements sont sans engagement et peuvent être modifiés ou annulés à tout moment.
-                    Livraison gratuite incluse et possibilité de personnaliser chaque livraison.
-                  </p>
-                  <ActionButton text="En savoir plus sur nos abonnements" href="/abonnements" primary={false} />
-                </motion.div>
+            <div className="bg-gradient-to-br from-white to-light-beige rounded-3xl shadow-2xl p-8 md:p-12 overflow-hidden relative">
+              {/* Fond décoratif subtil */}
+              <div className="absolute inset-0 opacity-10 pointer-events-none">
+                <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+                  <path d="M0,0 C30,50 70,50 100,0 V100 H0 Z" fill="url(#floral-gradient)" />
+                  <defs>
+                    <linearGradient id="floral-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" style={{ stopColor: '#D4A5A5', stopOpacity: 1 }} />
+                      <stop offset="100%" style={{ stopColor: '#A8D5A2', stopOpacity: 1 }} />
+                    </linearGradient>
+                  </defs>
+                </svg>
               </div>
+
+              {/* Contenu principal */}
+              <motion.div
+                className="text-center mb-10 relative z-10"
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.7, ease: 'easeOut' }}
+                viewport={{ once: true }}
+              >
+                <h2 className="text-3xl md:text-4xl font-serif text-soft-brown mb-4 tracking-wide">
+                  Créez Votre Abonnement Floral Unique
+                </h2>
+                <p className="text-soft-brown/80 max-w-2xl mx-auto text-lg leading-relaxed">
+                  Imaginez des fleurs fraîches, façonnées selon vos envies, livrées chez vous quand vous le souhaitez. 
+                  Avec ChezFlora, chaque abonnement est une œuvre sur mesure : choisissez votre fréquence, votre style et votre budget.
+                </p>
+              </motion.div>
+
+              {/* Section visuelle et immersive */}
+              <motion.div
+                className="relative flex flex-col items-center mb-10"
+                initial={{ opacity: 0, scale: 0.95 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.8, delay: 0.2, ease: 'easeOut' }}
+                viewport={{ once: true }}
+              >
+                {/* Élément visuel décoratif */}
+                <div className="relative w-full max-w-lg">
+                  <div className="absolute -top-10 -left-10 w-24 h-24 bg-soft-green/20 rounded-full blur-2xl animate-pulse-slow"></div>
+                  <div className="absolute -bottom-10 -right-10 w-32 h-32 bg-soft-brown/20 rounded-full blur-3xl animate-pulse-slow delay-200"></div>
+                  <p className="text-center text-2xl font-light text-soft-green italic">
+                    "Des bouquets qui vous ressemble, à chaque livraison."
+                  </p>
+                </div>
+              </motion.div>
+
+              {/* Call-to-action */}
+              <motion.div
+                className="text-center relative z-10"
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.7, delay: 0.4, ease: 'easeOut' }}
+                viewport={{ once: true }}
+              >
+                <p className="text-soft-brown/70 mb-6 text-base md:text-lg max-w-3xl mx-auto">
+                  Sans engagement, avec livraison gratuite et la possibilité de tout personnaliser — du choix des fleurs à la cadence des surprises florales. 
+                  Commencez dès aujourd’hui et laissez la magie opérer.
+                </p>
+                <ActionButton
+                  text="Créer Mon Abonnement"
+                  href="/abonnements"
+                  className="inline-flex items-center px-8 py-3 bg-soft-green hover:bg-soft-green/90 text-white font-medium rounded-full shadow-lg transition-all duration-300 transform hover:scale-105"
+                />
+              </motion.div>
             </div>
+          </div>
           </motion.section>
 
           {/* Workshops Section */}
