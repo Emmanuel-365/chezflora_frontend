@@ -6,8 +6,8 @@ import AdminLayout from "../components/AdminLayout";
 import ButtonPrimary from "../components/ButtonPrimary";
 import { FileText, Search, Edit, Trash2, PlusCircle, ChevronLeft, ChevronRight } from "lucide-react";
 import { ModalContainer, ModalBody, ModalFooter } from "../components/ModalContainer";
-import ReactQuill from "react-quill"; // Importer React Quill
-import "react-quill/dist/quill.snow.css"; // Importer le style CSS
+import ReactQuill from "react-quill";
+import "react-quill/dist/quill.snow.css";
 
 interface Article {
   id: string;
@@ -42,9 +42,9 @@ const AdminArticlesPage: React.FC = () => {
   const [editArticle, setEditArticle] = useState({ titre: "", contenu: "", cover: null as File | null, is_active: true });
   const articlesPerPage = 10;
 
-  // Références pour React Quill
-  const quillRefAdd = useRef<any>(null);
-  const quillRefEdit = useRef<any>(null);
+  // Typage correct des références pour React Quill
+  const quillRefAdd = useRef<ReactQuill>(null);
+  const quillRefEdit = useRef<ReactQuill>(null);
 
   useEffect(() => {
     fetchArticles();
@@ -56,8 +56,7 @@ const AdminArticlesPage: React.FC = () => {
       const response = await api.get<ApiResponse>("/articles/", {
         params: { page: currentPage, per_page: articlesPerPage, search: searchQuery || undefined },
       });
-      const results = Array.isArray(response.data.results) ? response.data.results : [];
-      setArticles(results);
+      setArticles(Array.isArray(response.data.results) ? response.data.results : []);
       setTotalArticles(response.data.count || 0);
       setTotalPages(Math.ceil((response.data.count || 0) / articlesPerPage));
       setLoading(false);
@@ -166,15 +165,15 @@ const AdminArticlesPage: React.FC = () => {
     ["clean"],
   ];
 
-  // Gestion de l'upload d'images
-  const imageHandler = async (quillRef: any) => {
+  // Gestion de l'upload d'images avec vérification de la sélection
+  const imageHandler = (quillRef: React.MutableRefObject<ReactQuill | null>) => {
     const input = document.createElement("input");
     input.setAttribute("type", "file");
     input.setAttribute("accept", "image/*");
     input.click();
     input.onchange = async () => {
       const file = input.files?.[0];
-      if (file) {
+      if (file && quillRef.current) {
         const formData = new FormData();
         formData.append("image", file);
         try {
@@ -182,8 +181,12 @@ const AdminArticlesPage: React.FC = () => {
             headers: { "Content-Type": "multipart/form-data" },
           });
           const quill = quillRef.current.getEditor();
-          const range = quill.getSelection();
-          quill.insertEmbed(range.index, "image", response.data.url);
+          const range = quill.getSelection(true); // Forcer la récupération de la sélection
+          if (range) {
+            quill.insertEmbed(range.index, "image", response.data.url);
+          } else {
+            quill.insertEmbed(quill.getLength(), "image", response.data.url); // Insérer à la fin si pas de sélection
+          }
         } catch (err) {
           console.error("Erreur lors de l'upload de l'image:", err);
           setError("Erreur lors de l'upload de l'image.");
@@ -221,24 +224,12 @@ const AdminArticlesPage: React.FC = () => {
         <tbody>
           {Array.from({ length: 5 }).map((_, index) => (
             <tr key={index} className="border-b border-lightBorder dark:border-darkBorder animate-pulse">
-              <td className="py-3 px-4">
-                <div className="h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
-              </td>
-              <td className="py-3 px-4">
-                <div className="h-4 w-32 bg-gray-200 dark:bg-gray-700 rounded"></div>
-              </td>
-              <td className="py-3 px-4">
-                <div className="h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded"></div>
-              </td>
-              <td className="py-3 px-4">
-                <div className="h-4 w-20 bg-gray-200 dark:bg-gray-700 rounded"></div>
-              </td>
-              <td className="py-3 px-4">
-                <div className="h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
-              </td>
-              <td className="py-3 px-4">
-                <div className="h-6 w-24 bg-gray-300 dark:bg-gray-600 rounded"></div>
-              </td>
+              <td className="py-3 px-4"><div className="h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded"></div></td>
+              <td className="py-3 px-4"><div className="h-4 w-32 bg-gray-200 dark:bg-gray-700 rounded"></div></td>
+              <td className="py-3 px-4"><div className="h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded"></div></td>
+              <td className="py-3 px-4"><div className="h-4 w-20 bg-gray-200 dark:bg-gray-700 rounded"></div></td>
+              <td className="py-3 px-4"><div className="h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded"></div></td>
+              <td className="py-3 px-4"><div className="h-6 w-24 bg-gray-300 dark:bg-gray-600 rounded"></div></td>
             </tr>
           ))}
         </tbody>
@@ -389,9 +380,7 @@ const AdminArticlesPage: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">
-                    Image de couverture
-                  </label>
+                  <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">Image de couverture</label>
                   <input
                     type="file"
                     onChange={(e) => setNewArticle({ ...newArticle, cover: e.target.files?.[0] || null })}
@@ -415,7 +404,7 @@ const AdminArticlesPage: React.FC = () => {
                   >
                     Annuler
                   </ButtonPrimary>
-                  <ButtonPrimary type="submit" className="px-4 py-2 bg-blue-533 text-white hover:bg-blue-600">
+                  <ButtonPrimary type="submit" className="px-4 py-2 bg-blue-500 text-white hover:bg-blue-600">
                     Ajouter
                   </ButtonPrimary>
                 </ModalFooter>
@@ -450,9 +439,7 @@ const AdminArticlesPage: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">
-                    Image de couverture
-                  </label>
+                  <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">Image de couverture</label>
                   <input
                     type="file"
                     onChange={(e) => setEditArticle({ ...editArticle, cover: e.target.files?.[0] || null })}
