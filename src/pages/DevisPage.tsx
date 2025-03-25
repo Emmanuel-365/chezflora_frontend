@@ -56,7 +56,7 @@ const DevisPage: React.FC = () => {
       try {
         setLoading(true);
         const response = await getDevis();
-        setDevisList(response.data || []);
+        setDevisList(response.data.results || []);
         setError(null);
       } catch (err: any) {
         console.error("Erreur lors du chargement des devis:", err.response?.status, err.response?.data);
