@@ -43,8 +43,8 @@ interface Article {
   commentaires?: Commentaire[]
 }
 
-// Limite maximale des caractères pour les commentaires
 const MAX_COMMENT_LENGTH = 500
+const MAX_WORD_LENGTH = 50 // Limite pour un mot individuel sans espace
 
 // Fonction pour générer une couleur basée sur une chaîne
 const stringToColor = (str: string) => {
@@ -111,6 +111,12 @@ const estimateReadingTime = (content: string) => {
   return readingTime
 }
 
+// Fonction pour vérifier la longueur des mots individuels
+const hasOverlyLongWord = (text: string) => {
+  const words = text.split(/\s+/)
+  return words.some((word) => word.length > MAX_WORD_LENGTH)
+}
+
 const ArticleDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>()
   const commentSectionRef = useRef<HTMLDivElement>(null)
@@ -164,6 +170,10 @@ const ArticleDetailPage: React.FC = () => {
       alert(`Le commentaire ne peut pas dépasser ${MAX_COMMENT_LENGTH} caractères.`)
       return
     }
+    if (hasOverlyLongWord(commentText)) {
+      alert(`Aucun mot ne peut dépasser ${MAX_WORD_LENGTH} caractères sans espace.`)
+      return
+    }
 
     setSubmitting(true)
     try {
@@ -209,6 +219,10 @@ const ArticleDetailPage: React.FC = () => {
     }
     if (reply.length > MAX_COMMENT_LENGTH) {
       alert(`La réponse ne peut pas dépasser ${MAX_COMMENT_LENGTH} caractères.`)
+      return
+    }
+    if (hasOverlyLongWord(reply)) {
+      alert(`Aucun mot ne peut dépasser ${MAX_WORD_LENGTH} caractères sans espace.`)
       return
     }
 
@@ -290,7 +304,8 @@ const ArticleDetailPage: React.FC = () => {
                     <MoreHorizontal size={16} />
                   </button>
                 </div>
-                <p className="mt-2 text-gray-700 break-words">{comment.texte}</p>
+                {/* Mise à jour pour gérer les longues chaînes sans espaces */}
+                <p className="mt-2 text-gray-700 break-all">{comment.texte}</p>
                 <div className="mt-3 flex items-center gap-4">
                   <button
                     onClick={() => isAuthenticated && toggleLike(comment.id)}
@@ -334,7 +349,7 @@ const ArticleDetailPage: React.FC = () => {
                       value={replyText[comment.id] || ""}
                       onChange={(e) => setReplyText((prev) => ({ ...prev, [comment.id]: e.target.value }))}
                       placeholder="Écrire une réponse..."
-                      className="w-full p-3 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white text-gray-700 text-sm break-words"
+                      className="w-full p-3 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white text-gray-700 text-sm break-all"
                       rows={3}
                       maxLength={MAX_COMMENT_LENGTH}
                     />
@@ -549,7 +564,7 @@ const ArticleDetailPage: React.FC = () => {
                       value={commentText}
                       onChange={(e) => setCommentText(e.target.value)}
                       placeholder="Partagez votre avis sur cet article..."
-                      className="w-full p-4 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-gray-50 text-gray-700 break-words"
+                      className="w-full p-4 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-gray-50 text-gray-700 break-all"
                       rows={4}
                       maxLength={MAX_COMMENT_LENGTH}
                     />
@@ -595,4 +610,4 @@ const ArticleDetailPage: React.FC = () => {
   )
 }
 
-export default ArticleDetailPage;
+export default ArticleDetailPage
