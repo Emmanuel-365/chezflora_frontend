@@ -1,119 +1,123 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import NavBar from '../components/NavBar';
-import Footer from '../components/Footer';
-import PageContainer from '../components/PageContainer';
-import ButtonPrimary from '../components/ButtonPrimary';
-import { getCart, validateCart, getAddresses, createAddress } from '../services/api';
-import { ChevronLeft } from 'lucide-react';
+"use client"
+
+import type React from "react"
+import { useState, useEffect } from "react"
+import { useNavigate, Link } from "react-router-dom"
+import NavBar from "../components/NavBar"
+import Footer from "../components/Footer"
+import PageContainer from "../components/PageContainer"
+import ButtonPrimary from "../components/ButtonPrimary"
+import { getCart, validateCart, getAddresses, createAddress } from "../services/api"
+import { ChevronLeft } from "lucide-react"
 
 interface CartItem {
-  id: string;
+  id: string
   produit: {
-    id: string;
-    nom: string;
-    prix: number;
-    prix_reduit?: number;
-    photos: string[];
-  };
-  quantite: number;
+    id: string
+    nom: string
+    prix: number
+    prix_reduit?: number
+    photos: string[]
+  }
+  quantite: number
 }
 
 interface Cart {
-  id: string;
-  items: CartItem[];
-  total: string;
+  id: string
+  items: CartItem[]
+  total: string
 }
 
 interface Adresse {
-  id: string;
-  nom: string;
-  rue: string;
-  ville: string;
-  code_postal: string;
-  pays: string;
-  is_default: boolean;
+  id: string
+  nom: string
+  rue: string
+  ville: string
+  code_postal: string
+  pays: string
+  is_default: boolean
 }
 
 const CheckoutPage: React.FC = () => {
-  
-  const [cart, setCart] = useState<Cart | null>(null);
-  const [addresses, setAddresses] = useState<Adresse[]>([]);
-  const [selectedAddress, setSelectedAddress] = useState<string>('');
-  const [newAddress, setNewAddress] = useState({ nom: '', rue: '', ville: '', code_postal: '', pays: '' });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [checkoutLoading, setCheckoutLoading] = useState(false);
-  const navigate = useNavigate();
+  const [cart, setCart] = useState<Cart | null>(null)
+  const [addresses, setAddresses] = useState<Adresse[]>([])
+  const [selectedAddress, setSelectedAddress] = useState<string>("")
+  const [newAddress, setNewAddress] = useState({ nom: "", rue: "", ville: "", code_postal: "", pays: "" })
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [checkoutLoading, setCheckoutLoading] = useState(false)
+  const navigate = useNavigate()
 
   useEffect(() => {
     const fetchData = async () => {
-      const token = localStorage.getItem('access_token');
+      const token = localStorage.getItem("access_token")
       if (!token) {
-        navigate('/auth');
-        return;
+        navigate("/auth")
+        return
       }
 
       try {
-        const [cartResponse, addressesResponse] = await Promise.all([getCart(), getAddresses()]);
-        setCart(cartResponse.data);
-        setAddresses(addressesResponse.data.results);
+        const [cartResponse, addressesResponse] = await Promise.all([getCart(), getAddresses()])
+        setCart(cartResponse.data)
+        setAddresses(addressesResponse.data.results)
         if (addressesResponse.data.results.length > 0) {
-          setSelectedAddress(addressesResponse.data.results[0].id);
+          setSelectedAddress(addressesResponse.data.results[0].id)
         }
-        setLoading(false);
+        setLoading(false)
       } catch (err: any) {
-        console.error('Erreur lors du chargement:', err.response?.status, err.response?.data);
-        setError('Erreur lors du chargement des données.');
-        setLoading(false);
+        console.error("Erreur lors du chargement:", err.response?.status, err.response?.data)
+        setError("Erreur lors du chargement des données.")
+        setLoading(false)
         if (err.response?.status === 401) {
-          localStorage.removeItem('access_token');
-          navigate('/auth');
+          localStorage.removeItem("access_token")
+          navigate("/auth")
         }
       }
-    };
+    }
 
-
-    fetchData();
-  }, [navigate]);
+    fetchData()
+  }, [navigate])
 
   const handleAddAddress = async () => {
     try {
-      const response = await createAddress(newAddress);
-      setAddresses([...addresses, response.data]);
-      setSelectedAddress(response.data.id);
-      setNewAddress({ nom: '', rue: '', ville: '', code_postal: '', pays: '' });
-      alert('Adresse ajoutée avec succès !');
+      const response = await createAddress(newAddress)
+      setAddresses([...addresses, response.data])
+      setSelectedAddress(response.data.id)
+      setNewAddress({ nom: "", rue: "", ville: "", code_postal: "", pays: "" })
+      alert("Adresse ajoutée avec succès !")
     } catch (err: any) {
-      alert('Erreur lors de l’ajout de l’adresse : ' + (err.response?.data?.detail || 'Vérifiez vos entrées.'));
+      alert("Erreur lors de l’ajout de l’adresse : " + (err.response?.data?.detail || "Vérifiez vos entrées."))
     }
-  };
+  }
 
   const handleCheckout = async () => {
-    if (!cart || !selectedAddress) return;
-    setCheckoutLoading(true);
+    if (!cart || !selectedAddress) return
+    setCheckoutLoading(true)
     try {
-      await validateCart(cart.id, { adresse_id: selectedAddress });
-      alert('Commande validée avec succès !');
-      navigate('/orders');
+      await validateCart(cart.id, { adresse_id: selectedAddress })
+      alert("Commande validée avec succès !")
+      navigate("/orders")
     } catch (err: any) {
-      console.error('Erreur lors de la validation:', err.response?.status, err.response?.data);
-      alert('Erreur lors de la validation : ' + (err.response?.data?.error || 'Vérifiez votre connexion.'));
+      console.error("Erreur lors de la validation:", err.response?.status, err.response?.data)
+      alert("Erreur lors de la validation : " + (err.response?.data?.error || "Vérifiez votre connexion."))
     } finally {
-      setCheckoutLoading(false);
+      setCheckoutLoading(false)
     }
-  };
+  }
 
   if (loading) {
-    return <div className="text-center py-16">Chargement...</div>;
+    return <div className="text-center py-16">Chargement...</div>
   }
 
   if (error) {
     return (
       <div className="text-center py-16 text-powder-pink">
-        {error} <Link to="/auth" className="underline">Connectez-vous</Link>
+        {error}{" "}
+        <Link to="/auth" className="underline">
+          Connectez-vous
+        </Link>
       </div>
-    );
+    )
   }
 
   return (
@@ -131,7 +135,7 @@ const CheckoutPage: React.FC = () => {
                     {cart.items.map((item) => (
                       <div key={item.id} className="flex items-center">
                         <img
-                          src={item.produit.photos[0] || '/images/placeholder-image.jpg'}
+                          src={item.produit.photos[0] || "/images/placeholder-image.jpg"}
                           alt={item.produit.nom}
                           className="w-16 h-16 object-cover rounded-md mr-4"
                         />
@@ -142,7 +146,7 @@ const CheckoutPage: React.FC = () => {
                             {item.produit.prix_reduit ? (
                               <>{item.produit.prix_reduit.toFixed(2)} FCFA</>
                             ) : (
-                              item.produit.prix.toFixed(2) + ' FCFA'
+                              item.produit.prix.toFixed(2) + " FCFA"
                             )}
                           </p>
                         </div>
@@ -234,9 +238,12 @@ const CheckoutPage: React.FC = () => {
                     disabled={checkoutLoading || !selectedAddress || !cart?.items.length}
                     className="w-full bg-soft-green hover:bg-soft-green/90"
                   >
-                    {checkoutLoading ? 'Validation...' : 'Valider la commande'}
+                    {checkoutLoading ? "Validation..." : "Valider la commande"}
                   </ButtonPrimary>
-                  <Link to="/cart" className="flex items-center justify-center mt-4 text-soft-brown hover:text-soft-green">
+                  <Link
+                    to="/cart"
+                    className="flex items-center justify-center mt-4 text-soft-brown hover:text-soft-green"
+                  >
                     <ChevronLeft className="h-4 w-4 mr-1" />
                     Retour au panier
                   </Link>
@@ -248,7 +255,8 @@ const CheckoutPage: React.FC = () => {
       </PageContainer>
       <Footer />
     </>
-  );
-};
+  )
+}
 
-export default CheckoutPage;
+export default CheckoutPage
+
