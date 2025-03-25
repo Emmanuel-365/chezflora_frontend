@@ -399,7 +399,7 @@ const OrdersPage: React.FC = () => {
                                 </div>
                                 <div>
                                   <h2 className="text-lg font-medium text-gray-800">
-                                    Commande #{order.id.substring(0, 8)}...
+                                    Commande #{order.id}...
                                   </h2>
                                   <div className="flex items-center text-sm text-gray-500 mt-1">
                                     <Calendar className="w-4 h-4 mr-1" />
