@@ -1,11 +1,13 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import api from "../services/api";
 import AdminLayout from "../components/AdminLayout";
 import ButtonPrimary from "../components/ButtonPrimary";
 import { FileText, Search, Edit, Trash2, PlusCircle, ChevronLeft, ChevronRight } from "lucide-react";
 import { ModalContainer, ModalBody, ModalFooter } from "../components/ModalContainer";
+import ReactQuill from "react-quill"; // Importer React Quill
+import "react-quill/dist/quill.snow.css"; // Importer le style CSS
 
 interface Article {
   id: string;
@@ -39,6 +41,10 @@ const AdminArticlesPage: React.FC = () => {
   const [newArticle, setNewArticle] = useState({ titre: "", contenu: "", cover: null as File | null, is_active: true });
   const [editArticle, setEditArticle] = useState({ titre: "", contenu: "", cover: null as File | null, is_active: true });
   const articlesPerPage = 10;
+
+  // Références pour React Quill
+  const quillRefAdd = useRef<any>(null);
+  const quillRefEdit = useRef<any>(null);
 
   useEffect(() => {
     fetchArticles();
@@ -151,6 +157,55 @@ const AdminArticlesPage: React.FC = () => {
     }
   };
 
+  // Configuration de la barre d'outils React Quill
+  const toolbarOptions = [
+    [{ header: [1, 2, 3, false] }],
+    ["bold", "italic", "underline"],
+    [{ list: "ordered" }, { list: "bullet" }],
+    ["image", "link"],
+    ["clean"],
+  ];
+
+  // Gestion de l'upload d'images
+  const imageHandler = async (quillRef: any) => {
+    const input = document.createElement("input");
+    input.setAttribute("type", "file");
+    input.setAttribute("accept", "image/*");
+    input.click();
+    input.onchange = async () => {
+      const file = input.files?.[0];
+      if (file) {
+        const formData = new FormData();
+        formData.append("image", file);
+        try {
+          const response = await api.post("/upload-image/", formData, {
+            headers: { "Content-Type": "multipart/form-data" },
+          });
+          const quill = quillRef.current.getEditor();
+          const range = quill.getSelection();
+          quill.insertEmbed(range.index, "image", response.data.url);
+        } catch (err) {
+          console.error("Erreur lors de l'upload de l'image:", err);
+          setError("Erreur lors de l'upload de l'image.");
+        }
+      }
+    };
+  };
+
+  const modulesAdd = {
+    toolbar: {
+      container: toolbarOptions,
+      handlers: { image: () => imageHandler(quillRefAdd) },
+    },
+  };
+
+  const modulesEdit = {
+    toolbar: {
+      container: toolbarOptions,
+      handlers: { image: () => imageHandler(quillRefEdit) },
+    },
+  };
+
   const renderArticlesPlaceholder = () => (
     <div className="overflow-x-auto">
       <table className="w-full text-left text-sm">
@@ -166,12 +221,24 @@ const AdminArticlesPage: React.FC = () => {
         <tbody>
           {Array.from({ length: 5 }).map((_, index) => (
             <tr key={index} className="border-b border-lightBorder dark:border-darkBorder animate-pulse">
-              <td className="py-3 px-4"><div className="h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded"></div></td>
-              <td className="py-3 px-4"><div className="h-4 w-32 bg-gray-200 dark:bg-gray-700 rounded"></div></td>
-              <td className="py-3 px-4"><div className="h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded"></div></td>
-              <td className="py-3 px-4"><div className="h-4 w-20 bg-gray-200 dark:bg-gray-700 rounded"></div></td>
-              <td className="py-3 px-4"><div className="h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded"></div></td>
-              <td className="py-3 px-4"><div className="h-6 w-24 bg-gray-300 dark:bg-gray-600 rounded"></div></td>
+              <td className="py-3 px-4">
+                <div className="h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
+              </td>
+              <td className="py-3 px-4">
+                <div className="h-4 w-32 bg-gray-200 dark:bg-gray-700 rounded"></div>
+              </td>
+              <td className="py-3 px-4">
+                <div className="h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded"></div>
+              </td>
+              <td className="py-3 px-4">
+                <div className="h-4 w-20 bg-gray-200 dark:bg-gray-700 rounded"></div>
+              </td>
+              <td className="py-3 px-4">
+                <div className="h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
+              </td>
+              <td className="py-3 px-4">
+                <div className="h-6 w-24 bg-gray-300 dark:bg-gray-600 rounded"></div>
+              </td>
             </tr>
           ))}
         </tbody>
@@ -313,16 +380,18 @@ const AdminArticlesPage: React.FC = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">Contenu</label>
-                  <textarea
+                  <ReactQuill
+                    ref={quillRefAdd}
                     value={newArticle.contenu}
-                    onChange={(e) => setNewArticle({ ...newArticle, contenu: e.target.value })}
-                    className="w-full px-3 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-soft-green dark:focus:ring-dark-soft-green"
-                    rows={5}
-                    required
+                    onChange={(value) => setNewArticle({ ...newArticle, contenu: value })}
+                    modules={modulesAdd}
+                    className="bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">Image de couverture</label>
+                  <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">
+                    Image de couverture
+                  </label>
                   <input
                     type="file"
                     onChange={(e) => setNewArticle({ ...newArticle, cover: e.target.files?.[0] || null })}
@@ -346,7 +415,7 @@ const AdminArticlesPage: React.FC = () => {
                   >
                     Annuler
                   </ButtonPrimary>
-                  <ButtonPrimary type="submit" className="px-4 py-2 bg-blue-500 text-white hover:bg-blue-600">
+                  <ButtonPrimary type="submit" className="px-4 py-2 bg-blue-533 text-white hover:bg-blue-600">
                     Ajouter
                   </ButtonPrimary>
                 </ModalFooter>
@@ -372,16 +441,18 @@ const AdminArticlesPage: React.FC = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">Contenu</label>
-                  <textarea
+                  <ReactQuill
+                    ref={quillRefEdit}
                     value={editArticle.contenu}
-                    onChange={(e) => setEditArticle({ ...editArticle, contenu: e.target.value })}
-                    className="w-full px-3 py-2 border border-lightBorder dark:border-darkBorder rounded-lg bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText focus:outline-none focus:ring-2 focus:ring-soft-green dark:focus:ring-dark-soft-green"
-                    rows={5}
-                    required
+                    onChange={(value) => setEditArticle({ ...editArticle, contenu: value })}
+                    modules={modulesEdit}
+                    className="bg-lightCard dark:bg-darkCard text-lightText dark:text-darkText"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">Image de couverture</label>
+                  <label className="block text-sm font-medium text-lightText dark:text-darkText mb-1">
+                    Image de couverture
+                  </label>
                   <input
                     type="file"
                     onChange={(e) => setEditArticle({ ...editArticle, cover: e.target.files?.[0] || null })}

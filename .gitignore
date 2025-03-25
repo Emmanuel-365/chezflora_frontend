@@ -11,6 +11,7 @@ node_modules
 dist
 dist-ssr
 *.local
+script_admin.py
 
 # Editor directories and files
 .vscode/*

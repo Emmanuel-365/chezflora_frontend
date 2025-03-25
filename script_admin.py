@@ -3,18 +3,22 @@ import os
 def combine_admin_files_into_one():
     # Dossier de départ : le dossier courant où le script est exécuté
     base_dir = os.getcwd()
-    
+
     # Nom du fichier de sortie
-    output_file = os.path.join(base_dir, "all_admin_files.tsx")
-    
+    output_file = os.path.join(base_dir, "all_files.tsx")
+
     # Liste pour stocker le contenu combiné
     combined_content = []
 
     # Parcourir récursivement tous les fichiers dans le dossier courant
-    for root, _, files in os.walk(base_dir):
+    for root, dirs, files in os.walk(base_dir):
+        # Ignorer le dossier node_modules
+        if 'node_modules' in dirs:
+            dirs.remove('node_modules')
+
         for file in files:
-            # Vérifier si le fichier est un .tsx et commence par "Admin"
-            if file.endswith('.tsx') and file.startswith('Admin'):
+            # Vérifier si le fichier est un .tsx ou .ts
+            if file.endswith('.tsx') or file.endswith('.ts'):
                 # Chemin absolu du fichier
                 file_path = os.path.join(root, file)
                 # Chemin relatif par rapport au dossier courant
