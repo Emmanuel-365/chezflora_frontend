@@ -174,7 +174,7 @@ const DevisPage: React.FC = () => {
     }
     try {
       const response = await getDevis();
-      setDevisList(response.data || []);
+      setDevisList(response.data.results || []);
     } catch (err: any) {
       setError("Erreur lors du rechargement des devis.");
     }
