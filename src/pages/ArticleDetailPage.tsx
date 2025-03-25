@@ -43,6 +43,9 @@ interface Article {
   commentaires?: Commentaire[]
 }
 
+// Limite maximale des caractères pour les commentaires
+const MAX_COMMENT_LENGTH = 500
+
 // Fonction pour générer une couleur basée sur une chaîne
 const stringToColor = (str: string) => {
   let hash = 0
@@ -136,7 +139,6 @@ const ArticleDetailPage: React.FC = () => {
         if (token) {
           await getUserProfile()
           setIsAuthenticated(true)
-          console.log(expandedComments);
         }
         setLoading(false)
       } catch (err: any) {
@@ -158,6 +160,10 @@ const ArticleDetailPage: React.FC = () => {
       alert("Veuillez entrer un commentaire.")
       return
     }
+    if (commentText.length > MAX_COMMENT_LENGTH) {
+      alert(`Le commentaire ne peut pas dépasser ${MAX_COMMENT_LENGTH} caractères.`)
+      return
+    }
 
     setSubmitting(true)
     try {
@@ -168,7 +174,6 @@ const ArticleDetailPage: React.FC = () => {
       setShowSuccessMessage(true)
       setTimeout(() => setShowSuccessMessage(false), 3000)
 
-      // Scroll to the comment section
       if (commentSectionRef.current) {
         commentSectionRef.current.scrollIntoView({ behavior: "smooth" })
       }
@@ -180,7 +185,6 @@ const ArticleDetailPage: React.FC = () => {
     }
   }
 
-  // Fonction pour toggle l'état d'expansion d'un commentaire
   const toggleCommentExpand = (commentId: string) => {
     setExpandedComments((prev) => {
       const newSet = new Set(prev)
@@ -201,6 +205,10 @@ const ArticleDetailPage: React.FC = () => {
     const reply = replyText[parentId]?.trim()
     if (!reply) {
       alert("Veuillez entrer une réponse.")
+      return
+    }
+    if (reply.length > MAX_COMMENT_LENGTH) {
+      alert(`La réponse ne peut pas dépasser ${MAX_COMMENT_LENGTH} caractères.`)
       return
     }
 
@@ -263,11 +271,11 @@ const ArticleDetailPage: React.FC = () => {
   }
 
   const renderComments = (commentaires: Commentaire[], level = 0) => (
-    <div className={`space-y-6 ${level > 0 ? "pl-6 md:pl-12 border-l-2 border-emerald-100" : ""}`}>
+    <div className={`space-y-6 ${level > 0 ? "pl-6 md:pl-12 border-l-2 border-emerald-100 max-pl-24" : ""}`}>
       {commentaires.map((comment) => {
         const isExpanded = expandedComments.has(comment.id)
         const hasReplies = comment.reponses.length > 0
-  
+
         return (
           <div key={comment.id} className="relative">
             <div className="flex items-start gap-4">
@@ -282,7 +290,7 @@ const ArticleDetailPage: React.FC = () => {
                     <MoreHorizontal size={16} />
                   </button>
                 </div>
-                <p className="mt-2 text-gray-700">{comment.texte}</p>
+                <p className="mt-2 text-gray-700 break-words">{comment.texte}</p>
                 <div className="mt-3 flex items-center gap-4">
                   <button
                     onClick={() => isAuthenticated && toggleLike(comment.id)}
@@ -312,7 +320,7 @@ const ArticleDetailPage: React.FC = () => {
                 </div>
               </div>
             </div>
-  
+
             <AnimatePresence>
               {openReplyId === comment.id && isAuthenticated && (
                 <motion.div
@@ -326,30 +334,36 @@ const ArticleDetailPage: React.FC = () => {
                       value={replyText[comment.id] || ""}
                       onChange={(e) => setReplyText((prev) => ({ ...prev, [comment.id]: e.target.value }))}
                       placeholder="Écrire une réponse..."
-                      className="w-full p-3 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white text-gray-700 text-sm"
+                      className="w-full p-3 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white text-gray-700 text-sm break-words"
                       rows={3}
+                      maxLength={MAX_COMMENT_LENGTH}
                     />
-                    <div className="flex justify-end gap-2 mt-2">
-                      <button
-                        onClick={() => setOpenReplyId(null)}
-                        className="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-800 rounded-md"
-                      >
-                        Annuler
-                      </button>
-                      <button
-                        onClick={() => handleReplySubmit(comment.id)}
-                        disabled={submitting}
-                        className="px-3 py-1.5 bg-emerald-600 text-white text-sm rounded-md hover:bg-emerald-700 transition-colors flex items-center gap-1"
-                      >
-                        {submitting ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
-                        <span>Répondre</span>
-                      </button>
+                    <div className="flex justify-between items-center mt-2">
+                      <span className="text-xs text-gray-500">
+                        {replyText[comment.id]?.length || 0}/{MAX_COMMENT_LENGTH}
+                      </span>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setOpenReplyId(null)}
+                          className="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-800 rounded-md"
+                        >
+                          Annuler
+                        </button>
+                        <button
+                          onClick={() => handleReplySubmit(comment.id)}
+                          disabled={submitting}
+                          className="px-3 py-1.5 bg-emerald-600 text-white text-sm rounded-md hover:bg-emerald-700 transition-colors flex items-center gap-1"
+                        >
+                          {submitting ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+                          <span>Répondre</span>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </motion.div>
               )}
             </AnimatePresence>
-  
+
             {hasReplies && (
               <AnimatePresence>
                 {isExpanded && (
@@ -359,7 +373,7 @@ const ArticleDetailPage: React.FC = () => {
                     exit={{ opacity: 0, height: 0 }}
                     className="mt-4"
                   >
-                    {renderComments(comment.reponses, level + 1)}
+                    {renderComments(comment.reponses, Math.min(level + 1, 3))}
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -412,7 +426,6 @@ const ArticleDetailPage: React.FC = () => {
     <>
       <NavBar />
 
-      {/* Notification de succès */}
       <AnimatePresence>
         {showSuccessMessage && (
           <motion.div
@@ -427,7 +440,6 @@ const ArticleDetailPage: React.FC = () => {
         )}
       </AnimatePresence>
 
-      {/* Hero section */}
       <div className="bg-emerald-600 text-white">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
           <div className="max-w-3xl">
@@ -472,7 +484,6 @@ const ArticleDetailPage: React.FC = () => {
       <PageContainer>
         <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row gap-8">
-            {/* Article content */}
             <div className="md:flex-1">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -491,13 +502,11 @@ const ArticleDetailPage: React.FC = () => {
                 )}
 
                 <div className="p-6 md:p-8">
-                  {/* Article content */}
                   <div
                     className="prose prose-emerald prose-lg max-w-none"
                     dangerouslySetInnerHTML={{ __html: article.contenu }}
                   />
 
-                  {/* Article actions */}
                   <div className="mt-8 pt-6 border-t border-gray-100 flex justify-between items-center">
                     <div className="flex gap-4">
                       <button
@@ -522,7 +531,6 @@ const ArticleDetailPage: React.FC = () => {
                 </div>
               </motion.div>
 
-              {/* Comments section */}
               <div ref={commentSectionRef} className="mt-12">
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-2xl font-serif font-medium text-gray-800">
@@ -530,7 +538,6 @@ const ArticleDetailPage: React.FC = () => {
                   </h2>
                 </div>
 
-                {/* Add comment form */}
                 {isAuthenticated ? (
                   <motion.div
                     initial={{ opacity: 0 }}
@@ -542,10 +549,14 @@ const ArticleDetailPage: React.FC = () => {
                       value={commentText}
                       onChange={(e) => setCommentText(e.target.value)}
                       placeholder="Partagez votre avis sur cet article..."
-                      className="w-full p-4 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-gray-50 text-gray-700"
+                      className="w-full p-4 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-gray-50 text-gray-700 break-words"
                       rows={4}
+                      maxLength={MAX_COMMENT_LENGTH}
                     />
-                    <div className="mt-4 flex justify-end">
+                    <div className="flex justify-between items-center mt-4">
+                      <span className="text-xs text-gray-500">
+                        {commentText.length}/{MAX_COMMENT_LENGTH}
+                      </span>
                       <ButtonPrimary
                         onClick={handleCommentSubmit}
                         disabled={submitting}
@@ -565,7 +576,6 @@ const ArticleDetailPage: React.FC = () => {
                   </div>
                 )}
 
-                {/* Comments list */}
                 {article.commentaires && article.commentaires.length > 0 ? (
                   renderComments(article.commentaires)
                 ) : (
