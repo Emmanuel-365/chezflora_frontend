@@ -36,6 +36,14 @@ const ArticlesPage = () => {
   const headerRef = useRef(null)
   const isHeaderInView = useInView(headerRef, { once: true })
 
+  // Fonction pour créer un extrait textuel à partir du HTML
+  const createExcerpt = (html: string, maxLength: number = 150): string => {
+    const tempDiv = document.createElement("div")
+    tempDiv.innerHTML = html
+    const text = tempDiv.textContent || tempDiv.innerText || ""
+    return text.length > maxLength ? `${text.substring(0, maxLength).trim()}...` : text
+  }
+
   // Fetch articles
   useEffect(() => {
     const fetchArticles = async () => {
@@ -43,7 +51,6 @@ const ArticlesPage = () => {
         setLoading(true)
         const response = await getArticles()
         
-        // Add some mock data for demonstration
         const articlesWithMockData = response.data.results.map((article: Article, index: number) => ({
           ...article,
           categorie: ["Conseils", "Tendances", "Tutoriels", "Événements"][index % 4],
@@ -54,7 +61,6 @@ const ArticlesPage = () => {
         setArticles(articlesWithMockData)
         setFilteredArticles(articlesWithMockData)
         
-        // Extract unique categories
         const uniqueCategories = Array.from(
           new Set(articlesWithMockData.map((article: Article) => article.categorie))
         ).filter(Boolean) as string[]
@@ -82,7 +88,7 @@ const ArticlesPage = () => {
       filtered = filtered.filter(
         article => 
           article.titre.toLowerCase().includes(query) || 
-          article.contenu.toLowerCase().includes(query) ||
+          createExcerpt(article.contenu).toLowerCase().includes(query) || // Filtrer sur l'extrait
           (article.tags && article.tags.some(tag => tag.toLowerCase().includes(query)))
       )
     }
@@ -356,7 +362,10 @@ const ArticlesPage = () => {
                             )}
                           </div>
                           
-                          <p className="text-gray-600 mb-6 line-clamp-3 flex-grow">{article.contenu}</p>
+                          {/* Affichage corrigé du contenu avec extrait */}
+                          <p className="text-gray-600 mb-6 line-clamp-3 flex-grow">
+                            {createExcerpt(article.contenu)}
+                          </p>
                           
                           <div className="flex flex-wrap items-center justify-between mt-auto">
                             <div className="flex flex-wrap gap-2 mb-4 md:mb-0">
